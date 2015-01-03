@@ -86,7 +86,7 @@ proc closeDatastore(store:Datastore) =
 proc retrieveDatastores*(): seq[string] =
   result = newSeq[string](0)
   for f in walkFiles(cwd.joinPath("*.ls")):
-    result.add f.extractFilename
+    result.add f.extractFilename.changeFileExt("")
 
 # TODO Implement
 proc createDocument*(store: Datastore, value: string, content = "", mimetype = "text/plain") =
