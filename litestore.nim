@@ -6,7 +6,9 @@ import
   oids,
   times,
   json,
-  pegs
+  pegs, 
+  mimetypes,
+  base64
 import
   types,
   contenttypes,
@@ -65,9 +67,15 @@ proc retrieveDatastores*(): string =
 
 # Manage Documents
 
-proc createDocument*(store: Datastore,  data = "", contenttype = "text/plain", binary = -1, searchable = 1): string =
+proc createDocument*(store: Datastore,  id="", data = "", contenttype = "text/plain", binary = -1, searchable = 1): string =
   var binary = checkIfBinary(binary, contenttype)
-  result = $genOid()
+  var data = data
+  if binary == 1:
+    data = data.encode(data.len*2)
+  if id == "":
+    result = $genOid()
+  else:
+    result = id
   # Store document
   store.db.exec(SQL_INSERT_DOCUMENT, result, data, contenttype, binary, searchable, getTime().getGMTime().format("yyyy-MM-dd'T'hh:mm:ss'Z'"))
   if binary == 0 and searchable == 1:
@@ -76,8 +84,11 @@ proc createDocument*(store: Datastore,  data = "", contenttype = "text/plain", b
   store.addDocumentSystemTags(result, contenttype)
   return result
 
-proc updateDocument*(store: Datastore, id: string, data: string, contenttype = "text/plain", binary = -1, searchable = true) =
+proc updateDocument*(store: Datastore, id: string, data: string, contenttype = "text/plain", binary = -1, searchable = 1) =
   var binary = checkIfBinary(binary, contenttype)
+  var data = data
+  if binary == 1:
+    data = data.encode(data.len*2)
   store.db.exec(SQL_UPDATE_DOCUMENT, data, contenttype, binary, searchable, getTime().getGMTime().format("yyyy-MM-dd'T'hh:mm:ss'Z'"), id)
   store.deleteDocumentSystemTags(id)
   store.addDocumentSystemTags(id, contenttype)
@@ -133,7 +144,19 @@ proc retrieveTags*(store: Datastore, options: QueryOptions = newQueryOptions()):
 # TODO Pack/Unpack Directories
 
 proc packDir*(store: Datastore, dir: string) =
-  discard
+  if not dir.dirExists:
+    raise newException(EDirectoryNotFound, "Directory '$1' not found." % dir)
+  for f in dir.walkDirRec():
+    var d_id = f
+    var d_contents = f.readFile
+    var d_ct = CONTENT_TYPES.getMimetype(f.splitFile.ext, "application/octet-stream")
+    var d_binary = 0
+    var d_searchable = 1
+    if d_ct.isBinary:
+      d_binary = 1
+      d_searchable = 0
+    discard store.createDocument(d_id, d_contents, d_ct, d_binary, d_searchable)
+    store.db.exec(SQL_INSERT_TAG, "$dir:"&dir, d_id)
 
 proc unpackDir*(store: Datastore, dir: string) =
   discard
@@ -158,4 +181,6 @@ store.createTag "test", id3
 var opts = newQueryOptions()
 #opts.tags = "test,test2"
 #opts.search = "another yet"
+store.packDir("nimcache")
 echo store.retrieveDocuments(opts)
+

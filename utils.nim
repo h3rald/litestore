@@ -8,7 +8,7 @@ let PEG_TAG* = peg"""
 let PEG_USER_TAG* = peg"""
 ^[a-zA-Z0-9_-?~:.@#^%!]+$
 """
-proc dbQuote(s: string): string =
+proc dbQuote*(s: string): string =
   result = "'"
   for c in items(s):
     if c == '\'': add(result, "''")
@@ -40,7 +40,7 @@ proc prepareSelectDocumentsQuery*(options: QueryOptions): string =
   if options.tags.len > 0:
     result = result & options.tags.selectDocumentsByTags()
   if options.search.len > 0:
-    result = result & "AND content MATCH \"" & options.search.dbQuote & "\""
+    result = result & "AND content MATCH \"" & options.search & "\""
   if options.orderby.validOrderBy():
     result = result & "ORDER BY " & options.orderby & " " 
   if options.limit > 0:
@@ -73,7 +73,7 @@ proc checkIfBinary*(binary:int, contenttype:string): int =
   if binary == -1 and contenttype.isBinary:
     return 1
   else:
-    return 0
+    return binary
 
 proc addDocumentSystemTags*(store: Datastore, docid, contenttype: string) =
   var splittype = contenttype.split("/")
