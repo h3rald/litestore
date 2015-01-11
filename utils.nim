@@ -8,6 +8,12 @@ let PEG_TAG* = peg"""
 let PEG_USER_TAG* = peg"""
 ^[a-zA-Z0-9_-?~:.@#^%!]+$
 """
+proc dbQuote(s: string): string =
+  result = "'"
+  for c in items(s):
+    if c == '\'': add(result, "''")
+    else: add(result, c)
+  add(result, '\'')
 
 proc selectDocumentsByTags(tags: string): string =
   var select_tagged = "SELECT document_id FROM tags WHERE tag_id = \""
@@ -33,6 +39,8 @@ proc prepareSelectDocumentsQuery*(options: QueryOptions): string =
     result = result & "AND id = ?"
   if options.tags.len > 0:
     result = result & options.tags.selectDocumentsByTags()
+  if options.search.len > 0:
+    result = result & "AND content MATCH \"" & options.search.dbQuote & "\""
   if options.orderby.validOrderBy():
     result = result & "ORDER BY " & options.orderby & " " 
   if options.limit > 0:

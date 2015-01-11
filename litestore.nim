@@ -156,5 +156,6 @@ store.createTag "test", id1
 store.createTag "test", id2
 store.createTag "test", id3
 var opts = newQueryOptions()
-opts.tags = "test,test2"
+#opts.tags = "test,test2"
+#opts.search = "another yet"
 echo store.retrieveDocuments(opts)
