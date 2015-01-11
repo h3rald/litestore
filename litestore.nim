@@ -8,99 +8,17 @@ import
   json,
   pegs
 import
+  types,
   contenttypes,
-  queries
+  queries,
+  utils
 
 {.compile: "vendor/sqlite/libsqlite3.c".}
 {.passC: "-DSQLITE_ENABLE_FTS3 -DSQLITE_ENABLE_FTS3_PARENTHESIS".}
 
-type 
-  EDatastoreExists* = object of Exception
-  EDatastoreDoesNotExist* = object of Exception
-  EDatastoreUnavailable* = object of Exception
-  Datastore* = object
-    db: TDbConn
-    path: string
-    name: string
-  QueryOptions* = object
-    single*:bool          #
-    limit*: int           #
-    orderby*: string      #
-    tags*: string
-    search*: string
-
-proc newQueryOptions(): QueryOptions =
-  return QueryOptions(single: false, limit: 0, orderby: "", tags: "", search: "")
 
 # TODO manage stores directory
 let cwd = getCurrentDir()
-
-# Helper Functions
-
-proc validOrderBy(clause):bool =
-  return clause == "id ASC" or 
-         clause == "id DESC" or
-         clause == "created ASC" or
-         clause == "created DESC" or
-         clause == "modified ASC" or
-         clause == "modified DESC"
-
-proc prepareSelectDocumentsQuery(options: QueryOptions): string =
-  result = "SELECT * "
-  result = result & "FROM documents, searchcontents "
-  result = result & "WHERE documents.id = searchcontents.document_id "
-  if options.single:
-    result = result & "AND documents.id = ?"
-  if options.orderby.validOrderBy():
-    result = result & "ORDER BY " & options.orderby&" " 
-  if options.limit > 0:
-    result = result & "LIMIT " & $options.limit & " "
-  echo result
-
-proc prepareSelectTagsQuery(options: QueryOptions): string =
-  result = "SELECT tag_id, COUNT(document_ID) "
-  result = result & "FROM tags "
-  if options.single:
-    result = result & "WHERE tag_id = ?"
-  result = result & "GROUP BY tag_id"
-  if options.orderby.validOrderBy():
-    result = result & "ORDER BY " & options.orderby&" " 
-  if options.limit > 0:
-    result = result & "LIMIT " & $options.limit & " "
-  echo result
-
-proc prepareJsonDocument(store:Datastore, doc: TRow): JsonNode =
-  var raw_tags = store.db.getAllRows(SQL_SELECT_DOCUMENT_TAGS, doc[0])
-  var tags = newSeq[JsonNode](0)
-  for tag in raw_tags:
-    tags.add(%($(tag[0])))
-  return %[("id", %doc[0]), 
-             ("data", %doc[1]), 
-             ("created", %doc[5]),
-             ("modified", %doc[5]),
-             ("tags", %tags)]
-
-proc checkIfBinary(binary:int, contenttype:string): int =
-  if binary == -1 and contenttype.isBinary:
-    return 1
-  else:
-    return 0
-
-proc addDocumentSystemTags(store: Datastore, docid, contenttype: string) =
-  var splittype = contenttype.split("/")
-  var tags = newSeq[string](0)
-  tags.add "$type:"&splittype[0]
-  tags.add "$subtype:"&splittype[1]
-  var binary = checkIfBinary(-1, contenttype)
-  if binary == 1:
-    tags.add "$format:binary"
-  else:
-    tags.add "$format:text"
-  for tag in tags:
-    store.db.exec(SQL_INSERT_TAG, tag, docid)
-
-proc deleteDocumentSystemTags(store: Datastore, docid) = 
-  store.db.exec(SQL_DELETE_DOCUMENT_SYSTEM_TAGS, docid)
 
 # Manage Datastores
 
@@ -145,6 +63,8 @@ proc retrieveDatastores*(): string =
     store.closeDatastore()
   return $(%(stores))
 
+# Manage Documents
+
 proc createDocument*(store: Datastore,  data = "", contenttype = "text/plain", binary = -1, searchable = 1): string =
   var binary = checkIfBinary(binary, contenttype)
   result = $genOid()
@@ -183,10 +103,16 @@ proc retrieveDocuments*(store: Datastore, options: QueryOptions = newQueryOption
     documents.add store.prepareJsonDocument(doc)
   return $(%documents)
 
+# Manage Tags
+
 proc createTag*(store: Datastore, tagid, documentid: string) =
+  if not tagid.match(PEG_USER_TAG):
+    raise newException(EInvalidTag, "Invalid Tag: $1" % tagid)
   store.db.exec(SQL_INSERT_TAG, tagid, documentid)
 
 proc deleteTag*(store: Datastore, tagid, documentid: string) =
+  if not tagid.match(PEG_USER_TAG):
+    raise newException(EInvalidTag, "Invalid Tag: $1" % tagid)
   store.db.exec(SQL_DELETE_TAG, documentid, tagid)
 
 proc retrieveTag*(store: Datastore, id: string, options: QueryOptions = newQueryOptions()): string =
@@ -230,8 +156,5 @@ store.createTag "test", id1
 store.createTag "test", id2
 store.createTag "test", id3
 var opts = newQueryOptions()
-opts.limit = 2
-opts.orderby = "created DESC"
+opts.tags = "test,test2"
 echo store.retrieveDocuments(opts)
-echo retrieveDatastores()
-echo store.retrieveTags()
