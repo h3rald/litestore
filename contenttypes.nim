@@ -1,6 +1,15 @@
-import mimetypes, strutils
+import json, strutils, strtabs
 
-let CONTENT_TYPES* = newMimetypes()
+
+proc loadContentTypes(): StringTableRef =
+  result = newStringTable(modeCaseInsensitive)
+  const raw_json = "contenttypes.json".slurp
+  let json = raw_json.parseJson
+  for item in json.items:
+    for pair in item.pairs:
+      result[$pair.key] = $pair.val
+
+let CONTENT_TYPES* = loadContentTypes()
 
 proc isBinary*(ct: string): bool =
   if ct.endsWith "xml":

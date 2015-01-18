@@ -98,3 +98,15 @@ UPDATE searchcontents
 SET content = ?
 WHERE document_id = ?
 """
+
+const SQL_SELECT_DOCUMENTS_BY_TAG* = sql"""
+SELECT * FROM documents, tags
+WHERE documents.id = tags.document_id AND
+tag_id = ?
+"""
+
+const SQL_SELECT_DOCUMENT_IDS_BY_TAG* = sql"""
+SELECT id FROM documents, tags
+WHERE documents.id = tags.document_id AND
+tag_id = ?
+"""

@@ -7,7 +7,7 @@ import
   times,
   json,
   pegs, 
-  mimetypes,
+  strtabs,
   base64
 import
   types,
@@ -19,51 +19,36 @@ import
 {.passC: "-DSQLITE_ENABLE_FTS3 -DSQLITE_ENABLE_FTS3_PARENTHESIS".}
 
 
-# TODO manage stores directory
-let cwd = getCurrentDir()
-
 # Manage Datastores
 
-proc createDatastore*(name:string) = 
-  if name.changeFileExt("ls").fileExists:
-    raise newException(EDatastoreExists, "Datastore '$1' already exists." % name)
-  let store = db.open(cwd.joinPath(name.changeFileExt("ls")), "", "", "")
+proc createDatastore*(file:string) = 
+  if file.fileExists:
+    raise newException(EDatastoreExists, "Datastore '$1' already exists." % file)
+  let store = db.open(file, "", "", "")
   store.exec(SQL_CREATE_DOCUMENTS_TABLE)
   store.exec(SQL_CREATE_SEARCHCONTENTS_TABLE)
   store.exec(SQL_CREATE_TAGS_TABLE)
 
-proc deleteDatastore*(name:string) =
+proc deleteDatastore*(file:string) =
   try:
-    cwd.joinPath(name.changeFileExt("ls")).removeFile
+    file.removeFile
   except:
-    raise newException(EDatastoreUnavailable, "Datastore '$1' cannot deleted." % name)
+    raise newException(EDatastoreUnavailable, "Datastore '$1' cannot deleted." % file)
 
-proc openDatastore(name:string): Datastore =
-  if not name.changeFileExt("ls").fileExists:
-    raise newException(EDatastoreDoesNotExist, "Datastore '$1' does not exists." % name)
+proc openDatastore(file:string): Datastore =
+  if not file.fileExists:
+    raise newException(EDatastoreDoesNotExist, "Datastore '$1' does not exists." % file)
   try:
-    result.db = db.open(cwd.joinPath(name.changeFileExt("ls")), "", "", "")
-    result.name = name
-    result.path = cwd.joinPath(name)
+    result.db = db.open(file, "", "", "")
+    result.path = file
   except:
-    raise newException(EDatastoreUnavailable, "Datastore '$1' cannot be opened." % name)
+    raise newException(EDatastoreUnavailable, "Datastore '$1' cannot be opened." % file)
 
 proc closeDatastore(store:Datastore) = 
   try:
     db.close(store.db)
   except:
-    raise newException(EDatastoreUnavailable, "Datastore '$1' cannot be closed." % store.name)
-
-proc retrieveDatastores*(): string =
-  var stores = newSeq[JsonNode](0)
-  for f in walkFiles(cwd.joinPath("*.ls")):
-    var name = f.extractFilename.changeFileExt("")
-    var store = name.openDataStore()
-    var n_documents = store.db.getRow(SQL_COUNT_DOCUMENTS)[0].parseInt
-    var n_tags = store.db.getRow(SQL_COUNT_TAGS)[0].parseInt
-    stores.add(%[("id", %name), ("documents", %n_documents), ("tags", %n_tags)])
-    store.closeDatastore()
-  return $(%(stores))
+    raise newException(EDatastoreUnavailable, "Datastore '$1' cannot be closed." % store.path)
 
 # Manage Documents
 
@@ -84,18 +69,18 @@ proc createDocument*(store: Datastore,  id="", data = "", contenttype = "text/pl
   store.addDocumentSystemTags(result, contenttype)
   return result
 
-proc updateDocument*(store: Datastore, id: string, data: string, contenttype = "text/plain", binary = -1, searchable = 1) =
+proc updateDocument*(store: Datastore, id: string, data: string, contenttype = "text/plain", binary = -1, searchable = 1): int64 =
   var binary = checkIfBinary(binary, contenttype)
   var data = data
   if binary == 1:
     data = data.encode(data.len*2)
-  store.db.exec(SQL_UPDATE_DOCUMENT, data, contenttype, binary, searchable, getTime().getGMTime().format("yyyy-MM-dd'T'hh:mm:ss'Z'"), id)
+  result = store.db.execAffectedRows(SQL_UPDATE_DOCUMENT, data, contenttype, binary, searchable, getTime().getGMTime().format("yyyy-MM-dd'T'hh:mm:ss'Z'"), id)
   store.deleteDocumentSystemTags(id)
   store.addDocumentSystemTags(id, contenttype)
   store.db.exec(SQL_UPDATE_SEARCHCONTENT, data, id)
 
-proc deleteDocument*(store: Datastore, id: string) =
-  store.db.exec(SQL_DELETE_DOCUMENT, id)
+proc deleteDocument*(store: Datastore, id: string): int64 =
+  result = store.db.execAffectedRows(SQL_DELETE_DOCUMENT, id)
   store.db.exec(SQL_DELETE_SEARCHCONTENT, id)
   store.db.exec(SQL_DELETE_DOCUMENT_TAGS, id)
 
@@ -121,10 +106,10 @@ proc createTag*(store: Datastore, tagid, documentid: string) =
     raise newException(EInvalidTag, "Invalid Tag: $1" % tagid)
   store.db.exec(SQL_INSERT_TAG, tagid, documentid)
 
-proc deleteTag*(store: Datastore, tagid, documentid: string) =
+proc deleteTag*(store: Datastore, tagid, documentid: string): int64 =
   if not tagid.match(PEG_USER_TAG):
     raise newException(EInvalidTag, "Invalid Tag: $1" % tagid)
-  store.db.exec(SQL_DELETE_TAG, documentid, tagid)
+  return store.db.execAffectedRows(SQL_DELETE_TAG, documentid, tagid)
 
 proc retrieveTag*(store: Datastore, id: string, options: QueryOptions = newQueryOptions()): string =
   var options = options
@@ -141,15 +126,16 @@ proc retrieveTags*(store: Datastore, options: QueryOptions = newQueryOptions()):
     tags.add(%[("id", %tag[0]), ("documents", %(tag[1].parseInt))])
   return $(%tags)
 
-# TODO Pack/Unpack Directories
-
 proc packDir*(store: Datastore, dir: string) =
   if not dir.dirExists:
     raise newException(EDirectoryNotFound, "Directory '$1' not found." % dir)
   for f in dir.walkDirRec():
+    let ext = f.splitFile.ext
     var d_id = f
     var d_contents = f.readFile
-    var d_ct = CONTENT_TYPES.getMimetype(f.splitFile.ext, "application/octet-stream")
+    var d_ct = "text/plain"
+    if CONTENT_TYPES.hasKey(ext):
+      d_ct = CONTENT_TYPES[ext]
     var d_binary = 0
     var d_searchable = 1
     if d_ct.isBinary:
@@ -159,16 +145,30 @@ proc packDir*(store: Datastore, dir: string) =
     store.db.exec(SQL_INSERT_TAG, "$dir:"&dir, d_id)
 
 proc unpackDir*(store: Datastore, dir: string) =
-  discard
+  let docs = store.db.getAllRows(SQL_SELECT_DOCUMENTS_BY_TAG, "$dir:"&dir)
+  for doc in docs:
+    let file = doc[0]
+    var data: string
+    if doc[3].parseInt == 1:
+      data = doc[1].decode
+    else:
+      data = doc[1]
+    file.parentDir.createDir
+    file.writeFile(data)
+
+proc deleteDocumentsByTag(store: Datastore, tag: string): int64 =
+  result = 0
+  var ids = store.db.getAllRows(SQL_SELECT_DOCUMENT_IDS_BY_TAG, tag)
+  for id in ids:
+    result.inc(store.deleteDocument(id[0]).int)
 
 # Test
 
-var name = "test"
-var file = cwd.joinPath(name&".ls")
+var file = "test.ls"
 if file.fileExists:
   file.removeFile
-createDatastore(name)
-var store = name.openDatastore
+createDatastore(file)
+var store = file.openDatastore
 var id1 = store.createDocument "This is a test document"
 var id2 = store.createDocument "This is another test document"
 var id3 = store.createDocument "This is yet another test document"
@@ -182,5 +182,8 @@ var opts = newQueryOptions()
 #opts.tags = "test,test2"
 #opts.search = "another yet"
 store.packDir("nimcache")
-echo store.retrieveDocuments(opts)
+"test".createDir
+"test".setCurrentDir
+store.unpackDir("nimcache")
+echo store.deleteDocumentsByTag("$dir:nimcache")
 

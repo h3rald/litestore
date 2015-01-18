@@ -9,7 +9,6 @@ type
   Datastore* = object
     db*: TDbConn
     path*: string
-    name*: string
   QueryOptions* = object
     single*:bool         
     limit*: int           
