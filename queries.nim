@@ -3,10 +3,6 @@ import db_sqlite
 
 # SQL QUERIES
 
-const SQL_COUNT_DOCUMENTS* = sql"""
-SELECT COUNT(id) FROM documents
-"""
-
 const SQL_COUNT_TAGS* = sql"""
 SELECT COUNT(DISTINCT tag_id) FROM tags 
 """

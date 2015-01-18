@@ -20,6 +20,14 @@ type
     startswith*: bool
     endswith*: bool
     negated*: bool
+  Operation* = enum opRun, opPack, opUnpack
+  Settings* = object
+    store*: Datastore
+    address*: string
+    port*: int
+    operation*: Operation
+    directory*: string
+    file*: string
 
 proc newQueryOptions*(): QueryOptions =
   return QueryOptions(single: false, limit: 0, orderby: "", tags: "", search: "")

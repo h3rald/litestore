@@ -13,7 +13,8 @@ import
   types,
   contenttypes,
   queries,
-  utils
+  utils,
+  cli
 
 {.compile: "vendor/sqlite/libsqlite3.c".}
 {.passC: "-DSQLITE_ENABLE_FTS3 -DSQLITE_ENABLE_FTS3_PARENTHESIS".}
@@ -35,7 +36,7 @@ proc deleteDatastore*(file:string) =
   except:
     raise newException(EDatastoreUnavailable, "Datastore '$1' cannot deleted." % file)
 
-proc openDatastore(file:string): Datastore =
+proc openDatastore*(file:string): Datastore =
   if not file.fileExists:
     raise newException(EDatastoreDoesNotExist, "Datastore '$1' does not exists." % file)
   try:
@@ -44,7 +45,7 @@ proc openDatastore(file:string): Datastore =
   except:
     raise newException(EDatastoreUnavailable, "Datastore '$1' cannot be opened." % file)
 
-proc closeDatastore(store:Datastore) = 
+proc closeDatastore*(store:Datastore) = 
   try:
     db.close(store.db)
   except:
@@ -156,34 +157,56 @@ proc unpackDir*(store: Datastore, dir: string) =
     file.parentDir.createDir
     file.writeFile(data)
 
-proc deleteDocumentsByTag(store: Datastore, tag: string): int64 =
+proc deleteDocumentsByTag*(store: Datastore, tag: string): int64 =
   result = 0
   var ids = store.db.getAllRows(SQL_SELECT_DOCUMENT_IDS_BY_TAG, tag)
   for id in ids:
     result.inc(store.deleteDocument(id[0]).int)
 
+
+
+
 # Test
-
-var file = "test.ls"
-if file.fileExists:
-  file.removeFile
-createDatastore(file)
-var store = file.openDatastore
-var id1 = store.createDocument "This is a test document"
-var id2 = store.createDocument "This is another test document"
-var id3 = store.createDocument "This is yet another test document"
-store.createTag "test1", id1
-store.createTag "test2", id2
-store.createTag "test3", id2
-store.createTag "test", id1
-store.createTag "test", id2
-store.createTag "test", id3
-var opts = newQueryOptions()
-#opts.tags = "test,test2"
-#opts.search = "another yet"
-store.packDir("nimcache")
-"test".createDir
-"test".setCurrentDir
-store.unpackDir("nimcache")
-echo store.deleteDocumentsByTag("$dir:nimcache")
-
+when false:
+  var file = "test.ls"
+  if file.fileExists:
+    file.removeFile
+  createDatastore(file)
+  var store = file.openDatastore
+  var id1 = store.createDocument "This is a test document"
+  var id2 = store.createDocument "This is another test document"
+  var id3 = store.createDocument "This is yet another test document"
+  store.createTag "test1", id1
+  store.createTag "test2", id2
+  store.createTag "test3", id2
+  store.createTag "test", id1
+  store.createTag "test", id2
+  store.createTag "test", id3
+  var opts = newQueryOptions()
+  #opts.tags = "test,test2"
+  #opts.search = "another yet"
+  store.packDir("nimcache")
+  "test".createDir
+  "test".setCurrentDir
+  store.unpackDir("nimcache")
+  echo store.deleteDocumentsByTag("$dir:nimcache")
+  
+when isMainModule:
+  # Initialize Datastore
+  if not settings.file.fileExists:
+    try:
+      settings.file.createDatastore()
+    except:
+      error(1, "Unable to create datastore '$1'" % [settings.file])
+  try:
+    settings.store = settings.file.openDatastore()
+  except:
+    error(2, "Unable to open datastore '$1'" % [settings.file])
+  case settings.operation:
+    of opPack:
+      settings.store.packDir(settings.directory)
+    of opUnpack:
+      settings.store.unpackDir(settings.directory)
+    of opRun:
+      #TODO
+      discard

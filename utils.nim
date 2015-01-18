@@ -94,3 +94,7 @@ proc addDocumentSystemTags*(store: Datastore, docid, contenttype: string) =
 proc deleteDocumentSystemTags*(store: Datastore, docid) = 
   store.db.exec(SQL_DELETE_DOCUMENT_SYSTEM_TAGS, docid)
 
+proc error*(code, msg) =
+  stderr.writeln(msg)
+  quit(code)
+
