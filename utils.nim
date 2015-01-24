@@ -37,7 +37,7 @@ proc prepareSelectDocumentsQuery*(options: QueryOptions): string =
     result = result & "FROM documents, searchcontents "
     result = result & "WHERE documents.id = searchcontents.document_id "
   else:
-    result = result & "FROM documents "
+    result = result & "FROM documents WHERE 1=1 "
   if options.single:
     result = result & "AND id = ?"
   if options.tags.len > 0:
@@ -48,7 +48,6 @@ proc prepareSelectDocumentsQuery*(options: QueryOptions): string =
     result = result & "ORDER BY " & options.orderby & " " 
   if options.limit > 0:
     result = result & "LIMIT " & $options.limit & " "
-  echo result
 
 proc prepareSelectTagsQuery*(options: QueryOptions): string =
   result = "SELECT tag_id, COUNT(document_ID) "
@@ -91,7 +90,7 @@ proc addDocumentSystemTags*(store: Datastore, docid, contenttype: string) =
   for tag in tags:
     store.db.exec(SQL_INSERT_TAG, tag, docid)
 
-proc deleteDocumentSystemTags*(store: Datastore, docid) = 
+proc destroyDocumentSystemTags*(store: Datastore, docid) = 
   store.db.exec(SQL_DELETE_DOCUMENT_SYSTEM_TAGS, docid)
 
 proc error*(code, msg) =

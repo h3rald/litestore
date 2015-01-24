@@ -6,7 +6,7 @@ import
 
 
 const 
-  version = "1.0"
+  version* = "1.0"
   usage* = "  LiteStore v"& version & " - Lightweight REST Document Store" & """
   (c) 2015 Fabio Cevasco
 
@@ -24,7 +24,7 @@ const
 
 var 
   file = "data.ls"
-  port = 70700
+  port = 9500
   address = "0.0.0.0"
   operation = opRun
   directory = ""
@@ -64,3 +64,5 @@ settings.address = address
 settings.operation = operation
 settings.file = file
 settings.directory = directory
+settings.appversion = version
+settings.appname = "LiteStore"

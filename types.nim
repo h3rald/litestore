@@ -1,4 +1,6 @@
-import db_sqlite
+import db_sqlite 
+from asynchttpserver import HttpCode 
+from strtabs import StringTableRef, newStringTable
 
 type 
   EDatastoreExists* = object of Exception
@@ -28,6 +30,12 @@ type
     operation*: Operation
     directory*: string
     file*: string
+    appname*: string
+    appversion*: string
+  Response* = tuple[
+    code: HttpCode,
+    content: string,
+    headers: StringTableRef]
 
 proc newQueryOptions*(): QueryOptions =
   return QueryOptions(single: false, limit: 0, orderby: "", tags: "", search: "")
