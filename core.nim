@@ -103,7 +103,6 @@ proc retrieveDocument*(store: Datastore, id: string, options: QueryOptions = new
     else:
       return (data: raw_document[1], contenttype: raw_document[2])
 
-
 proc retrieveRawDocuments*(store: Datastore, options: QueryOptions = newQueryOptions()): string =
   var select = prepareSelectDocumentsQuery(options)
   var raw_documents = store.db.getAllRows(select.sql)

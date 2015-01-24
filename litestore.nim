@@ -48,26 +48,26 @@ when false:
   
 when isMainModule:
   # Initialize Datastore
-  if not settings.file.fileExists:
+  if not LS.file.fileExists:
     try:
-      settings.file.createDatastore()
+      LS.file.createDatastore()
     except:
-      error(1, "Unable to create datastore '$1'" % [settings.file])
+      error(1, "Unable to create datastore '$1'" % [LS.file])
   try:
-    settings.store = settings.file.openDatastore()
+    LS.store = LS.file.openDatastore()
   except:
-    error(2, "Unable to open datastore '$1'" % [settings.file])
-  case settings.operation:
+    error(2, "Unable to open datastore '$1'" % [LS.file])
+  case LS.operation:
     of opPack:
-      settings.store.packDir(settings.directory)
+      LS.store.packDir(LS.directory)
     of opUnpack:
-      settings.store.unpackDir(settings.directory)
+      LS.store.unpackDir(LS.directory)
     of opRun:
       # STARTTEST
-      settings.file.destroyDatastore()
-      settings.file.createDatastore()
-      settings.store = settings.file.openDatastore()
-      settings.store.packDir("nimcache")
+      LS.file.destroyDatastore()
+      LS.file.createDatastore()
+      LS.store = LS.file.openDatastore()
+      LS.store.packDir("nimcache")
       # ENDTEST
-      settings.serve
+      LS.serve
       runForever()

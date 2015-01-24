@@ -11,7 +11,7 @@ const
   (c) 2015 Fabio Cevasco
 
   Usage:
-    litestore [-p:<port> -a:<address>] [<file>] [--pack:<directory> | --unpack:<directory>] 
+    LS [-p:<port> -a:<address>] [<file>] [--pack:<directory> | --unpack:<directory>] 
 
   Options:
     -a, --address     Specify address (default: 0.0.0.0).
@@ -57,12 +57,12 @@ for kind, key, val in getOpt():
     else:
       discard
 
-var settings*: Settings
+var LS*: LiteStore
 
-settings.port = port
-settings.address = address
-settings.operation = operation
-settings.file = file
-settings.directory = directory
-settings.appversion = version
-settings.appname = "LiteStore"
+LS.port = port
+LS.address = address
+LS.operation = operation
+LS.file = file
+LS.directory = directory
+LS.appversion = version
+LS.appname = "LiteStore"
