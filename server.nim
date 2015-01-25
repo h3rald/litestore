@@ -1,5 +1,4 @@
-import asynchttpserver, asyncdispatch, times, strutils, pegs
-from strtabs import StringTableRef, newStringTable
+import asynchttpserver, asyncdispatch, times, strutils, pegs, strtabs
 import types, api
 
 proc getReqInfo(req: Request): string =
@@ -45,7 +44,7 @@ proc getRoutes(req: Request, LS: LiteStore): Response =
   if req.url.path.rDocs(matches):
     if matches[0] != "":
       # Retrieve a single document
-      if req.url.query.contains("raw=true"):
+      if req.url.query.contains("raw=true") or req.headers["Content-Type"] == "application/json":
         return LS.getRawDocument(matches[0])
       else:
         return LS.getDocument(matches[0])

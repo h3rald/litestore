@@ -39,10 +39,10 @@ type
     headers: StringTableRef]
 
 const 
-  CT_JSON* = {"Content-type": "application/json"}
+  CT_JSON* = {"Content-Type": "application/json"}
 
 proc ctHeader*(ct: string): StringTableRef =
-  return {"Content-type": ct}.newStringTable
+  return {"Content-Type": ct}.newStringTable
 
 proc ctJsonHeader*(): StringTableRef =
   return CT_JSON.newStringTable
