@@ -32,7 +32,7 @@ proc validOrderBy*(clause):bool =
          clause == "modified DESC"
 
 proc prepareSelectDocumentsQuery*(options: QueryOptions): string =
-  result = "SELECT * "
+  result = "SELECT " & options.select & " "
   if options.search.len > 0:
     result = result & "FROM documents, searchcontents "
     result = result & "WHERE documents.id = searchcontents.document_id "
@@ -65,9 +65,16 @@ proc prepareJsonDocument*(store:Datastore, doc: TRow): JsonNode =
   var tags = newSeq[JsonNode](0)
   for tag in raw_tags:
     tags.add(%($(tag[0])))
-  return %[("id", %doc[0]), 
+  if doc.len > 6:
+    return % [("id", %doc[0]), 
              ("data", %doc[1]), 
              ("created", %doc[5]),
+             ("modified", %doc[6]),
+             ("tags", %tags)]
+  else:
+    # data was not retrieved
+    return % [("id", %doc[0]), 
+             ("created", %doc[4]),
              ("modified", %doc[5]),
              ("tags", %tags)]
 

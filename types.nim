@@ -12,6 +12,7 @@ type
     db*: TDbConn
     path*: string
   QueryOptions* = object
+    select*: string
     single*:bool         
     limit*: int           
     orderby*: string      
@@ -47,4 +48,4 @@ proc ctJsonHeader*(): StringTableRef =
   return CT_JSON.newStringTable
 
 proc newQueryOptions*(): QueryOptions =
-  return QueryOptions(single: false, limit: 0, orderby: "", tags: "", search: "")
+  return QueryOptions(select: "*", single: false, limit: 0, orderby: "", tags: "", search: "")
