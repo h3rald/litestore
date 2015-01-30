@@ -1,4 +1,4 @@
-import asynchttpserver, asyncdispatch, times, strutils, pegs, strtabs
+import asynchttpserver, asyncdispatch, times, strutils, pegs, strtabs, cgi
 import types, api
 
 proc getReqInfo(req: Request): string =
@@ -7,6 +7,46 @@ proc getReqInfo(req: Request): string =
 proc handleCtrlC() {.noconv.} =
   echo "\nExiting..."
   quit()
+
+proc validOrderBy(clause: string):bool =
+  return clause == "id ASC" or 
+         clause == "id DESC" or
+         clause == "created ASC" or
+         clause == "created DESC" or
+         clause == "modified ASC" or
+         clause == "modified DESC"
+
+proc parseQueryOption(fragment: string, options: var QueryOptions) =
+  var pair = fragment.split('=')
+  if pair.len < 2:
+    return
+  try:
+    pair[1] = pair[1].decodeURL
+  except:
+    raise newException(EInvalidRequest, "Unable to decode query string fragment '$1'" % fragment)
+  case pair[0]:
+    of "search":
+      options.search = pair[1]
+    of "tags":
+      options.tags = pair[1]
+    of "limit":
+      try:
+        options.limit = pair[1].parseInt
+      except:
+        raise newException(EInvalidRequest, "LIMIT - $1" % getCurrentExceptionMsg())
+    of "orderby":
+      if pair[1].validOrderBy():
+        options.orderby = pair[1]
+      else:
+        raise newException(EInvalidRequest, "ORDERBY - Invalid clause '$1'" % pair[1])
+    else:
+      return
+
+proc parseQueryOptions(querystring: string, options: var QueryOptions) =
+  var fragments = querystring.split('&')
+  for f in fragments:
+    f.parseQueryOption(options)
+
 
 proc rDocs(path: string, matches: var seq[string]): bool =
   return path.find(peg"""^\/? {(.*)}""", matches) != -1
@@ -27,30 +67,39 @@ proc optionsRoutes(req: Request, LS: LiteStore): Response =
 
 proc headRoutes(req: Request, LS: LiteStore): Response =
   var matches = @[""]
-  var options = newQueryOptions()
-  options.select = "id, content_type, binary, searchable, created, modified"
   if req.url.path.rDocs(matches):
-    if matches[0] != "":
-      # Retrieve a single document
-      return LS.getRawDocument(matches[0], options)
-    else:
-      # Retrieve a multiple documents
-      return LS.getRawDocuments(options)
+    var options = newQueryOptions()
+    options.select = "id, content_type, binary, searchable, created, modified"
+    try:
+      parseQueryOptions(req.url.query, options);
+      if matches[0] != "":
+        # Retrieve a single document
+        return LS.getRawDocument(matches[0], options)
+      else:
+        # Retrieve a multiple documents
+        return LS.getRawDocuments(options)
+    except:
+      return resError(Http400, "Bad request: $1" % getCurrentExceptionMsg())
   else:
     return resError(Http400, "Bad request: $1" % req.url.path) 
 
 proc getRoutes(req: Request, LS: LiteStore): Response =
   var matches = @[""]
   if req.url.path.rDocs(matches):
-    if matches[0] != "":
-      # Retrieve a single document
-      if req.url.query.contains("raw=true") or req.headers["Content-Type"] == "application/json":
-        return LS.getRawDocument(matches[0])
+    var options = newQueryOptions()
+    try:
+      parseQueryOptions(req.url.query, options);
+      if matches[0] != "":
+        # Retrieve a single document
+        if req.url.query.contains("raw=true") or req.headers["Content-Type"] == "application/json":
+          return LS.getRawDocument(matches[0], options)
+        else:
+          return LS.getDocument(matches[0], options)
       else:
-        return LS.getDocument(matches[0])
-    else:
-      # Retrieve a multiple documents
-      return LS.getRawDocuments()
+        # Retrieve a multiple documents
+        return LS.getRawDocuments(options)
+    except:
+      return resError(Http400, "Bad request: $1" % getCurrentExceptionMsg())
   else:
     return resError(Http400, "Bad request: $1" % req.url.path) 
 

@@ -8,6 +8,7 @@ type
   EDatastoreUnavailable* = object of Exception
   EInvalidTag* = object of Exception
   EDirectoryNotFound* = object of Exception
+  EInvalidRequest* = object of Exception
   Datastore* = object
     db*: TDbConn
     path*: string

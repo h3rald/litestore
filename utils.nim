@@ -2,11 +2,11 @@ import json, db_sqlite, strutils, pegs
 import types, queries, contenttypes
 
 let PEG_TAG* = peg"""
-^\$? [a-zA-Z0-9_-?~:.@#^%!]+$
+^\$? [a-zA-Z0-9_\-?~:.@#^!]+$
 """
 
 let PEG_USER_TAG* = peg"""
-^[a-zA-Z0-9_-?~:.@#^%!]+$
+^[a-zA-Z0-9_\-?~:.@#^!]+$
 """
 proc dbQuote*(s: string): string =
   result = "'"
@@ -23,14 +23,6 @@ proc selectDocumentsByTags(tags: string): string =
       raise newException(EInvalidTag, "Invalid tag '$1'" % tag)
     result = result & "AND id IN (" & select_tagged & tag & "\") "
    
-proc validOrderBy*(clause):bool =
-  return clause == "id ASC" or 
-         clause == "id DESC" or
-         clause == "created ASC" or
-         clause == "created DESC" or
-         clause == "modified ASC" or
-         clause == "modified DESC"
-
 proc prepareSelectDocumentsQuery*(options: QueryOptions): string =
   result = "SELECT " & options.select & " "
   if options.search.len > 0:
@@ -44,7 +36,7 @@ proc prepareSelectDocumentsQuery*(options: QueryOptions): string =
     result = result & options.tags.selectDocumentsByTags()
   if options.search.len > 0:
     result = result & "AND content MATCH \"" & options.search & "\""
-  if options.orderby.validOrderBy():
+  if options.orderby.len > 0:
     result = result & "ORDER BY " & options.orderby & " " 
   if options.limit > 0:
     result = result & "LIMIT " & $options.limit & " "
@@ -55,7 +47,7 @@ proc prepareSelectTagsQuery*(options: QueryOptions): string =
   if options.single:
     result = result & "WHERE tag_id = ?"
   result = result & "GROUP BY tag_id"
-  if options.orderby.validOrderBy():
+  if options.orderby.len > 0:
     result = result & "ORDER BY " & options.orderby&" " 
   if options.limit > 0:
     result = result & "LIMIT " & $options.limit & " "
