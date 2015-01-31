@@ -1,13 +1,6 @@
-import json, db_sqlite, strutils, pegs
+import json, db_sqlite, strutils, pegs, asyncdispatch, asynchttpserver 
 import types, queries, contenttypes
 
-let PEG_TAG* = peg"""
-^\$? [a-zA-Z0-9_\-?~:.@#^!]+$
-"""
-
-let PEG_USER_TAG* = peg"""
-^[a-zA-Z0-9_\-?~:.@#^!]+$
-"""
 proc dbQuote*(s: string): string =
   result = "'"
   for c in items(s):
@@ -95,4 +88,12 @@ proc destroyDocumentSystemTags*(store: Datastore, docid) =
 proc error*(code, msg) =
   stderr.writeln(msg)
   quit(code)
+
+proc resError*(code: HttpCode, message: string): Response =
+  result.code = code
+  result.content = """{"error":"$1"}""" % message
+  result.headers = ctJsonHeader()
+
+proc resDocumentNotFound*(id): Response =
+  resError(Http404, "Document '$1' not found." % id)
 

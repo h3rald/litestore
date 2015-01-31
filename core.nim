@@ -154,10 +154,10 @@ proc packDir*(store: Datastore, dir: string) =
       d_binary = 1
       d_searchable = 0
     discard store.createDocument(d_id, d_contents, d_ct, d_binary, d_searchable)
-    store.db.exec(SQL_INSERT_TAG, "$dir:"&dir, d_id)
+    store.db.exec(SQL_INSERT_TAG, "$collection:"&dir, d_id)
 
 proc unpackDir*(store: Datastore, dir: string) =
-  let docs = store.db.getAllRows(SQL_SELECT_DOCUMENTS_BY_TAG, "$dir:"&dir)
+  let docs = store.db.getAllRows(SQL_SELECT_DOCUMENTS_BY_TAG, "$collection:"&dir)
   for doc in docs:
     let file = doc[0]
     var data: string

@@ -1,4 +1,4 @@
-import db_sqlite 
+import db_sqlite, pegs
 from asynchttpserver import HttpCode 
 from strtabs import StringTableRef, newStringTable
 
@@ -38,6 +38,23 @@ type
     code: HttpCode,
     content: string,
     headers: StringTableRef]
+  ResourceInfo* = tuple[
+    resource: string,
+    id: string,
+    version: string
+  ]
+
+let PEG_TAG* = peg"""
+^\$? [a-zA-Z0-9_\-?~:.@#^!]+$
+"""
+
+let PEG_USER_TAG* = peg"""
+^[a-zA-Z0-9_\-?~:.@#^!]+$
+"""
+
+let PEG_URL* = peg"""
+  ^\/{(v\d+)} \/ {([^\/]+)} \/ {(.*)}
+"""
 
 const 
   CT_JSON* = {"Content-Type": "application/json"}
