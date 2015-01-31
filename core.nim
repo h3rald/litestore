@@ -8,6 +8,7 @@ import
   json,
   pegs, 
   strtabs,
+  strutils,
   base64
 import
   types,
@@ -48,38 +49,6 @@ proc closeDatastore*(store:Datastore) =
 
 # Manage Documents
 
-proc createDocument*(store: Datastore,  id="", data = "", contenttype = "text/plain", binary = -1, searchable = 1): string =
-  var binary = checkIfBinary(binary, contenttype)
-  var data = data
-  if binary == 1:
-    data = data.encode(data.len*2)
-  if id == "":
-    result = $genOid()
-  else:
-    result = id
-  # Store document
-  store.db.exec(SQL_INSERT_DOCUMENT, result, data, contenttype, binary, searchable, getTime().getGMTime().format("yyyy-MM-dd'T'hh:mm:ss'Z'"))
-  if binary == 0 and searchable == 1:
-    # Add to search index
-    store.db.exec(SQL_INSERT_SEARCHCONTENT, result, data)
-  store.addDocumentSystemTags(result, contenttype)
-  return result
-
-proc updateDocument*(store: Datastore, id: string, data: string, contenttype = "text/plain", binary = -1, searchable = 1): int64 =
-  var binary = checkIfBinary(binary, contenttype)
-  var data = data
-  if binary == 1:
-    data = data.encode(data.len*2)
-  result = store.db.execAffectedRows(SQL_UPDATE_DOCUMENT, data, contenttype, binary, searchable, getTime().getGMTime().format("yyyy-MM-dd'T'hh:mm:ss'Z'"), id)
-  store.destroyDocumentSystemTags(id)
-  store.addDocumentSystemTags(id, contenttype)
-  store.db.exec(SQL_UPDATE_SEARCHCONTENT, data, id)
-
-proc destroyDocument*(store: Datastore, id: string): int64 =
-  result = store.db.execAffectedRows(SQL_DELETE_DOCUMENT, id)
-  store.db.exec(SQL_DELETE_SEARCHCONTENT, id)
-  store.db.exec(SQL_DELETE_DOCUMENT_TAGS, id)
-
 proc retrieveRawDocument*(store: Datastore, id: string, options: QueryOptions = newQueryOptions()): string =
   var options = options
   options.single = true
@@ -89,6 +58,43 @@ proc retrieveRawDocument*(store: Datastore, id: string, options: QueryOptions = 
     return ""
   else:
     return $store.prepareJsonDocument(raw_document)
+
+proc createDocument*(store: Datastore,  id="", data = "", contenttype = "text/plain", binary = -1, searchable = 1): string =
+  var id = id
+  var contenttype = contenttype.replace(peg"""\;(.+)$""", "") # Strip charset for now
+  var binary = checkIfBinary(binary, contenttype)
+  var data = data
+  if binary == 1:
+    data = data.encode(data.len*2)
+  if id == "":
+    id = $genOid()
+  # Store document
+  store.db.exec(SQL_INSERT_DOCUMENT, id, data, contenttype, binary, searchable, getTime().getGMTime().format("yyyy-MM-dd'T'hh:mm:ss'Z'"))
+  if binary <= 0 and searchable >= 0:
+    # Add to search index
+    store.db.exec(SQL_INSERT_SEARCHCONTENT, id, data)
+  store.addDocumentSystemTags(id, contenttype)
+  return $store.retrieveRawDocument(id)
+
+proc updateDocument*(store: Datastore, id: string, data: string, contenttype = "text/plain", binary = -1, searchable = 1): string =
+  var contenttype = contenttype.replace(peg"""\;(.+)$""", "") # Strip charset for now
+  var binary = checkIfBinary(binary, contenttype)
+  var data = data
+  if binary == 1:
+    data = data.encode(data.len*2)
+  var res = store.db.execAffectedRows(SQL_UPDATE_DOCUMENT, data, contenttype, binary, searchable, getTime().getGMTime().format("yyyy-MM-dd'T'hh:mm:ss'Z'"), id)
+  if res > 0:
+    store.destroyDocumentSystemTags(id)
+    store.addDocumentSystemTags(id, contenttype)
+    store.db.exec(SQL_UPDATE_SEARCHCONTENT, data, id)
+    return $store.retrieveRawDocument(id)
+  else:
+    return ""
+
+proc destroyDocument*(store: Datastore, id: string): int64 =
+  result = store.db.execAffectedRows(SQL_DELETE_DOCUMENT, id)
+  store.db.exec(SQL_DELETE_SEARCHCONTENT, id)
+  store.db.exec(SQL_DELETE_DOCUMENT_TAGS, id)
 
 proc retrieveDocument*(store: Datastore, id: string, options: QueryOptions = newQueryOptions()): tuple[data: string, contenttype: string] =
   var options = options

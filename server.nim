@@ -1,4 +1,4 @@
-import asynchttpserver, asyncdispatch, times, strutils, pegs, strtabs, cgi
+import asynchttpserver2, asyncdispatch, times, strutils, pegs, strtabs, cgi
 import types, utils, api_v1
 
 proc getReqInfo(req: Request): string =

@@ -1,4 +1,4 @@
-import json, db_sqlite, strutils, pegs, asyncdispatch, asynchttpserver 
+import json, db_sqlite, strutils, pegs, asyncdispatch, asynchttpserver2 
 import types, queries, contenttypes
 
 proc dbQuote*(s: string): string =

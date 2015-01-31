@@ -1,6 +1,4 @@
-import db_sqlite, pegs
-from asynchttpserver import HttpCode 
-from strtabs import StringTableRef, newStringTable
+import db_sqlite, pegs, asynchttpserver2, strtabs 
 
 type 
   EDatastoreExists* = object of Exception
@@ -53,7 +51,7 @@ let PEG_USER_TAG* = peg"""
 """
 
 let PEG_URL* = peg"""
-  ^\/{(v\d+)} \/ {([^\/]+)} \/ {(.*)}
+  ^\/{(v\d+)} \/ {([^\/]+)} (\/ {(.+)} / \/?)$
 """
 
 const 

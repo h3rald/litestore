@@ -1,4 +1,4 @@
-import asynchttpserver, asyncdispatch, strutils, cgi, strtabs, pegs
+import asynchttpserver2, asyncdispatch, strutils, cgi, strtabs, pegs, json
 import types, core, utils
 
 # Helper procs
@@ -45,6 +45,25 @@ proc parseQueryOptions(querystring: string, options: var QueryOptions) =
   for f in fragments:
     f.parseQueryOption(options)
 
+
+proc validate(req: Request, LS: LiteStore, id: string, cb: proc(req: Request, LS: LiteStore, id: string):Response): Response = 
+  if req.reqMethod == "POST" or req.reqMethod == "PUT" or req.reqMethod == "PATCH":
+    var ct =  ""
+    let body = req.body.strip
+    if body == "":
+      return resError(Http400, "Bad request: No content specified for document.")
+    if req.headers.hasKey("Content-type"):
+      ct = req.headers["Content-type"]
+      case ct:
+        of "application/json":
+          try:
+            discard body.parseJson()
+          except:
+            return resError(Http400, "Invalid JSON content - $1" % getCurrentExceptionMsg())
+        else:
+          discard
+  return cb(req, LS, id)
+
 # Low level procs
 
 proc getRawDocument(LS: LiteStore, id: string, options = newQueryOptions()): Response =
@@ -65,6 +84,22 @@ proc getDocument(LS: LiteStore, id: string, options = newQueryOptions()): Respon
     result.content = doc.data
     result.code = Http200
 
+proc deleteDocument(LS: LiteStore, id: string): Response =
+  let doc = LS.store.retrieveDocument(id)
+  if doc.data == "":
+    result = resDocumentNotFound(id)
+  else:
+    try:
+      let res = LS.store.destroyDocument(id)
+      if res == 0:
+        result = resError(Http500, "Unable to delete document '$1'" % id)
+      else:
+        result.headers = {"Content-Length": "0"}.newStringTable
+        result.content = ""
+        result.code = Http204
+    except:
+      result = resError(Http500, "Unable to delete document '$1'" % id)
+
 proc getRawDocuments(LS: LiteStore, options = newQueryOptions()): Response =
   let docs = LS.store.retrieveRawDocuments(options) 
   if docs == "[]":
@@ -74,17 +109,53 @@ proc getRawDocuments(LS: LiteStore, options = newQueryOptions()): Response =
     result.content = docs
     result.code = Http200
 
+proc postDocument(LS: LiteStore, body: string, ct: string): Response =
+  try:
+    var doc = LS.store.createDocument("", body, ct)
+    if doc != "":
+      result.headers = ctJsonHeader()
+      result.content = doc
+      result.code = Http201
+    else:
+      result = resError(Http500, "Unable to create document.")
+  except:
+    result = resError(Http500, "Unable to create document.")
+
+proc putDocument(LS: LiteStore, id: string, body: string, ct: string): Response =
+  let doc = LS.store.retrieveDocument(id)
+  if doc.data == "":
+    # Create a new document
+    var doc = LS.store.createDocument(id, body, ct)
+    if doc != "":
+      result.headers = ctJsonHeader()
+      result.content = doc
+      result.code = Http201
+    else:
+      result = resError(Http500, "Unable to create document.")
+  else:
+    # Update existing document
+    try:
+      var doc = LS.store.updateDocument(id, body, ct)
+      if doc != "":
+        result.headers = ctJsonHeader()
+        result.content = doc
+        result.code = Http200
+      else:
+        result = resError(Http500, "Unable to update document '$1'." % id)
+    except:
+      result = resError(Http500, "Unable to update document '$1'." % id)
+
 # Main routing
 
 proc options(req: Request, LS: LiteStore, id = ""): Response =
   if id != "":
-    result.code = Http202
+    result.code = Http204
     result.content = ""
     result.headers = {"Allow": "HEAD,GET,PUT,PATCH,DELETE"}.newStringTable
   else:
-    result.code = Http202
+    result.code = Http204
     result.content = ""
-    result.headers = {"Allow": "HEAD,GET,POST,DELETE"}.newStringTable
+    result.headers = {"Allow": "HEAD,GET,POST"}.newStringTable
 
 proc head(req: Request, LS: LiteStore, id = ""): Response =
   var options = newQueryOptions()
@@ -112,13 +183,43 @@ proc get(req: Request, LS: LiteStore, id = ""): Response =
   except:
     return resError(Http400, "Bad request - $1" % getCurrentExceptionMsg())
 
+proc post(req: Request, LS: LiteStore, id = ""): Response = 
+  if id == "":
+    var ct = "text/plain"
+    if req.headers.hasKey("Content-type"):
+      ct = req.headers["Content-type"]
+    return LS.postDocument(req.body.strip, ct)
+  else:
+    return resError(Http400, "Bad request: document ID cannot be specified in POST requests.")
+
+proc put(req: Request, LS: LiteStore, id = ""): Response = 
+  if id != "":
+    var ct = "text/plain"
+    if req.headers.hasKey("Content-type"):
+      ct = req.headers["Content-type"]
+    return LS.putDocument(id, req.body.strip, ct)
+  else:
+    return resError(Http400, "Bad request: document ID must be specified in PUT requests.")
+
+proc delete(req: Request, LS: LiteStore, id = ""): Response = 
+  if id != "":
+    return LS.deleteDocument(id)
+  else:
+    return resError(Http400, "Bad request: document ID must be specified in DELETE requests.")
+
 proc route*(req: Request, LS: LiteStore, id = ""): Response = 
   case req.reqMethod:
+    of "POST":
+      return validate(req, LS, id, post)
+    of "PUT":
+      return validate(req, LS, id, put)
+    of "DELETE":
+      return validate(req, LS, id, delete)
     of "HEAD":
-      return req.head(LS, id)
+      return validate(req, LS, id, head)
     of "OPTIONS":
-      return req.options(LS, id)
+      return validate(req, LS, id, options)
     of "GET":
-      return req.get(LS, id)
+      return validate(req, LS, id, get)
     else:
       return resError(Http405, "Method not allowed: $1" % req.reqMethod) 
