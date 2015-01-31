@@ -30,6 +30,7 @@ type
     operation*: Operation
     directory*: string
     file*: string
+    readonly*: bool
     appname*: string
     appversion*: string
   Response* = tuple[

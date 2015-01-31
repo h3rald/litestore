@@ -47,6 +47,12 @@ modified = ?
 WHERE id = ?
 """
 
+const SQL_SET_DOCUMENT_MODIFIED* = sql"""
+UPDATE documents
+SET modified = ?
+WHERE id = ?
+"""
+
 const SQL_DELETE_DOCUMENT* = sql"""
 DELETE FROM documents
 WHERE id = ? 
@@ -60,7 +66,7 @@ VALUES (?, ?)
 
 const SQL_DELETE_TAG* = sql"""
 DELETE FROM tags
-WHERE document_id = ? AND tag_id = ?
+WHERE tag_id = ? AND document_id = ?
 """
 
 const SQL_DELETE_DOCUMENT_TAGS* = sql"""

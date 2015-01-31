@@ -4,7 +4,6 @@ import
   strutils, 
   os,
   oids,
-  times,
   json,
   pegs, 
   strtabs,
@@ -69,7 +68,7 @@ proc createDocument*(store: Datastore,  id="", data = "", contenttype = "text/pl
   if id == "":
     id = $genOid()
   # Store document
-  store.db.exec(SQL_INSERT_DOCUMENT, id, data, contenttype, binary, searchable, getTime().getGMTime().format("yyyy-MM-dd'T'hh:mm:ss'Z'"))
+  store.db.exec(SQL_INSERT_DOCUMENT, id, data, contenttype, binary, searchable, currentTime())
   if binary <= 0 and searchable >= 0:
     # Add to search index
     store.db.exec(SQL_INSERT_SEARCHCONTENT, id, data)
@@ -82,7 +81,7 @@ proc updateDocument*(store: Datastore, id: string, data: string, contenttype = "
   var data = data
   if binary == 1:
     data = data.encode(data.len*2)
-  var res = store.db.execAffectedRows(SQL_UPDATE_DOCUMENT, data, contenttype, binary, searchable, getTime().getGMTime().format("yyyy-MM-dd'T'hh:mm:ss'Z'"), id)
+  var res = store.db.execAffectedRows(SQL_UPDATE_DOCUMENT, data, contenttype, binary, searchable, currentTime(), id)
   if res > 0:
     store.destroyDocumentSystemTags(id)
     store.addDocumentSystemTags(id, contenttype)
@@ -90,6 +89,9 @@ proc updateDocument*(store: Datastore, id: string, data: string, contenttype = "
     return $store.retrieveRawDocument(id)
   else:
     return ""
+
+proc setDocumentModified*(store: Datastore, id: string): string =
+  store.db.exec(SQL_SET_DOCUMENT_MODIFIED, id, currentTime())
 
 proc destroyDocument*(store: Datastore, id: string): int64 =
   result = store.db.execAffectedRows(SQL_DELETE_DOCUMENT, id)
@@ -109,25 +111,27 @@ proc retrieveDocument*(store: Datastore, id: string, options: QueryOptions = new
     else:
       return (data: raw_document[1], contenttype: raw_document[2])
 
-proc retrieveRawDocuments*(store: Datastore, options: QueryOptions = newQueryOptions()): string =
+proc retrieveRawDocuments*(store: Datastore, options: QueryOptions = newQueryOptions()): JsonNode =
   var select = prepareSelectDocumentsQuery(options)
   var raw_documents = store.db.getAllRows(select.sql)
   var documents = newSeq[JsonNode](0)
   for doc in raw_documents:
     documents.add store.prepareJsonDocument(doc)
-  return $(%documents)
+  return %documents
 
 # Manage Tags
 
-proc createTag*(store: Datastore, tagid, documentid: string) =
-  if not tagid.match(PEG_USER_TAG):
+proc createTag*(store: Datastore, tagid, documentid: string, system=false) =
+  if tagid.match(PEG_USER_TAG) or system and tagid.match(PEG_TAG):
+    store.db.exec(SQL_INSERT_TAG, tagid, documentid)
+  else:
     raise newException(EInvalidTag, "Invalid Tag: $1" % tagid)
-  store.db.exec(SQL_INSERT_TAG, tagid, documentid)
 
-proc destroyTag*(store: Datastore, tagid, documentid: string): int64 =
-  if not tagid.match(PEG_USER_TAG):
+proc destroyTag*(store: Datastore, tagid, documentid: string, system=false): int64 =
+  if tagid.match(PEG_USER_TAG) or system and tagid.match(PEG_TAG):
+    return store.db.execAffectedRows(SQL_DELETE_TAG, tagid, documentid)
+  else:
     raise newException(EInvalidTag, "Invalid Tag: $1" % tagid)
-  return store.db.execAffectedRows(SQL_DELETE_TAG, documentid, tagid)
 
 proc retrieveTag*(store: Datastore, id: string, options: QueryOptions = newQueryOptions()): string =
   var options = options

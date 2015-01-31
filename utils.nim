@@ -1,4 +1,4 @@
-import json, db_sqlite, strutils, pegs, asyncdispatch, asynchttpserver2 
+import json, db_sqlite, strutils, pegs, asyncdispatch, asynchttpserver2, times
 import types, queries, contenttypes
 
 proc dbQuote*(s: string): string =
@@ -7,6 +7,9 @@ proc dbQuote*(s: string): string =
     if c == '\'': add(result, "''")
     else: add(result, c)
   add(result, '\'')
+
+proc currentTime*(): string =
+  return getTime().getGMTime().format("yyyy-MM-dd'T'hh:mm:ss'Z'")
 
 proc selectDocumentsByTags(tags: string): string =
   var select_tagged = "SELECT document_id FROM tags WHERE tag_id = \""
@@ -50,7 +53,10 @@ proc prepareJsonDocument*(store:Datastore, doc: TRow): JsonNode =
   var tags = newSeq[JsonNode](0)
   for tag in raw_tags:
     tags.add(%($(tag[0])))
-  if doc.len > 6:
+  if doc.len == 1:
+    # COUNT(id)
+    return %(doc[0].parseInt)
+  elif doc.len > 6:
     return % [("id", %doc[0]), 
              ("data", %doc[1]), 
              ("created", %doc[5]),

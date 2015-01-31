@@ -28,6 +28,7 @@ var
   address = "0.0.0.0"
   operation = opRun
   directory = ""
+  readonly = false
   
 
 for kind, key, val in getOpt():
@@ -50,6 +51,8 @@ for kind, key, val in getOpt():
         of "help", "h":
           echo usage
           quit(0)
+        of "readonly", "r":
+          readonly = true
         else:
           discard
     of cmdArgument:
@@ -65,4 +68,5 @@ LS.operation = operation
 LS.file = file
 LS.directory = directory
 LS.appversion = version
+LS.readonly = readonly
 LS.appname = "LiteStore"
