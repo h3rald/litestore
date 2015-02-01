@@ -1,4 +1,4 @@
-import asynchttpserver2, asyncdispatch, strutils, cgi, strtabs, pegs, json
+import asynchttpserver2, asyncdispatch, strutils, cgi, strtabs, pegs, json, os
 import types, core, utils
 
 # Helper procs
@@ -51,7 +51,7 @@ proc parseQueryOptions(querystring: string, options: var QueryOptions) =
     f.parseQueryOption(options)
 
 
-proc validate(req: Request, LS: LiteStore, id: string, cb: proc(req: Request, LS: LiteStore, id: string):Response): Response = 
+proc validate(req: Request, LS: LiteStore, resource: string, id: string, cb: proc(req: Request, LS: LiteStore, resource: string, id: string):Response): Response = 
   if req.reqMethod == "POST" or req.reqMethod == "PUT" or req.reqMethod == "PATCH":
     var ct =  ""
     let body = req.body.strip
@@ -67,7 +67,7 @@ proc validate(req: Request, LS: LiteStore, id: string, cb: proc(req: Request, LS
             return resError(Http400, "Invalid JSON content - $1" % getCurrentExceptionMsg())
         else:
           discard
-  return cb(req, LS, id)
+  return cb(req, LS, resource, id)
 
 proc applyPatchOperation(tags: var seq[string], op: string, path: string, value: string): bool =
   var matches = @[""]
@@ -171,8 +171,22 @@ proc getRawDocuments(LS: LiteStore, options: QueryOptions = newQueryOptions()): 
     content["total"] = %total
     content["results"] = docs
     result.headers = ctJsonHeader()
-    result.content = $content
+    result.content = content.pretty
     result.code = Http200
+
+proc getInfo(LS: LiteStore): Response =
+  let total_docs = LS.store.countDocuments()
+  let total_tags = LS.store.countTags()
+  let tags = LS.store.retrieveTagsWithTotals()
+  var content = newJObject()
+  content["version"] = %(LS.appname & " v" & LS.appversion)
+  content["size"] = %($((LS.file.getFileSize().float/(1024*1024)).formatFloat(ffDecimal, 2)) & " MB")
+  content["total_documents"] = %total_docs
+  content["total_tags"] = %total_tags
+  content["tags"] = tags
+  result.headers = ctJsonHeader()
+  result.content = content.pretty
+  result.code = Http200
 
 proc postDocument(LS: LiteStore, body: string, ct: string): Response =
   try:
@@ -248,23 +262,34 @@ proc patchDocument(LS: LiteStore, id: string, body: string): Response =
 
 # Main routing
 
-proc options(req: Request, LS: LiteStore, id = ""): Response =
-  if id != "":
-    result.code = Http204
-    result.content = ""
-    if LS.readonly:
-      result.headers = {"Allow": "HEAD,GET"}.newStringTable
+proc options(req: Request, LS: LiteStore, resource: string, id = ""): Response =
+  case resource:
+    of "info":
+      if id != "":
+        return resError(Http404, "Info '$1' not found." % id)
+      else:
+        result.code = Http204
+        result.content = ""
+        result.headers = {"Allow": "GET"}.newStringTable
+    of "docs":
+      if id != "":
+        result.code = Http204
+        result.content = ""
+        if LS.readonly:
+          result.headers = {"Allow": "HEAD,GET"}.newStringTable
+        else:
+          result.headers = {"Allow": "HEAD,GET,PUT,PATCH,DELETE"}.newStringTable
+      else:
+        result.code = Http204
+        result.content = ""
+        if LS.readonly:
+          result.headers = {"Allow": "HEAD,GET"}.newStringTable
+        else:
+          result.headers = {"Allow": "HEAD,GET,POST"}.newStringTable
     else:
-      result.headers = {"Allow": "HEAD,GET,PUT,PATCH,DELETE"}.newStringTable
-  else:
-    result.code = Http204
-    result.content = ""
-    if LS.readonly:
-      result.headers = {"Allow": "HEAD,GET"}.newStringTable
-    else:
-      result.headers = {"Allow": "HEAD,GET,POST"}.newStringTable
+      discard # never happens really.
 
-proc head(req: Request, LS: LiteStore, id = ""): Response =
+proc head(req: Request, LS: LiteStore, resource: string, id = ""): Response =
   var options = newQueryOptions()
   options.select = "id, content_type, binary, searchable, created, modified"
   try:
@@ -276,21 +301,30 @@ proc head(req: Request, LS: LiteStore, id = ""): Response =
   except:
     return resError(Http400, "Bad request - $1" % getCurrentExceptionMsg())
 
-proc get(req: Request, LS: LiteStore, id = ""): Response =
-  var options = newQueryOptions()
-  try:
-    parseQueryOptions(req.url.query, options);
-    if id != "":
-      if req.url.query.contains("raw=true") or req.headers["Content-Type"] == "application/json":
-        return LS.getRawDocument(id, options)
-      else:
-        return LS.getDocument(id, options)
+proc get(req: Request, LS: LiteStore, resource: string, id = ""): Response =
+  case resource:
+    of "docs":
+      var options = newQueryOptions()
+      try:
+        parseQueryOptions(req.url.query, options);
+        if id != "":
+          if req.url.query.contains("raw=true") or req.headers["Content-Type"] == "application/json":
+            return LS.getRawDocument(id, options)
+          else:
+            return LS.getDocument(id, options)
+        else:
+          return LS.getRawDocuments(options)
+      except:
+        return resError(Http400, "Bad request - $1" % getCurrentExceptionMsg())
+    of "info":
+      if id != "":
+        return resError(Http404, "Info '$1' not found." % id)
+      return LS.getInfo()
     else:
-      return LS.getRawDocuments(options)
-  except:
-    return resError(Http400, "Bad request - $1" % getCurrentExceptionMsg())
+      discard # never happens really.
 
-proc post(req: Request, LS: LiteStore, id = ""): Response = 
+
+proc post(req: Request, LS: LiteStore, resource: string, id = ""): Response = 
   if id == "":
     var ct = "text/plain"
     if req.headers.hasKey("Content-type"):
@@ -299,7 +333,7 @@ proc post(req: Request, LS: LiteStore, id = ""): Response =
   else:
     return resError(Http400, "Bad request: document ID cannot be specified in POST requests.")
 
-proc put(req: Request, LS: LiteStore, id = ""): Response = 
+proc put(req: Request, LS: LiteStore, resource: string, id = ""): Response = 
   if id != "":
     var ct = "text/plain"
     if req.headers.hasKey("Content-type"):
@@ -308,19 +342,19 @@ proc put(req: Request, LS: LiteStore, id = ""): Response =
   else:
     return resError(Http400, "Bad request: document ID must be specified in PUT requests.")
 
-proc delete(req: Request, LS: LiteStore, id = ""): Response = 
+proc delete(req: Request, LS: LiteStore, resource: string, id = ""): Response = 
   if id != "":
     return LS.deleteDocument(id)
   else:
     return resError(Http400, "Bad request: document ID must be specified in DELETE requests.")
 
-proc patch(req: Request, LS: LiteStore, id = ""): Response = 
+proc patch(req: Request, LS: LiteStore, resource: string, id = ""): Response = 
   if id != "":
     return LS.patchDocument(id, req.body)
   else:
     return resError(Http400, "Bad request: document ID must be specified in PATCH requests.")
 
-proc route*(req: Request, LS: LiteStore, id = ""): Response = 
+proc route*(req: Request, LS: LiteStore, resource = "docs", id = ""): Response = 
   var reqMethod = req.reqMethod
   if req.headers.hasKey("X-HTTP-Method-Override"):
     reqMethod = req.headers["X-HTTP-Method-Override"]
@@ -328,24 +362,24 @@ proc route*(req: Request, LS: LiteStore, id = ""): Response =
     of "POST":
       if LS.readonly:
         return resError(Http405, "Method not allowed: $1" % req.reqMethod) 
-      return validate(req, LS, id, post)
+      return validate(req, LS, resource, id, post)
     of "PUT":
       if LS.readonly:
         return resError(Http405, "Method not allowed: $1" % req.reqMethod) 
-      return validate(req, LS, id, put)
+      return validate(req, LS, resource, id, put)
     of "DELETE":
       if LS.readonly:
         return resError(Http405, "Method not allowed: $1" % req.reqMethod) 
-      return validate(req, LS, id, delete)
+      return validate(req, LS, resource, id, delete)
     of "HEAD":
-      return validate(req, LS, id, head)
+      return validate(req, LS, resource, id, head)
     of "OPTIONS":
-      return validate(req, LS, id, options)
+      return validate(req, LS, resource, id, options)
     of "GET":
-      return validate(req, LS, id, get)
+      return validate(req, LS, resource, id, get)
     of "PATCH":
       if LS.readonly:
         return resError(Http405, "Method not allowed: $1" % req.reqMethod) 
-      return validate(req, LS, id, patch)
+      return validate(req, LS, resource, id, patch)
     else:
       return resError(Http405, "Method not allowed: $1" % req.reqMethod) 

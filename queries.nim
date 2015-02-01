@@ -3,10 +3,6 @@ import db_sqlite
 
 # SQL QUERIES
 
-const SQL_COUNT_TAGS* = sql"""
-SELECT COUNT(DISTINCT tag_id) FROM tags 
-"""
-
 const SQL_CREATE_DOCUMENTS_TABLE* = sql"""
 CREATE TABLE documents (
 id TEXT PRIMARY KEY,
@@ -111,4 +107,17 @@ const SQL_SELECT_DOCUMENT_IDS_BY_TAG* = sql"""
 SELECT id FROM documents, tags
 WHERE documents.id = tags.document_id AND
 tag_id = ?
+"""
+
+const SQL_SELECT_TAGS_WITH_TOTALS* = sql"""
+SELECT DISTINCT tag_id, COUNT(document_id) 
+FROM tags GROUP BY tag_id ORDER BY tag_id ASC
+"""
+
+const SQL_COUNT_TAGS* = sql"""
+SELECT COUNT(DISTINCT tag_id) FROM tags 
+"""
+
+const SQL_COUNT_DOCUMENTS* = sql"""
+SELECT COUNT(id) FROM documents 
 """

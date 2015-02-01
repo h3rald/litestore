@@ -119,6 +119,10 @@ proc retrieveRawDocuments*(store: Datastore, options: QueryOptions = newQueryOpt
     documents.add store.prepareJsonDocument(doc)
   return %documents
 
+proc countDocuments*(store: Datastore): int64 =
+  return store.db.getRow(SQL_COUNT_DOCUMENTS)[0].parseInt
+
+
 # Manage Tags
 
 proc createTag*(store: Datastore, tagid, documentid: string, system=false) =
@@ -147,6 +151,19 @@ proc retrieveTags*(store: Datastore, options: QueryOptions = newQueryOptions()):
   for tag in raw_tags:
     tags.add(%[("id", %tag[0]), ("documents", %(tag[1].parseInt))])
   return $(%tags)
+
+proc countTags*(store: Datastore): int64 =
+  return store.db.getRow(SQL_COUNT_TAGS)[0].parseInt
+
+proc retrieveTagsWithTotals*(store: Datastore): JsonNode =
+  var data = store.db.getAllRows(SQL_SELECT_TAGS_WITH_TOTALS)
+  var tag_array = newSeq[JsonNode](0)
+  for row in data:
+    var obj = newJObject()
+    obj[row[0]] = %row[1].parseInt
+    tag_array.add(obj)
+  return %tag_array
+
 
 proc packDir*(store: Datastore, dir: string) =
   if not dir.dirExists:

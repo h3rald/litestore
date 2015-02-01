@@ -20,8 +20,8 @@ proc parseApiUrl(req: Request): ResourceInfo =
 proc route(req: Request, LS: LiteStore): Response =
   try:
     var info = req.parseApiUrl
-    if info.version == "v1" and info.resource == "docs":
-      return api_v1.route(req, LS, info.id)
+    if info.version == "v1" and info.resource.match(peg"^docs / info$"):
+      return api_v1.route(req, LS, info.resource, info.id)
     else:
       if info.version != "v1":
         return resError(Http400, "Bad request - Invalid API version: $1" % info.version)
