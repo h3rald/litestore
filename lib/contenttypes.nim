@@ -3,7 +3,7 @@ import json, strutils, strtabs
 
 proc loadContentTypes(): StringTableRef =
   result = newStringTable(modeCaseInsensitive)
-  const raw_json = "contenttypes.json".slurp
+  const raw_json = "lib/contenttypes.json".slurp
   let json = raw_json.parseJson
   for item in json.items:
     for pair in item.pairs:

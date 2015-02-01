@@ -10,11 +10,11 @@ import
   strtabs,
   base64
 import
-  types,
-  utils, 
-  core,
-  cli,
-  server
+  lib/types,
+  lib/utils, 
+  lib/core,
+  lib/cli,
+  lib/server
 
 from asyncdispatch import runForever
 

@@ -17,6 +17,7 @@ const
     -a, --address     Specify address (default: 0.0.0.0).
     -h, --help        Display this message.
     -p, --port        Specify port number (default: 70700).
+    -r, --readonly    Allow only data retrieval operations.
     --pack            Pack the specified directory (Store all its contents).
     --unpack          Unpack the previously-packed specified directory to the current directory.
     -v, --version     Display the program version.
