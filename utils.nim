@@ -36,6 +36,8 @@ proc prepareSelectDocumentsQuery*(options: QueryOptions): string =
     result = result & "ORDER BY " & options.orderby & " " 
   if options.limit > 0:
     result = result & "LIMIT " & $options.limit & " "
+    if options.offset > 0:
+      result = result & "OFFSET " & $options.offset & " "
 
 proc prepareSelectTagsQuery*(options: QueryOptions): string =
   result = "SELECT tag_id, COUNT(document_ID) "

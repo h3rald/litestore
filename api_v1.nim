@@ -31,6 +31,11 @@ proc parseQueryOption(fragment: string, options: var QueryOptions) =
         options.limit = pair[1].parseInt
       except:
         raise newException(EInvalidRequest, "Invalid limit value: $1" % getCurrentExceptionMsg())
+    of "offset":
+      try:
+        options.offset = pair[1].parseInt
+      except:
+        raise newException(EInvalidRequest, "Invalid offset value: $1" % getCurrentExceptionMsg())
     of "sort":
       let orderby = pair[1].orderByClause()
       if orderby != "":
@@ -141,11 +146,13 @@ proc deleteDocument(LS: LiteStore, id: string): Response =
 proc getRawDocuments(LS: LiteStore, options: QueryOptions = newQueryOptions()): Response =
   var options = options
   let docs = LS.store.retrieveRawDocuments(options)
-  var orig_limit = options.limit
+  let orig_limit = options.limit
+  let orig_offset = options.offset
   options.limit = 0
+  options.offset = 0
   options.select = "COUNT(id)"
   let total = LS.store.retrieveRawDocuments(options)[0].num
-  if docs == %"[]":
+  if docs.len == 0:
     result = resError(Http404, "No documents found.")
   else:
     var content = newJObject()
@@ -157,6 +164,10 @@ proc getRawDocuments(LS: LiteStore, options: QueryOptions = newQueryOptions()): 
         content["tags"].add(%tag)
     if orig_limit > 0:
       content["limit"] = %orig_limit
+      if orig_offset > 0:
+        content["offset"] = %orig_offset
+    if options.orderby != "":
+      content["sort"] = %options.orderby
     content["total"] = %total
     content["results"] = docs
     result.headers = ctJsonHeader()

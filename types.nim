@@ -14,6 +14,7 @@ type
     select*: string
     single*:bool         
     limit*: int           
+    offset*: int           
     orderby*: string      
     tags*: string
     search*: string
@@ -65,4 +66,4 @@ proc ctJsonHeader*(): StringTableRef =
   return CT_JSON.newStringTable
 
 proc newQueryOptions*(): QueryOptions =
-  return QueryOptions(select: "*", single: false, limit: 0, orderby: "", tags: "", search: "")
+  return QueryOptions(select: "*", single: false, limit: 0, offset: 0, orderby: "", tags: "", search: "")
