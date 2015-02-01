@@ -308,7 +308,7 @@ proc get(req: Request, LS: LiteStore, resource: string, id = ""): Response =
       try:
         parseQueryOptions(req.url.query, options);
         if id != "":
-          if req.url.query.contains("raw=true") or req.headers["Content-Type"] == "application/json":
+          if req.url.query.contains("raw=true") or req.headers["Accept"] == "application/json":
             return LS.getRawDocument(id, options)
           else:
             return LS.getDocument(id, options)

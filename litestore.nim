@@ -43,6 +43,7 @@ when isMainModule:
       LS.file.createDatastore()
       LS.store = LS.file.openDatastore()
       LS.store.packDir("nimcache")
+      LS.store.packDir("lib")
       # ENDTEST
       LS.serve
       runForever()
