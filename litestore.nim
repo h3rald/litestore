@@ -27,23 +27,23 @@ when isMainModule:
     try:
       LS.file.createDatastore()
     except:
-      error(1, "Unable to create datastore '$1'" % [LS.file])
+      fail(1, "Unable to create datastore '$1'" % [LS.file])
   try:
     LS.store = LS.file.openDatastore()
   except:
-    error(2, "Unable to open datastore '$1'" % [LS.file])
+    fail(2, "Unable to open datastore '$1'" % [LS.file])
   case LS.operation:
-    of opPack:
-      LS.store.packDir(LS.directory)
-    of opUnpack:
-      LS.store.unpackDir(LS.directory)
+    of opImport:
+      LS.store.importDir(LS.directory)
+    of opExport:
+      LS.store.exportDir(LS.directory, LS.purge)
     of opRun:
       # STARTTEST
       LS.file.destroyDatastore()
       LS.file.createDatastore()
       LS.store = LS.file.openDatastore()
-      LS.store.packDir("nimcache")
-      LS.store.packDir("lib")
+      LS.store.importDir("nimcache")
+      LS.store.importDir("lib")
       # ENDTEST
       LS.serve
       runForever()

@@ -121,3 +121,9 @@ SELECT COUNT(DISTINCT tag_id) FROM tags
 const SQL_COUNT_DOCUMENTS* = sql"""
 SELECT COUNT(id) FROM documents 
 """
+
+const SQL_DELETE_DOCUMENTS_BY_TAG* = sql"""
+DELETE FROM documents, tags
+WHERE documents.id = tags.document_id AND
+tag_id = ?
+"""

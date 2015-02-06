@@ -1,6 +1,7 @@
 import
   parseopt2,
-  strutils
+  strutils,
+  logging
 import
   types
 
@@ -15,11 +16,13 @@ const
 
   Options:
     -a, --address     Specify address (default: 0.0.0.0).
+    --export          Export the previously-packed specified directory to the current directory.
     -h, --help        Display this message.
-    -p, --port        Specify port number (default: 70700).
+    --import          Import the specified directory (Store all its contents).
+    -l, --log         Specify the log level: debug, info, warn, error, fatal, none (default: info)
+    -p, --port        Specify port number (default: 9500).
+    --purge           Delete exported files (used in conjunction with --export).
     -r, --readonly    Allow only data retrieval operations.
-    --pack            Pack the specified directory (Store all its contents).
-    --unpack          Unpack the previously-packed specified directory to the current directory.
     -v, --version     Display the program version.
 """
 
@@ -30,6 +33,8 @@ var
   operation = opRun
   directory = ""
   readonly = false
+  purge = false
+  logLevel = lvlInfo
   
 
 for kind, key, val in getOpt():
@@ -40,12 +45,16 @@ for kind, key, val in getOpt():
           address = val
         of "port", "p":
           port = val.parseInt
-        of "pack":
-          operation = opPack
+        of "log", "l":
+          logLevel = logging.LevelNames.find(val.toUpper).Level
+        of "import":
+          operation = opImport
           directory = val
-        of "unpack":
-          operation = opUnpack
+        of "export":
+          operation = opExport
           directory = val
+        of "purge":
+          purge = true
         of "version", "v":
           echo version
           quit(0)
@@ -67,7 +76,13 @@ LS.port = port
 LS.address = address
 LS.operation = operation
 LS.file = file
+LS.purge = purge
 LS.directory = directory
 LS.appversion = version
 LS.readonly = readonly
 LS.appname = "LiteStore"
+
+# Initialize loggers
+
+logging.handlers.add(newConsoleLogger(logLevel, "$date $time - "))
+logging.handlers.add(newRollingFileLogger("litestore.log.txt", fmReadWrite, logLevel, "$date $time - ", 100000))

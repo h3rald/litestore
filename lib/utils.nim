@@ -1,4 +1,4 @@
-import json, db_sqlite, strutils, pegs, asyncdispatch, asynchttpserver2, times
+import json, db_sqlite, strutils, pegs, asyncdispatch, asynchttpserver2, times, logging
 import types, queries, contenttypes
 
 proc dbQuote*(s: string): string =
@@ -93,11 +93,12 @@ proc addDocumentSystemTags*(store: Datastore, docid, contenttype: string) =
 proc destroyDocumentSystemTags*(store: Datastore, docid) = 
   store.db.exec(SQL_DELETE_DOCUMENT_SYSTEM_TAGS, docid)
 
-proc error*(code, msg) =
+proc fail*(code, msg) =
   stderr.writeln(msg)
   quit(code)
 
 proc resError*(code: HttpCode, message: string): Response =
+  warn(message)
   result.code = code
   result.content = """{"error":"$1"}""" % message
   result.headers = ctJsonHeader()

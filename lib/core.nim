@@ -165,7 +165,7 @@ proc retrieveTagsWithTotals*(store: Datastore): JsonNode =
   return %tag_array
 
 
-proc packDir*(store: Datastore, dir: string) =
+proc importDir*(store: Datastore, dir: string) =
   if not dir.dirExists:
     raise newException(EDirectoryNotFound, "Directory '$1' not found." % dir)
   for f in dir.walkDirRec():
@@ -181,10 +181,10 @@ proc packDir*(store: Datastore, dir: string) =
       d_binary = 1
       d_searchable = 0
     discard store.createDocument(d_id, d_contents, d_ct, d_binary, d_searchable)
-    store.db.exec(SQL_INSERT_TAG, "$collection:"&dir, d_id)
+    store.db.exec(SQL_INSERT_TAG, "$dir:"&dir, d_id)
 
-proc unpackDir*(store: Datastore, dir: string) =
-  let docs = store.db.getAllRows(SQL_SELECT_DOCUMENTS_BY_TAG, "$collection:"&dir)
+proc  exportDir*(store: Datastore, dir: string, purge = false) =
+  let docs = store.db.getAllRows(SQL_SELECT_DOCUMENTS_BY_TAG, "$dir:"&dir)
   for doc in docs:
     let file = doc[0]
     var data: string
@@ -194,6 +194,8 @@ proc unpackDir*(store: Datastore, dir: string) =
       data = doc[1]
     file.parentDir.createDir
     file.writeFile(data)
+  if purge:
+    store.db.exec(SQL_DELETE_DOCUMENTS_BY_TAG, "$dir:"&dir)
 
 proc destroyDocumentsByTag*(store: Datastore, tag: string): int64 =
   result = 0

@@ -1,11 +1,17 @@
-import asynchttpserver2, asyncdispatch, times, strutils, pegs, strtabs, cgi
+import asynchttpserver2, asyncdispatch, times, strutils, pegs, strtabs, cgi, logging
 import types, utils, api_v1
 
 proc getReqInfo(req: Request): string =
-  return $getLocalTime(getTime()) & " - " & req.hostname & " " & req.reqMethod & " " & req.url.path
+  var url = req.url.path
+  if req.url.anchor != "":
+    url = url & "#" & req.url.anchor
+  if req.url.query != "":
+    url = url & "?" & req.url.query
+  return req.hostname & " " & req.reqMethod & " " & url
 
 proc handleCtrlC() {.noconv.} =
-  echo "\nExiting..."
+  echo ""
+  info("Exiting...")
   quit()
 
 proc parseApiUrl(req: Request): ResourceInfo =
@@ -38,9 +44,9 @@ setControlCHook(handleCtrlC)
 proc serve*(LS: LiteStore) =
   var server = newAsyncHttpServer()
   proc handleHttpRequest(req: Request): Future[void] {.async.} =
-    echo getReqInfo(req)
+    info getReqInfo(req)
     let res = req.route(LS)
     await req.respond(res.code, res.content, res.headers)
-  echo LS.appname, " v", LS.appversion, " started on ", LS.address, ":", LS.port, "." 
+  info(LS.appname & " v" & LS.appversion & " started on " & LS.address & ":" & $LS.port & ".")
   asyncCheck server.serve(LS.port.Port, handleHttpRequest, LS.address)
 
