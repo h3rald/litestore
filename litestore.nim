@@ -27,11 +27,11 @@ when isMainModule:
     try:
       LS.file.createDatastore()
     except:
-      fail(1, "Unable to create datastore '$1'" % [LS.file])
+      fail(200, "Unable to create datastore '$1'" % [LS.file])
   try:
     LS.store = LS.file.openDatastore()
   except:
-    fail(2, "Unable to open datastore '$1'" % [LS.file])
+    fail(201, "Unable to open datastore '$1'" % [LS.file])
   case LS.operation:
     of opImport:
       LS.store.importDir(LS.directory)

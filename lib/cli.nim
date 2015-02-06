@@ -3,7 +3,8 @@ import
   strutils,
   logging
 import
-  types
+  types,
+  utils
 
 
 const 
@@ -42,15 +43,28 @@ for kind, key, val in getOpt():
     of cmdLongOption, cmdShortOption:
       case key:
         of "address", "a":
+          if val == "":
+            fail(100, "Address not specified.")
           address = val
         of "port", "p":
+          if val == "":
+            fail(101, "Port not specified.")
           port = val.parseInt
         of "log", "l":
-          logLevel = logging.LevelNames.find(val.toUpper).Level
+          if val == "":
+            fail(102, "Log level not specified.")
+          try:
+            logLevel = logging.LevelNames.find(val.toUpper).Level
+          except:
+            fail(103, "Invalid log level '$1'" % val)
         of "import":
+          if val == "":
+            fail(104, "Directory to import not specified.")
           operation = opImport
           directory = val
         of "export":
+          if val == "":
+            fail(105, "Directory to export not specified.")
           operation = opExport
           directory = val
         of "purge":
