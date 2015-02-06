@@ -99,4 +99,4 @@ LS.appname = "LiteStore"
 # Initialize loggers
 
 logging.handlers.add(newConsoleLogger(logLevel, "$date $time - "))
-logging.handlers.add(newRollingFileLogger("litestore.log.txt", fmReadWrite, logLevel, "$date $time - ", 100000))
+logging.handlers.add(newFileLogger("litestore.log.txt", fmAppend, logLevel, fmtStr = "$date $time - "))
