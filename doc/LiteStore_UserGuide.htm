@@ -90,7 +90,49 @@
    <li><a href="#Examples">Examples</a></li>
   </ul>
   </li>
-  <li><a href="#REST.API.Reference">REST API Reference</a></li>
+  <li><a href="#REST.API.Reference">REST API Reference</a>
+  <ul>
+   <li><a href="#L.v1.info.-.LiteStore.Information">/v1/info - LiteStore Information</a>
+   <ul>
+    <li><a href="#OPTIONS..v1.info">OPTIONS /v1/info</a>
+    <ul>
+     <li><a href="#Example">Example</a></li>
+    </ul>
+    </li>
+    <li><a href="#GET..v1.info">GET /v1/info</a>
+    <ul>
+     <li><a href="#Example.Response">Example Response</a>
+</li>
+    </ul>
+    </li>
+   </ul>
+   </li>
+   <li><a href="#L.v1.docs.-.LiteStore.Documents">/v1/docs - LiteStore Documents</a>
+   <ul>
+    <li><a href="#Example.Document">Example Document</a></li>
+    <li><a href="#OPTIONS..v1.docs">OPTIONS /v1/docs</a>
+    <ul>
+     <li><a href="#Example">Example</a></li>
+    </ul>
+    </li>
+    <li><a href="#OPTIONS..v1.docs.:id">OPTIONS /v1/docs/:id</a>
+    <ul>
+     <li><a href="#Example">Example</a></li>
+    </ul>
+    </li>
+    <li><a href="#POST..v1.docs">POST /v1/docs</a></li>
+    <li><a href="#HEAD..v1.docs">HEAD /v1/docs</a></li>
+    <li><a href="#HEAD..v1.docs.:id">HEAD /v1/docs/:id</a></li>
+    <li><a href="#GET..v1.docs">GET /v1/docs</a></li>
+    <li><a href="#GET..v1.docs.:id">GET /v1/docs/:id</a></li>
+    <li><a href="#PUT..v1.docs.:id">PUT /v1/docs/:id</a></li>
+    <li><a href="#PATCH..v1.docs.:id">PATCH /v1/docs/:id</a></li>
+    <li><a href="#DELETE..v1.docs.:id">DELETE /v1/docs/:id</a>
+</li>
+   </ul>
+   </li>
+  </ul>
+  </li>
   <li><a href="#Credits">Credits</a></li>
  </ul>
  </li>
@@ -123,10 +165,135 @@
 
 <h2 id="REST.API.Reference">REST API Reference<a href="#document-top" title="Go to top"></a></h2>
 
+<h3 id="L.v1.info.-.LiteStore.Information">/v1/info - LiteStore Information<a href="#document-top" title="Go to top"></a></h3>
+
+<p>This resource can be queried to obtain basic information and statistics on the LiteStore server.</p>
+
+<h4 id="OPTIONS..v1.info">OPTIONS /v1/info<a href="#document-top" title="Go to top"></a></h4>
+
+<p>Returns the allowed HTTP verbs for this resource.</p>
+
+<h5 id="Example">Example<a href="#document-top" title="Go to top"></a></h5>
+
+<div class="terminal"><p>curl -i -X OPTIONS http://0.0.0.0:9500/v1/info<br/>
+HTTP/1.1 200 OK <br/>
+Content-Length: 0<br/>
+Allow: GET,OPTIONS</p></div>
+
+<h4 id="GET..v1.info">GET /v1/info<a href="#document-top" title="Go to top"></a></h4>
+
+<p>Returns the following server statistics:</p>
+
+<ul>
+<li>Version</li>
+<li>Size of the database on disk (in MB)</li>
+<li>Total documents</li>
+<li>Total Tags</li>
+<li>Number of documents per tag</li>
+</ul>
+
+
+<h5 id="Example.Response">Example Response<a href="#document-top" title="Go to top"></a></h5>
+
+<pre><code>{
+    "version": "LiteStore v1.0",
+    "size": "9.71 MB",
+    "total_documents": 103,
+    "total_tags": 10,
+    "tags": [{
+        "$dir:lib": 10
+    }, {
+        "$dir:nimcache": 93
+    }, {
+        "$format:binary": 46
+    }, {
+        "$format:text": 57
+    }, {
+        "$subtype:json": 1
+    }, {
+        "$subtype:octet-stream": 46
+    }, {
+        "$subtype:plain": 11
+    }, {
+        "$subtype:x-c": 45
+    }, {
+        "$type:application": 47
+    }, {
+        "$type:text": 56
+    }]
+}
+</code></pre>
+
+<h3 id="L.v1.docs.-.LiteStore.Documents">/v1/docs - LiteStore Documents<a href="#document-top" title="Go to top"></a></h3>
+
+<p>A document is the main resource type managed by LiteStore. Any LiteStore document can be represented as a JSON object exposing the following properties:</p>
+
+<dl>
+<dt>id</dt>
+<dd>The unique identifier of the document.</dd>
+<dt>data</dt>
+<dd>The document contents (base64-encoded if binary).</dd>
+<dt>created</dt>
+<dd>The document creation date expressed as combined date and time in UTC (<a href="http://en.wikipedia.org/wiki/ISO_8601">ISO 8601</a> compliant).</dd>
+<dt>modified</dt>
+<dd>The document modification date (if applicable) expressed as combined date and time in UTC (<a href="http://en.wikipedia.org/wiki/ISO_8601">ISO 8601</a> compliant).</dd>
+<dt>tags</dt>
+<dd>A list of tags associated to the document.</dd>
+</dl>
+
+<h4 id="Example.Document">Example Document<a href="#document-top" title="Go to top"></a></h4>
+
+<pre><code>{
+    "id": "test_document",
+    "data": "This is a test document",
+    "created": "2015-02-07T10:36:09Z",
+    "modified": "",
+    "tags": ["$type:text", "$subtype:plain", "$format:text", "another_tag"]
+}
+</code></pre>
+
+<h4 id="OPTIONS..v1.docs">OPTIONS /v1/docs<a href="#document-top" title="Go to top"></a></h4>
+
+<p>Returns the allowed HTTP verbs for this resource.</p>
+
+<h5 id="Example">Example<a href="#document-top" title="Go to top"></a></h5>
+
+<div class="terminal"><p>curl -i -X OPTIONS http://0.0.0.0:9500/v1/docs<br/>
+HTTP/1.1 200 OK <br/>
+Content-Length: 0<br/>
+Allow: HEAD,GET,POST,OPTIONS</p></div>
+
+<h4 id="OPTIONS..v1.docs.:id">OPTIONS /v1/docs/:id<a href="#document-top" title="Go to top"></a></h4>
+
+<p>Returns the allowed HTTP verbs for this resource.</p>
+
+<h5 id="Example">Example<a href="#document-top" title="Go to top"></a></h5>
+
+<div class="terminal"><p>curl -i -X OPTIONS http://0.0.0.0:9500/v1/docs/test<br/>
+HTTP/1.1 200 OK <br/>
+Content-Length: 0<br/>
+Allow: HEAD,GET,PUT,PATCH,DELETE,OPTIONS</p></div>
+
+<h4 id="POST..v1.docs">POST /v1/docs<a href="#document-top" title="Go to top"></a></h4>
+
+<h4 id="HEAD..v1.docs">HEAD /v1/docs<a href="#document-top" title="Go to top"></a></h4>
+
+<h4 id="HEAD..v1.docs.:id">HEAD /v1/docs/:id<a href="#document-top" title="Go to top"></a></h4>
+
+<h4 id="GET..v1.docs">GET /v1/docs<a href="#document-top" title="Go to top"></a></h4>
+
+<h4 id="GET..v1.docs.:id">GET /v1/docs/:id<a href="#document-top" title="Go to top"></a></h4>
+
+<h4 id="PUT..v1.docs.:id">PUT /v1/docs/:id<a href="#document-top" title="Go to top"></a></h4>
+
+<h4 id="PATCH..v1.docs.:id">PATCH /v1/docs/:id<a href="#document-top" title="Go to top"></a></h4>
+
+<h4 id="DELETE..v1.docs.:id">DELETE /v1/docs/:id<a href="#document-top" title="Go to top"></a></h4>
+
 <h2 id="Credits">Credits<a href="#document-top" title="Go to top"></a></h2>
   </div>
   <div id="footer">
-    <p><span class="copy"></span> Fabio Cevasco &ndash; February 6, 2015</p>
+    <p><span class="copy"></span> Fabio Cevasco &ndash; February 7, 2015</p>
     <p><span>Powered by</span> <a href="https://h3rald.com/hastyscribe"><span class="hastyscribe"></span></a></p>
   </div>
 </body>

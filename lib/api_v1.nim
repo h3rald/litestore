@@ -268,24 +268,24 @@ proc options(req: Request, LS: LiteStore, resource: string, id = ""): Response =
       if id != "":
         return resError(Http404, "Info '$1' not found." % id)
       else:
-        result.code = Http204
+        result.code = Http200
         result.content = ""
-        result.headers = {"Allow": "GET"}.newStringTable
+        result.headers = {"Allow": "GET,OPTIONS"}.newStringTable
     of "docs":
       if id != "":
-        result.code = Http204
+        result.code = Http200
         result.content = ""
         if LS.readonly:
-          result.headers = {"Allow": "HEAD,GET"}.newStringTable
+          result.headers = {"Allow": "HEAD,GET,OPTIONS"}.newStringTable
         else:
-          result.headers = {"Allow": "HEAD,GET,PUT,PATCH,DELETE"}.newStringTable
+          result.headers = {"Allow": "HEAD,GET,PUT,PATCH,DELETE,OPTIONS"}.newStringTable
       else:
-        result.code = Http204
+        result.code = Http200
         result.content = ""
         if LS.readonly:
-          result.headers = {"Allow": "HEAD,GET"}.newStringTable
+          result.headers = {"Allow": "HEAD,GET,OPTIONS"}.newStringTable
         else:
-          result.headers = {"Allow": "HEAD,GET,POST"}.newStringTable
+          result.headers = {"Allow": "HEAD,GET,POST,OPTIONS"}.newStringTable
     else:
       discard # never happens really.
 
