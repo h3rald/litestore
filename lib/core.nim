@@ -18,18 +18,26 @@ import
 # Manage Datastores
 
 proc createDatastore*(file:string) = 
-  if file.fileExists:
+  if file.fileExists():
     raise newException(EDatastoreExists, "Datastore '$1' already exists." % file)
   let store = db.open(file, "", "", "")
   store.exec(SQL_CREATE_DOCUMENTS_TABLE)
   store.exec(SQL_CREATE_SEARCHCONTENTS_TABLE)
   store.exec(SQL_CREATE_TAGS_TABLE)
 
-proc destroyDatastore*(file:string) =
+proc closeDatastore*(store:Datastore) = 
   try:
-    file.removeFile
+    db.close(store.db)
   except:
-    raise newException(EDatastoreUnavailable, "Datastore '$1' cannot destroyd." % file)
+    raise newException(EDatastoreUnavailable, "Datastore '$1' cannot be closed." % store.path)
+
+proc destroyDatastore*(store:Datastore) =
+  try:
+    if store.path.fileExists():
+      store.closeDataStore()
+      store.path.removeFile()
+  except:
+    raise newException(EDatastoreUnavailable, "Datastore '$1' cannot destroyed." % store.path)
 
 proc openDatastore*(file:string): Datastore =
   if not file.fileExists:
@@ -39,12 +47,6 @@ proc openDatastore*(file:string): Datastore =
     result.path = file
   except:
     raise newException(EDatastoreUnavailable, "Datastore '$1' cannot be opened." % file)
-
-proc closeDatastore*(store:Datastore) = 
-  try:
-    db.close(store.db)
-  except:
-    raise newException(EDatastoreUnavailable, "Datastore '$1' cannot be closed." % store.path)
 
 # Manage Documents
 
