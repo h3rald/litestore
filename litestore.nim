@@ -39,7 +39,7 @@ when isMainModule:
       LS.store.exportDir(LS.directory, LS.purge)
     of opRun:
       # STARTTEST
-      LS.file.destroyDatastore()
+      LS.store.destroyDatastore()
       LS.file.createDatastore()
       LS.store = LS.file.openDatastore()
       LS.store.importDir("nimcache")
