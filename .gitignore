@@ -1,4 +1,4 @@
 *.log.txt
 nimcache
-*.ls
+*.db
 litestore

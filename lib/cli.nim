@@ -1,15 +1,57 @@
 import
   parseopt2,
+  parsecfg,
+  streams,
   strutils,
   logging
 import
   types,
   utils
 
+const cfgfile = "litestore.nimble".slurp
 
-const 
-  version* = "1.0"
-  usage* = "  LiteStore v"& version & " - Lightweight REST Document Store" & """
+var 
+  file*, address*, version*, appname*: string
+  port*: int
+  operation = opRun
+  directory = ""
+  readonly = false
+  purge = false
+  logLevel = lvlInfo
+  
+var f = newStringStream(cfgfile)
+if f != nil:
+  var p: CfgParser
+  open(p, f, "litestore.nimble")
+  while true:
+    var e = next(p)
+    case e.kind
+    of cfgEof:
+      break
+    of cfgKeyValuePair:
+      case e.key:
+        of "version":
+          version = e.value
+        of "appame":
+          appname = e.value
+        of "port":
+          port = e.value.parseInt
+        of "address":
+          address = e.value
+        of "file":
+          file = e.value
+        else:
+          discard
+    of cfgError:
+      fail(1, "Configuration error.")
+    else: 
+      discard
+  close(p)
+else:
+  fail(2, "Cannot process configuration file.")
+
+let
+  usage* = appname & " v" & version & " - Lightweight REST Document Store" & """
   (c) 2015 Fabio Cevasco
 
   Usage:
@@ -26,17 +68,6 @@ const
     -r, --readonly    Allow only data retrieval operations.
     -v, --version     Display the program version.
 """
-
-var 
-  file = "data.ls"
-  port = 9500
-  address = "0.0.0.0"
-  operation = opRun
-  directory = ""
-  readonly = false
-  purge = false
-  logLevel = lvlInfo
-  
 
 for kind, key, val in getOpt():
   case kind:
@@ -94,7 +125,7 @@ LS.purge = purge
 LS.directory = directory
 LS.appversion = version
 LS.readonly = readonly
-LS.appname = "LiteStore"
+LS.appname = appname
 
 # Initialize loggers
 

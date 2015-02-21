@@ -1,5 +1,7 @@
 ## Overview
 
+{{LS -> LiteStore}}
+
 ### Rationale 
 
 ...

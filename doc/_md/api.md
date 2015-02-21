@@ -2,7 +2,7 @@
 
 ### info - LiteStore Information
 
-This resource can be queried to obtain basic information and statistics on the {{LS -> LiteStore}} server.
+This resource can be queried to obtain basic information and statistics on the {{LS}} server.
 
 #### OPTIONS info
 
