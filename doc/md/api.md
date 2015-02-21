@@ -2,19 +2,20 @@
 
 ### info - LiteStore Information
 
-This resource can be queried to obtain basic information and statistics on the {{LS}} server.
+This resource can be queried to obtain basic information and statistics on the LiteStore server.
 
 #### OPTIONS info
 
-{{options -> Returns the allowed HTTP verbs for this resource.}}
+Returns the allowed HTTP verbs for this resource.
 
 ##### Example
 
-> %terminal%
-> curl -i -X OPTIONS http://0.0.0.0:9500info  
-> HTTP/1.1 200 OK   
-> Content-Length: 0  
-> Allow: GET,OPTIONS
+<div class="terminal">
+curl -i -X OPTIONS http://127.0.0.1:9500/v1/info  
+HTTP/1.1 200 OK   
+Content-Length: 0  
+Allow: GET,OPTIONS
+</div>
 
 #### GET info
 
@@ -60,7 +61,7 @@ Returns the following server statistics:
 
 ### docs - LiteStore Documents
 
-A document is the main resource type managed by {{LS}}. Any {{LS}} document can be represented as a JSON object exposing the following properties:
+A document is the main resource type managed by LiteStore. Any LiteStore document can be represented as a JSON object exposing the following properties:
 
 id
 : The unique identifier of the document.
@@ -87,28 +88,30 @@ tags
 
 #### OPTIONS docs
 
-{{options}}
+Returns the allowed HTTP verbs for this resource.
 
 ##### Example
 
-> %terminal%
-> curl -i -X OPTIONS http://0.0.0.0:9500/v1/docs  
-> HTTP/1.1 200 OK   
-> Content-Length: 0  
-> Allow: HEAD,GET,POST,OPTIONS
+<div class="terminal">
+curl -i -X OPTIONS http://0.0.0.0:9500/v1/docs  
+HTTP/1.1 200 OK   
+Content-Length: 0  
+Allow: HEAD,GET,POST,OPTIONS
+</div>
 
 
 #### OPTIONS docs/:id
 
-{{options}}
+Returns the allowed HTTP verbs for this resource.
 
 ##### Example
 
-> %terminal%
-> curl -i -X OPTIONS http://0.0.0.0:9500/v1/docs/test  
-> HTTP/1.1 200 OK   
-> Content-Length: 0  
-> Allow: HEAD,GET,PUT,PATCH,DELETE,OPTIONS
+<div class="terminal">
+curl -i -X OPTIONS http://0.0.0.0:9500/v1/docs/test  
+HTTP/1.1 200 OK   
+Content-Length: 0  
+Allow: HEAD,GET,PUT,PATCH,DELETE,OPTIONS
+</div>
 
 #### POST docs
 

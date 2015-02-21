@@ -1,6 +1,6 @@
 ## Overview
 
-{{LS -> LiteStore}} is a self-contained, RESTful, multi-format document store written in [Nim](http://www.nim-lang.org). It aims to be a very simple and lightweight backend suitable for prototypes and testing REST APIs.
+LiteStore is a self-contained, RESTful, multi-format document store written in [Nim](http://www.nim-lang.org). It aims to be a very simple and lightweight backend suitable for prototypes and testing REST APIs.
 
 ### Rationale 
 
@@ -29,5 +29,5 @@ And yes, you can even store the code of your client-side application inside the 
 
 ### Architecture
 
--> ![{{LS}} Architecture](_assets/litestore_arch.png) <-
+-> ![{{LS}} Architecture](assets/litestore_arch.png) <-
 
