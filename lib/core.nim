@@ -124,7 +124,6 @@ proc retrieveRawDocuments*(store: Datastore, options: QueryOptions = newQueryOpt
 proc countDocuments*(store: Datastore): int64 =
   return store.db.getRow(SQL_COUNT_DOCUMENTS)[0].parseInt
 
-
 # Manage Tags
 
 proc createTag*(store: Datastore, tagid, documentid: string, system=false) =
@@ -166,15 +165,19 @@ proc retrieveTagsWithTotals*(store: Datastore): JsonNode =
     tag_array.add(obj)
   return %tag_array
 
-
 proc importDir*(store: Datastore, dir: string) =
   if not dir.dirExists:
     raise newException(EDirectoryNotFound, "Directory '$1' not found." % dir)
   for f in dir.walkDirRec():
+    if f.existsDir:
+      continue
+    if f.splitFile.name.startsWith("."):    
+      # Ignore hidden files
+      continue
     let ext = f.splitFile.ext
     var d_id = f
     var d_contents = f.readFile
-    var d_ct = "text/plain"
+    var d_ct = "application/octet-stream"
     if CONTENT_TYPES.hasKey(ext):
       d_ct = CONTENT_TYPES[ext].replace("\"", "")
     var d_binary = 0

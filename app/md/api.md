@@ -10,12 +10,12 @@ Returns the allowed HTTP verbs for this resource.
 
 ##### Example
 
-<div class="terminal">
-curl -i -X OPTIONS http://127.0.0.1:9500/v1/info  
-HTTP/1.1 200 OK   
-Content-Length: 0  
+```
+curl -i -X OPTIONS http://127.0.0.1:9500/v1/inf
+HTTP/1.1 200 OK
+Content-Length: 0
 Allow: GET,OPTIONS
-</div>
+```
 
 #### GET info
 
@@ -92,13 +92,12 @@ Returns the allowed HTTP verbs for this resource.
 
 ##### Example
 
-<div class="terminal">
+```
 curl -i -X OPTIONS http://0.0.0.0:9500/v1/docs  
 HTTP/1.1 200 OK   
 Content-Length: 0  
 Allow: HEAD,GET,POST,OPTIONS
-</div>
-
+```
 
 #### OPTIONS docs/:id
 
@@ -106,12 +105,12 @@ Returns the allowed HTTP verbs for this resource.
 
 ##### Example
 
-<div class="terminal">
+```
 curl -i -X OPTIONS http://0.0.0.0:9500/v1/docs/test  
 HTTP/1.1 200 OK   
 Content-Length: 0  
 Allow: HEAD,GET,PUT,PATCH,DELETE,OPTIONS
-</div>
+```
 
 #### POST docs
 

@@ -21,7 +21,7 @@ proc parseApiUrl(req: Request): ResourceInfo =
     result.resource = matches[1]
     result.id = matches[2]
   else:
-    raise newException(EInvalidRequest, req.url.path&"?"&req.url.query)
+    raise newException(EInvalidRequest, req.getReqInfo())
 
 proc route(req: Request, LS: LiteStore): Response =
   try:
@@ -44,7 +44,7 @@ setControlCHook(handleCtrlC)
 proc serve*(LS: LiteStore) =
   var server = newAsyncHttpServer()
   proc handleHttpRequest(req: Request): Future[void] {.async.} =
-    info getReqInfo(req)
+    info(getReqInfo(req).replace("$", "$$"))
     let res = req.route(LS)
     await req.respond(res.code, res.content, res.headers)
   info(LS.appname & " v" & LS.appversion & " started on " & LS.address & ":" & $LS.port & ".")

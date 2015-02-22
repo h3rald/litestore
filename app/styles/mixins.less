@@ -33,7 +33,6 @@
   display: inline-block;
   width: auto;
   margin: 1px;
-  border:1px solid @border-color;
   -webkit-border-radius:2px;
   -moz-border-radius:2px;
   border-radius:2px;
@@ -86,7 +85,7 @@
 }
 
 .mix-green-badge (@text){
-  .mix-badge(@text, @bright-green, @lighter-green);
+  .mix-badge(@text, @dark-green, @lighter-green);
 }
 
 .mix-yellow-badge (@text){
@@ -116,7 +115,7 @@
 	hyphens: @val;
 }
 
-.mix-link-icon (@icon, @space:" ") {
+.mix-link-icon (@icon, @space:"\202F") {
   &:before {
     content: @icon @space;
     font-family: "FontAwesome";

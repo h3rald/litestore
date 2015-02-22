@@ -6,22 +6,34 @@
 .output {.mix-box(@light-gray, @gray-5, @light-gray);}
 
 .terminal {
-  .mix-box(@gray-e, @gray-2, @gray-c);
+  .mix-box(@gray-2, @gray-e, @gray-c);
   padding: 0 3px;
+  border: 2px solid @gray-9;
+  border-top: 10px solid @gray-9;
   p, p:first-child {
     margin-top: 0;
     margin-bottom: 0;
     text-shadow: none;
     font-weight: normal;
     font-family: @monospace-font;
-    font-size: 90%;
-    color: @gray-2;
+    font-size: 85%;
+    color: @gray-e;
     &:before {
-      font-family: "FontAwesome";
+      font-family: @monospace-font;
       font-style: normal;
       font-weight: bold;
       color: @dark-green;
-      content: @fa-var-terminal " ";
+      content: "$ ";
+    }
+  }
+}
+
+.terminal-su {
+  .terminal;
+  p, p:first-child {
+    &:before {
+      color: @bright-red;
+      content: "# ";
     }
   }
 }

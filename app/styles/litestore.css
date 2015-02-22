@@ -1658,14 +1658,9 @@
   -moz-border-radius: 0px;
   border-radius: 0px;
 }
-body {
-  -webkit-hyphens: auto;
-  -moz-hyphens: auto;
-  -ms-hyphens: auto;
-  -o-hyphens: auto;
-  hyphens: auto;
-}
 main {
+  max-width: 850px;
+  margin: auto;
   margin-top: 60px;
 }
 /* Blocks */
@@ -1704,6 +1699,7 @@ pre code {
   background: #f8f8f8;
   padding: 0px 2px 0 2px;
   border: none;
+  line-height: 1.2em;
 }
 pre .hljs {
   padding: 0 3px;
@@ -1732,7 +1728,6 @@ span.code {
   display: inline-block;
   width: auto;
   margin: 1px;
-  border: 1px solid #999999;
   -webkit-border-radius: 2px;
   -moz-border-radius: 2px;
   border-radius: 2px;
@@ -1741,6 +1736,7 @@ span.code {
   background-clip: padding-box;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin: 2px 0px;
   font-family: "Source Code Pro", "Monaco", "DejaVu Sans Mono", "Courier New", monospace;
   font-size: 85%;
   -webkit-hyphens: none;
@@ -1757,7 +1753,6 @@ span.kbd {
   display: inline-block;
   width: auto;
   margin: 1px;
-  border: 1px solid #999999;
   -webkit-border-radius: 2px;
   -moz-border-radius: 2px;
   border-radius: 2px;
@@ -1768,8 +1763,8 @@ span.kbd {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   font-family: "Source Code Pro", "Monaco", "DejaVu Sans Mono", "Courier New", monospace;
   font-weight: bold;
-  border-right: 1px solid #333333;
-  border-bottom: 1px solid #333333;
+  border-right: 1px solid #bbbbbb;
+  border-bottom: 1px solid #bbbbbb;
   line-height: 1em;
   font-size: 80%;
   -webkit-hyphens: none;
@@ -1806,7 +1801,6 @@ span.samp {
   display: inline-block;
   width: auto;
   margin: 1px;
-  border: 1px solid #f8f8f8;
   -webkit-border-radius: 2px;
   -moz-border-radius: 2px;
   border-radius: 2px;
@@ -1872,16 +1866,6 @@ span.dir {
 span.ext,
 span.kwd {
   font-weight: bold;
-}
-/* Links */
-a,
-a:visited {
-  color: #4183c4;
-  text-decoration: none;
-}
-a:hover,
-a:visited:hover {
-  text-decoration: underline;
 }
 .note {
   -moz-background-clip: padding;
@@ -2075,10 +2059,12 @@ a:visited:hover {
   padding: 2px 4px 0 4px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
-  color: #222222;
-  background-color: #eeeeee;
+  color: #eeeeee;
+  background-color: #222222;
   border: 1px solid #cccccc;
   padding: 0 3px;
+  border: 2px solid #999999;
+  border-top: 10px solid #999999;
 }
 .terminal a {
   color: #264c72;
@@ -2093,16 +2079,63 @@ a:visited:hover {
   text-shadow: none;
   font-weight: normal;
   font-family: "Source Code Pro", "Monaco", "DejaVu Sans Mono", "Courier New", monospace;
-  font-size: 90%;
-  color: #222222;
+  font-size: 85%;
+  color: #eeeeee;
 }
 .terminal p:before,
 .terminal p:first-child:before {
-  font-family: "FontAwesome";
+  font-family: "Source Code Pro", "Monaco", "DejaVu Sans Mono", "Courier New", monospace;
   font-style: normal;
   font-weight: bold;
   color: #009926;
-  content: "\f120" " ";
+  content: "$ ";
+}
+.terminal-su {
+  -moz-background-clip: padding;
+  -webkit-background-clip: padding-box;
+  background-clip: padding-box;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
+  margin: 10px auto;
+  padding: 2px 4px 0 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+  color: #eeeeee;
+  background-color: #222222;
+  border: 1px solid #cccccc;
+  padding: 0 3px;
+  border: 2px solid #999999;
+  border-top: 10px solid #999999;
+}
+.terminal-su a {
+  color: #264c72;
+}
+.terminal-su p {
+  margin: 0 auto;
+}
+.terminal-su p,
+.terminal-su p:first-child {
+  margin-top: 0;
+  margin-bottom: 0;
+  text-shadow: none;
+  font-weight: normal;
+  font-family: "Source Code Pro", "Monaco", "DejaVu Sans Mono", "Courier New", monospace;
+  font-size: 85%;
+  color: #eeeeee;
+}
+.terminal-su p:before,
+.terminal-su p:first-child:before {
+  font-family: "Source Code Pro", "Monaco", "DejaVu Sans Mono", "Courier New", monospace;
+  font-style: normal;
+  font-weight: bold;
+  color: #009926;
+  content: "$ ";
+}
+.terminal-su p:before,
+.terminal-su p:first-child:before {
+  color: #cc3300;
+  content: "# ";
 }
 div .terminal {
   margin: 2px auto;
@@ -2117,7 +2150,6 @@ div .terminal {
   display: inline-block;
   width: auto;
   margin: 1px;
-  border: 1px solid #cc3300;
   -webkit-border-radius: 2px;
   -moz-border-radius: 2px;
   border-radius: 2px;
@@ -2150,7 +2182,6 @@ div .terminal {
   display: inline-block;
   width: auto;
   margin: 1px;
-  border: 1px solid #cc3300;
   -webkit-border-radius: 2px;
   -moz-border-radius: 2px;
   border-radius: 2px;
@@ -2183,7 +2214,6 @@ div .terminal {
   display: inline-block;
   width: auto;
   margin: 1px;
-  border: 1px solid #cc3300;
   -webkit-border-radius: 2px;
   -moz-border-radius: 2px;
   border-radius: 2px;
@@ -2216,7 +2246,6 @@ div .terminal {
   display: inline-block;
   width: auto;
   margin: 1px;
-  border: 1px solid #cc3300;
   -webkit-border-radius: 2px;
   -moz-border-radius: 2px;
   border-radius: 2px;
@@ -2249,7 +2278,6 @@ div .terminal {
   display: inline-block;
   width: auto;
   margin: 1px;
-  border: 1px solid #cc3300;
   -webkit-border-radius: 2px;
   -moz-border-radius: 2px;
   border-radius: 2px;
@@ -2282,7 +2310,6 @@ div .terminal {
   display: inline-block;
   width: auto;
   margin: 1px;
-  border: 1px solid #705400;
   -webkit-border-radius: 2px;
   -moz-border-radius: 2px;
   border-radius: 2px;
@@ -2306,16 +2333,15 @@ div .terminal {
   content: "verify";
 }
 .draftcomment {
-  color: #00cc33;
+  color: #009926;
 }
 .draftcomment:before {
-  color: #00cc33;
+  color: #009926;
   background-color: #d8f5cd;
   padding: 0 3px 0;
   display: inline-block;
   width: auto;
   margin: 1px;
-  border: 1px solid #00cc33;
   -webkit-border-radius: 2px;
   -moz-border-radius: 2px;
   border-radius: 2px;
@@ -2431,7 +2457,7 @@ div .terminal {
   font-style: normal;
   font-weight: normal;
   font-size: 100%;
-  color: #705400;
+  color: #f5b800;
   content: "\f02b" " ";
 }
 .date:before {
@@ -2591,4 +2617,52 @@ div .terminal {
   font-size: 90%;
   color: #333333;
   content: "\f195" "";
+}
+.copy:before {
+  font-family: "FontAwesome";
+  font-style: normal;
+  font-weight: normal;
+  font-size: 100%;
+  color: #333333;
+  content: "\f1f9" " ";
+}
+.red-flag:before {
+  font-family: "FontAwesome";
+  font-style: normal;
+  font-weight: normal;
+  font-size: 100%;
+  color: #cc3300;
+  content: "\f024" " ";
+}
+.green-flag:before {
+  font-family: "FontAwesome";
+  font-style: normal;
+  font-weight: normal;
+  font-size: 100%;
+  color: #00cc33;
+  content: "\f024" " ";
+}
+.yellow-flag:before {
+  font-family: "FontAwesome";
+  font-style: normal;
+  font-weight: normal;
+  font-size: 100%;
+  color: #f5b800;
+  content: "\f024" " ";
+}
+.story:before {
+  font-family: "FontAwesome";
+  font-style: normal;
+  font-weight: normal;
+  font-size: 100%;
+  color: #0f4bff;
+  content: "\f075" " ";
+}
+.feature:before {
+  font-family: "FontAwesome";
+  font-style: normal;
+  font-weight: normal;
+  font-size: 100%;
+  color: #00cc33;
+  content: "\f058" " ";
 }

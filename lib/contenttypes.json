@@ -962,6 +962,9 @@
   {  
     ".les":"application\/vnd.hhe.lesson-player"
   },
+  {
+    ".less":"text/x-less"
+  },
   {  
     ".lha":"application\/octet-stream"
   },
@@ -1751,6 +1754,9 @@
   {  
     ".saf":"application\/vnd.yamaha.smaf-audio"
   },
+  {
+    ".sass":"text/x-sass"
+  },
   {  
     ".sbml":"application\/sbml+xml"
   },
@@ -1768,6 +1774,9 @@
   },
   {  
     ".scs":"application\/scvp-cv-response"
+  },
+  {
+    ".scss":"text/x-scss"
   },
   {  
     ".scurl":"text\/vnd.curl.scurl"

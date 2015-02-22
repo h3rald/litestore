@@ -1,10 +1,10 @@
-body {
-  .mix-hyphens(auto);
-}
-
 main {
+  max-width: 850px;
+  margin: auto;
   margin-top: 60px;
 }
+
+
 /* Blocks */
 
 blockquote {
@@ -24,6 +24,7 @@ pre {
     background: @light-gray;
     padding: 0px 2px 0 2px;
     border: none;
+    line-height: 1.2em;
   }
   .hljs {
     padding: 0 3px;
@@ -51,7 +52,8 @@ hr {
 }
 
 code, span.code {
-  .mix-inline-box(@light-gray, @dark-gray, @gray);
+  .mix-inline-box(@light-gray, @dark-gray, @light-gray);
+  margin: 2px 0px;
   font-family: @monospace-font;
   font-size: 85%;
   .mix-hyphens(none);
@@ -61,8 +63,8 @@ kbd, span.kbd {
   .mix-inline-box(@light-gray, @dark-gray, @gray);
   font-family: @monospace-font;
   font-weight: bold;
-  border-right: 1px solid @dark-gray;
-  border-bottom: 1px solid @dark-gray;
+  border-right: 1px solid @gray-b;
+  border-bottom: 1px solid @gray-b;
   line-height: 1em;
   font-size: 80%;
   .mix-hyphens(none);
@@ -118,14 +120,4 @@ span.ext, span.file, span.dir {
 
 span.ext, span.kwd {
   font-weight: bold;
-}
-
-/* Links */
-
-a,a:visited {
-  color: @link-color;
-  text-decoration:none;
-  &:hover {
-    text-decoration:underline;
-  }
 }
