@@ -1,0 +1,131 @@
+body {
+  .mix-hyphens(auto);
+}
+
+main {
+  margin-top: 60px;
+}
+/* Blocks */
+
+blockquote {
+  border-left: 3px solid #dedede;
+  padding: 0px 10px;
+  margin: 10px 0;
+  font-style: italic;
+}
+
+pre {
+  .mix-box(@light-gray, @dark-gray, @gray-c);
+  margin: auto;
+  font-family: @monospace-font;
+  padding: 0;
+  code {
+    box-shadow: none;
+    background: @light-gray;
+    padding: 0px 2px 0 2px;
+    border: none;
+  }
+  .hljs {
+    padding: 0 3px;
+  }
+}
+
+address {
+  font-style: italic;
+  color: @gray;
+}
+
+hr {
+  border: 0;
+  height: 1px;
+  background-image: -webkit-linear-gradient(left, rgba(99,99,99,0), rgba(99,99,99,0.75), rgba(99,99,99,0)); 
+  background-image:    -moz-linear-gradient(left, rgba(99,99,99,0), rgba(99,99,99,0.75), rgba(99,99,99,0)); 
+  background-image:     -ms-linear-gradient(left, rgba(99,99,99,0), rgba(99,99,99,0.75), rgba(99,99,99,0)); 
+  background-image:      -o-linear-gradient(left, rgba(99,99,99,0), rgba(99,99,99,0.75), rgba(99,99,99,0)); 
+}
+
+/* Inline */
+
+[class^="fa-"] {
+  font-family: "FontAwesome";
+}
+
+code, span.code {
+  .mix-inline-box(@light-gray, @dark-gray, @gray);
+  font-family: @monospace-font;
+  font-size: 85%;
+  .mix-hyphens(none);
+}
+
+kbd, span.kbd {
+  .mix-inline-box(@light-gray, @dark-gray, @gray);
+  font-family: @monospace-font;
+  font-weight: bold;
+  border-right: 1px solid @dark-gray;
+  border-bottom: 1px solid @dark-gray;
+  line-height: 1em;
+  font-size: 80%;
+  .mix-hyphens(none);
+}
+
+mark, span.mark {
+  padding: 0 1px;
+  color: @gray-2;
+}
+
+abbr, span.abbr {
+  font-variant: small-caps;
+  font-weight: bolder;
+  .mix-hyphens(none);
+  &:hover {
+    cursor: help;
+  }
+}
+
+samp, span.samp {
+  font-size: 90%;
+  .mix-inline-box(@light-gray, @dark-gray, @light-gray);
+  .mix-hyphens(none);
+}
+
+var, span.var {
+  font-size: 90%;
+  font-family: @monospace-font; 
+  font-weight: bold;
+  font-style: normal;
+  .mix-hyphens(none);
+}
+
+cite, span.cite {
+  font-weight: bold;
+  font-style: italic;
+  .mix-hyphens(none);
+}
+
+q, span.q {
+  font-style: italic;
+  color: @gray-6;
+  .mix-hyphens(none);
+}
+
+span.tt, span.cmd, 
+span.opt, span.arg, span.kwd,
+span.ext, span.file, span.dir {
+  font-size: 90%;
+  font-family: @monospace-font;
+  .mix-hyphens(none);
+}
+
+span.ext, span.kwd {
+  font-weight: bold;
+}
+
+/* Links */
+
+a,a:visited {
+  color: @link-color;
+  text-decoration:none;
+  &:hover {
+    text-decoration:underline;
+  }
+}

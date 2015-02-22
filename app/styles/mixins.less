@@ -1,0 +1,124 @@
+.mix-box (@bg-color, @fg-color, @border-color) {
+  -moz-background-clip:padding;
+  -webkit-background-clip:padding-box;
+  background-clip:padding-box;
+  -webkit-border-radius:3px;
+  -moz-border-radius:3px;
+  border-radius:3px;
+  margin: 10px auto;
+  padding:2px 4px 0 4px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.1);
+  text-shadow: 0 1px 0 rgba(255,255,255,0.8);
+  color:@fg-color;
+  background-color:@bg-color;
+  border:1px solid @border-color;
+  a {
+    color: @dark-blue;
+  }
+  p {
+    margin: 0 auto;
+  }
+}
+
+.mix-no-border-radius {
+  -webkit-border-radius: 0px;
+  -moz-border-radius: 0px;
+  border-radius: 0px;
+}
+
+.mix-inline-box (@bg-color, @fg-color, @border-color) {
+  color: @fg-color;
+  background-color: @bg-color;
+  padding:0 3px 0;
+  display: inline-block;
+  width: auto;
+  margin: 1px;
+  border:1px solid @border-color;
+  -webkit-border-radius:2px;
+  -moz-border-radius:2px;
+  border-radius:2px;
+  -moz-background-clip:padding;
+  -webkit-background-clip:padding-box;
+  background-clip:padding-box;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.8);
+  box-shadow:0 1px 3px rgba(0,0,0,0.1);
+}
+
+.mix-badge (@text, @color, @bg-color){
+  color: @color;
+  &:before {
+    .mix-inline-box(@bg-color, @color, @color);
+    -webkit-border-radius:4px;
+    -moz-border-radius:4px;
+    border-radius:4px;
+    border-size: 2px;
+    padding: 1px 1px 3px 1px;
+    text-size: 70%;
+    line-height: 90%;
+    width: 50px;
+    text-align: center;
+    margin-right: 3px;
+    font-variant: small-caps;
+    font-weight: bold;
+    content: @text;
+  }
+}
+
+
+.mix-titled-block (@bg-color, @fg-color, @border-color, @icon){
+  .mix-box(@bg-color, @fg-color, @border-color);
+  font-size: 90%;
+  p {
+    margin: 0 auto;
+    &:first-child {
+      font-weight: bold;
+      color: @fg-color;
+      .mix-symbol(@icon, @fg-color)
+    }
+  }
+  a {
+    color: darken(@fg-color, 15%);
+  }
+}
+
+.mix-red-badge (@text){
+  .mix-badge(@text, @bright-red, @lighter-red);
+}
+
+.mix-green-badge (@text){
+  .mix-badge(@text, @bright-green, @lighter-green);
+}
+
+.mix-yellow-badge (@text){
+  .mix-badge(@text, @dark-yellow, @lighter-yellow);
+}
+
+.mix-symbol (@symbol, @color, @size:100%, @space:" "){
+  &:before {
+    font-family: "FontAwesome";
+    font-style: normal;
+    font-weight: normal;
+    font-size: @size;
+    color: @color;
+    content: @symbol @space;
+  }
+}
+
+.mix-circle (@color, @size:100%){
+  .mix-symbol(@fa-var-circle, @color, @size);
+}
+
+.mix-hyphens (@val) {
+	-webkit-hyphens: @val; 
+	-moz-hyphens: @val; 
+	-ms-hyphens: @val; 
+	-o-hyphens: @val; 
+	hyphens: @val;
+}
+
+.mix-link-icon (@icon, @space:" ") {
+  &:before {
+    content: @icon @space;
+    font-family: "FontAwesome";
+  }
+}

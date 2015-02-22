@@ -1,0 +1,31 @@
+.note { .mix-titled-block(@lighter-blue, @dark-blue, @light-blue, @fa-var-arrow-circle-right);}
+.tip {.mix-titled-block(@lighter-green, @dark-green, @light-green, @fa-var-check-circle);}
+.warning {.mix-titled-block(@lighter-yellow, @dark-yellow, @light-yellow, @fa-var-exclamation-triangle);}
+
+.sidebar {.mix-titled-block(@light-gray, @gray-5, @light-gray, @fa-var-info-circle);}
+.output {.mix-box(@light-gray, @gray-5, @light-gray);}
+
+.terminal {
+  .mix-box(@gray-e, @gray-2, @gray-c);
+  padding: 0 3px;
+  p, p:first-child {
+    margin-top: 0;
+    margin-bottom: 0;
+    text-shadow: none;
+    font-weight: normal;
+    font-family: @monospace-font;
+    font-size: 90%;
+    color: @gray-2;
+    &:before {
+      font-family: "FontAwesome";
+      font-style: normal;
+      font-weight: bold;
+      color: @dark-green;
+      content: @fa-var-terminal " ";
+    }
+  }
+}
+
+div .terminal {
+  margin: 2px auto;
+}

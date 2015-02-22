@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-cat md/metadata.md md/overview.md md/getting_started.md md/usage.md md/api.md md/credits.md > LiteStore_UserGuide.md
-hastyscribe LiteStore_UserGuide.md
-rm LiteStore_UserGuide.md

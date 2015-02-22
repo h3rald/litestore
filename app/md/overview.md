@@ -8,7 +8,7 @@ If you ever wanted to build a simple single-page application in your favorite fr
 
 Sure, setting up a simple REST service using [Sinatra](http://www.sinatrarb.com) or [Express.js](http://expressjs.com) is not very hard, but if you want to distribute it, that will become a prerequisite for your app: you'll either distribute it with it, or install it beforehand on any machine you want to try your app on. Which is a shame, really, because single-page-applications are meant to be running anywhere _provided that they can access their backend_.
 
-{{LS}} aims to solve this problem. Using {{LS}}, you only need to take _two files_ with you, at all times:
+LiteStore aims to solve this problem. Using LiteStore, you only need to take _two files_ with you, at all times:
 
 * The [litestore](class:cmd) executable file for your platform of choice (that's about 2MB in size)
 * A datastore file
@@ -29,5 +29,5 @@ And yes, you can even store the code of your client-side application inside the 
 
 ### Architecture
 
--> ![{{LS}} Architecture](assets/litestore_arch.png) <-
+-> ![LiteStore Architecture](images/litestore_arch.png) <-
 
