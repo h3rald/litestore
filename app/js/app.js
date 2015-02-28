@@ -34,21 +34,44 @@ app.view = function(ctrl){
     ])
 }
 
+var bsNavDropdown = function() {
+  var dropdown = {}
+  dropdown.view = function(ctrl) {
+    return m("li.dropdown", [
+      m("a.dropdown-toggle[href='#'][data-toggle='dropdown'][role='button'][aria-expanded='false']",
+        [m("span", ctrl.title()+" "), m("span.caret")]),
+      m("ul.dropdown-menu[role='menu']", 
+        ctrl.links().map(function(e){
+          return m("li", 
+            [m("a", {href: e.path, config: m.route}, e.title)])}))
+      ])
+  };
+  return dropdown;
+};
+
 app.navlinks = {
-  controller: function() {
-    this.links = m.prop([
-      {id: "overview", title: "Overview"},
-      {id: "getting-started", title: "Getting Started"},
-      {id: "usage", title: "Usage"},
-      {id: "api", title: "API"},
-      {id: "credits", title: "Credits"}
-    ]);
+  controller: function(){
+    app.navlinks.vm.init();
   },
-  view: function(ctrl) {
-    return m("ul#nav-links.nav.navbar-nav", 
-      ctrl.links().map(function(e){
-        return m("li", {id: "nav-"+e.id, class: (app.vm.pageid() == e.id) ? "active" : ""}, 
-          [m("a", {href: "/pages/"+e.id, config: m.route}, e.title)])}));
+  vm: {
+    init: function(){
+      this.links = m.prop([
+        {path: "/pages/overview", title: "Overview"},
+        {path: "/pages/getting-started", title: "Getting Started"},
+        {path: "/pages/usage", title: "Usage"},
+        {path: "/pages/api", title: "API"},
+        {path: "/pages/credits", title: "Credits"}
+      ]);
+      this.title = m.prop("Guide");
+      this.guideDropdown = new bsNavDropdown();
+    }
+  },
+  view: function(ctrl){
+    var vm = app.navlinks.vm;
+    return m("ul.nav.navbar-nav", [
+      m("li", [m("a", {href: "/admin", config: m.route}, "Admin")]),
+      vm.guideDropdown.view({title: vm.title, links: vm.links})
+    ])
   }
 }
 
