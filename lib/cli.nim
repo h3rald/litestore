@@ -16,7 +16,6 @@ var
   operation = opRun
   directory = ""
   readonly = false
-  purge = false
   logLevel = lvlInfo
   
 var f = newStringStream(cfgfile)
@@ -55,16 +54,16 @@ let
   (c) 2015 Fabio Cevasco
 
   Usage:
-    LS [-p:<port> -a:<address>] [<file>] [--pack:<directory> | --unpack:<directory>] 
+    LS [-p:<port> -a:<address>] [<file>] [--import:<directory> | --export:<directory> | --delete:<directory>] 
 
   Options:
     -a, --address     Specify address (default: 0.0.0.0).
-    --export          Export the previously-packed specified directory to the current directory.
+    -d, --delete      Delete the previously-imported specified directory.
+    --export          Export the previously-imported specified directory to the current directory.
     -h, --help        Display this message.
     --import          Import the specified directory (Store all its contents).
     -l, --log         Specify the log level: debug, info, warn, error, fatal, none (default: info)
     -p, --port        Specify port number (default: 9500).
-    --purge           Delete exported files (used in conjunction with --export).
     -r, --readonly    Allow only data retrieval operations.
     -v, --version     Display the program version.
 """
@@ -98,8 +97,9 @@ for kind, key, val in getOpt():
             fail(105, "Directory to export not specified.")
           operation = opExport
           directory = val
-        of "purge":
-          purge = true
+        of "delete", "d":
+          operation = opDelete
+          directory = val
         of "version", "v":
           echo version
           quit(0)
@@ -121,7 +121,6 @@ LS.port = port
 LS.address = address
 LS.operation = operation
 LS.file = file
-LS.purge = purge
 LS.directory = directory
 LS.appversion = version
 LS.readonly = readonly

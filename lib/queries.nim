@@ -123,7 +123,19 @@ SELECT COUNT(id) FROM documents
 """
 
 const SQL_DELETE_DOCUMENTS_BY_TAG* = sql"""
-DELETE FROM documents, tags
-WHERE documents.id = tags.document_id AND
-tag_id = ?
+DELETE FROM documents
+WHERE documents.id IN 
+(SELECT document_id FROM tags WHERE tag_id = ?)
+"""
+
+const SQL_DELETE_SEARCHCONTENTS_BY_TAG* = sql"""
+DELETE FROM searchcontents
+WHERE document_id IN 
+(SELECT document_id FROM tags WHERE tag_id = ?)
+"""
+
+const SQL_DELETE_TAGS_BY_TAG* = sql"""
+DELETE FROM tags
+WHERE document_id IN 
+(SELECT document_id FROM tags WHERE tag_id = ?)
 """

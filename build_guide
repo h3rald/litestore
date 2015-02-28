@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+cd app
 cat md/metadata.md md/overview.md md/getting-started.md md/usage.md md/api.md md/credits.md > LiteStore_UserGuide.md
 hastyscribe LiteStore_UserGuide.md
 rm LiteStore_UserGuide.md
+cd ..

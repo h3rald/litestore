@@ -23,7 +23,7 @@ type
     startswith*: bool
     endswith*: bool
     negated*: bool
-  Operation* = enum opRun, opImport, opExport
+  Operation* = enum opRun, opImport, opExport, opDelete
   LiteStore* = object
     store*: Datastore
     address*: string
@@ -31,7 +31,6 @@ type
     operation*: Operation
     directory*: string
     file*: string
-    purge*: bool
     readonly*: bool
     appname*: string
     appversion*: string

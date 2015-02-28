@@ -188,7 +188,7 @@ proc importDir*(store: Datastore, dir: string) =
     discard store.createDocument(d_id, d_contents, d_ct, d_binary, d_searchable)
     store.db.exec(SQL_INSERT_TAG, "$dir:"&dir, d_id)
 
-proc  exportDir*(store: Datastore, dir: string, purge = false) =
+proc  exportDir*(store: Datastore, dir: string) =
   let docs = store.db.getAllRows(SQL_SELECT_DOCUMENTS_BY_TAG, "$dir:"&dir)
   for doc in docs:
     let file = doc[0]
@@ -199,14 +199,14 @@ proc  exportDir*(store: Datastore, dir: string, purge = false) =
       data = doc[1]
     file.parentDir.createDir
     file.writeFile(data)
-  if purge:
+
+proc  deleteDir*(store: Datastore, dir: string) =
     store.db.exec(SQL_DELETE_DOCUMENTS_BY_TAG, "$dir:"&dir)
+    store.db.exec(SQL_DELETE_SEARCHCONTENTS_BY_TAG, "$dir:"&dir)
+    store.db.exec(SQL_DELETE_TAGS_BY_TAG, "$dir:"&dir)
 
 proc destroyDocumentsByTag*(store: Datastore, tag: string): int64 =
   result = 0
   var ids = store.db.getAllRows(SQL_SELECT_DOCUMENT_IDS_BY_TAG, tag)
   for id in ids:
     result.inc(store.destroyDocument(id[0]).int)
-
-
-

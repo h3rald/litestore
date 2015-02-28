@@ -36,7 +36,9 @@ when isMainModule:
     of opImport:
       LS.store.importDir(LS.directory)
     of opExport:
-      LS.store.exportDir(LS.directory, LS.purge)
+      LS.store.exportDir(LS.directory)
+    of opDelete:
+      LS.store.deleteDir(LS.directory)
     of opRun:
       LS.serve
       runForever()
