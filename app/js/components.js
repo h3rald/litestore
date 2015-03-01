@@ -13,9 +13,7 @@ app.editor = {};
       };
 
       if (!isInitialized) {
-        //m.startComputation();
         var editor = ace.edit(e);
-        //m.endComputation();
         obj.editor = editor;
         e.style.position = "relative";
         setHeight();

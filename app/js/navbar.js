@@ -32,7 +32,7 @@
       var vm = app.navlinks.vm;
       return m("ul.nav.navbar-nav", [
         m("li", {class: vm.activelink("info")}, [m("a", {href: "/info", config: m.route}, "Info")]),
-        u.dropdown({title: "Tags", links: vm.taglinks(vm.info()), active: vm.activelink("documents")}),
+        u.dropdown({title: "Tags", links: vm.taglinks(vm.info()), active: vm.activelink("tags")}),
         u.dropdown({title: "Guide", links: vm.guidelinks, active: vm.activelink("guide")})
       ])
     }
