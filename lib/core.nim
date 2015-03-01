@@ -85,8 +85,8 @@ proc updateDocument*(store: Datastore, id: string, data: string, contenttype = "
     data = data.encode(data.len*2)
   var res = store.db.execAffectedRows(SQL_UPDATE_DOCUMENT, data, contenttype, binary, searchable, currentTime(), id)
   if res > 0:
-    store.destroyDocumentSystemTags(id)
-    store.addDocumentSystemTags(id, contenttype)
+    #store.destroyDocumentSystemTags(id)
+    #store.addDocumentSystemTags(id, contenttype)
     store.db.exec(SQL_UPDATE_SEARCHCONTENT, data, id)
     return $store.retrieveRawDocument(id)
   else:

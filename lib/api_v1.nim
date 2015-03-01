@@ -57,8 +57,8 @@ proc validate(req: Request, LS: LiteStore, resource: string, id: string, cb: pro
     let body = req.body.strip
     if body == "":
       return resError(Http400, "Bad request: No content specified for document.")
-    if req.headers.hasKey("Content-type"):
-      ct = req.headers["Content-type"]
+    if req.headers.hasKey("Content-Type"):
+      ct = req.headers["Content-Type"]
       case ct:
         of "application/json":
           try:
@@ -295,9 +295,11 @@ proc head(req: Request, LS: LiteStore, resource: string, id = ""): Response =
   try:
     parseQueryOptions(req.url.query, options);
     if id != "":
-      return LS.getRawDocument(id, options)
+      result = LS.getRawDocument(id, options)
+      result.content = ""
     else:
-      return LS.getRawDocuments(options)
+      result = LS.getRawDocuments(options)
+      result.content = ""
   except:
     return resError(Http400, "Bad request - $1" % getCurrentExceptionMsg())
 
@@ -305,6 +307,8 @@ proc get(req: Request, LS: LiteStore, resource: string, id = ""): Response =
   case resource:
     of "docs":
       var options = newQueryOptions()
+      if req.url.query.contains("contents=false"):
+        options.select = "id, content_type, binary, searchable, created, modified"
       try:
         parseQueryOptions(req.url.query, options);
         if id != "":
@@ -327,8 +331,8 @@ proc get(req: Request, LS: LiteStore, resource: string, id = ""): Response =
 proc post(req: Request, LS: LiteStore, resource: string, id = ""): Response = 
   if id == "":
     var ct = "text/plain"
-    if req.headers.hasKey("Content-type"):
-      ct = req.headers["Content-type"]
+    if req.headers.hasKey("Content-Type"):
+      ct = req.headers["Content-Type"]
     return LS.postDocument(req.body.strip, ct)
   else:
     return resError(Http400, "Bad request: document ID cannot be specified in POST requests.")
@@ -336,8 +340,8 @@ proc post(req: Request, LS: LiteStore, resource: string, id = ""): Response =
 proc put(req: Request, LS: LiteStore, resource: string, id = ""): Response = 
   if id != "":
     var ct = "text/plain"
-    if req.headers.hasKey("Content-type"):
-      ct = req.headers["Content-type"]
+    if req.headers.hasKey("Content-Type"):
+      ct = req.headers["Content-Type"]
     return LS.putDocument(id, req.body.strip, ct)
   else:
     return resError(Http400, "Bad request: document ID must be specified in PUT requests.")

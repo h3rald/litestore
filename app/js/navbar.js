@@ -9,22 +9,31 @@
     },
     vm: {
       init: function(){
-        this.guide = m.prop([
-          {path: "/pages/overview", title: "Overview"},
-          {path: "/pages/getting-started", title: "Getting Started"},
-          {path: "/pages/usage", title: "Usage"},
-          {path: "/pages/api", title: "API"},
-          {path: "/pages/credits", title: "Credits"}
-        ]);
-        this.title = m.prop("Guide");
-        this.guideDropdown = new bsNavDropdown();
+        this.info = Info.get();
+        this.activelink = function(url){
+          return (m.route().match(RegExp("^\/"+url))) ? "active" : "";
+        };
+        this.guidelinks = [
+          {path: "/guide/overview", title: "Overview"},
+          {path: "/guide/getting-started", title: "Getting Started"},
+          {path: "/guide/usage", title: "Usage"},
+          {path: "/guide/api", title: "API"},
+          {path: "/guide/credits", title: "Credits"}
+        ];
+        this.taglinks = function(info){ 
+          return info.tags.map(function(tag){
+            var key = Object.keys(tag)[0];
+            return {path: "/tags/"+key, title: key+" ("+tag[key]+")"};
+          })
+        }
       }
     },
     view: function(ctrl){
       var vm = app.navlinks.vm;
       return m("ul.nav.navbar-nav", [
-        m("li", [m("a", {href: "/info", config: m.route}, "Info")]),
-        vm.guideDropdown.view({title: vm.title, links: vm.guide})
+        m("li", {class: vm.activelink("info")}, [m("a", {href: "/info", config: m.route}, "Info")]),
+        u.dropdown({title: "Tags", links: vm.taglinks(vm.info()), active: vm.activelink("documents")}),
+        u.dropdown({title: "Guide", links: vm.guidelinks, active: vm.activelink("guide")})
       ])
     }
   }

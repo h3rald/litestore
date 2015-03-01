@@ -6,6 +6,8 @@ var app = app || {};
 
   m.route(document.body, "/info", {
     '/info': app.info,
-    "/pages/:page": app.guide
+    "/tags/:id": app.tags,
+    "/document/:id...": app.document,
+    "/guide/:id": app.guide
   });
 }());

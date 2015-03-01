@@ -1867,6 +1867,20 @@ span.ext,
 span.kwd {
   font-weight: bold;
 }
+span.label-primary {
+  margin: auto 2px;
+  font-weight: normal;
+}
+span.label-primary a {
+  color: #efefef;
+}
+span.label-primary a:hover {
+  color: #fff;
+  text-decoration: none;
+}
+.toolbar {
+  margin: 4px 0;
+}
 .note {
   -moz-background-clip: padding;
   -webkit-background-clip: padding-box;
