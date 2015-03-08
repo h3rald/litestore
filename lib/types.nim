@@ -34,6 +34,7 @@ type
     readonly*: bool
     appname*: string
     appversion*: string
+    favicon*:string
   Response* = tuple[
     code: HttpCode,
     content: string,

@@ -9,6 +9,7 @@ import
   utils
 
 const cfgfile = "litestore.nimble".slurp
+const favicon = "app/favicon.ico".slurp
 
 var 
   file*, address*, version*, appname*: string
@@ -125,6 +126,7 @@ LS.directory = directory
 LS.appversion = version
 LS.readonly = readonly
 LS.appname = appname
+LS.favicon = favicon
 
 # Initialize loggers
 

@@ -24,6 +24,11 @@ proc parseApiUrl(req: Request): ResourceInfo =
     raise newException(EInvalidRequest, req.getReqInfo())
 
 proc route(req: Request, LS: LiteStore): Response =
+  if req.url.path == "/favicon.ico":
+    result.code = Http200
+    result.content = LS.favicon
+    result.headers = {"Content-Type": "image/x-icon"}.newStringTable
+    return result
   try:
     var info = req.parseApiUrl
     if info.version == "v1" and info.resource.match(peg"^docs / info$"):

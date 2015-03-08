@@ -105,4 +105,3 @@ proc resError*(code: HttpCode, message: string): Response =
 
 proc resDocumentNotFound*(id): Response =
   resError(Http404, "Document '$1' not found." % id)
-
