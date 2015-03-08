@@ -1,9 +1,8 @@
-var app = app || {};
-
-app.editor = {};
-
 (function(){
   'use strict';  
+  var app = window.LS || (window.LS = {});
+  app.editor = {};
+
 
   app.editor.config = function(obj){
     return function(element, isInitialized, context){
@@ -24,7 +23,7 @@ app.editor = {};
         editor.getSession().setMode("ace/mode/"+obj.mode);
         editor.getSession().setUseWrapMode(true);
       }
-    }
+    };
   };
 
   /**
@@ -32,8 +31,8 @@ app.editor = {};
    *  - content The content of the editor
    */
   app.editor.view = function(obj) {
-    return m(".editor.panel.panal-default", {config: app.editor.config(obj)}, obj.content)
+    return m(".editor.panel.panal-default", {config: app.editor.config(obj)}, obj.content);
     
-  }
+  };
   
-}())
+}());

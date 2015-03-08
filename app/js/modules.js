@@ -1,7 +1,7 @@
-var app = app || {};
-
 (function(){
   'use strict';
+  var app = window.LS || (window.LS = {});
+  var u = LS.utils;
 
   // Info Module
   app.info = {vm: {}};
@@ -22,13 +22,13 @@ var app = app || {};
     ]);
     var taglist = m("ul", info.tags.map(function(tag){
         var key = Object.keys(tag)[0];
-        return m("li", [m("a", {href: "/tags/"+key, config: m.route}, key+" ("+tag[key]+")")])
+        return m("li", [m("a", {href: "/tags/"+key, config: m.route}, key+" ("+tag[key]+")")]);
         })
       );
     var v = m(".row", [
       m(".col-md-6", [u.panel({title: "Datastore Information", content: infolist})]),
       m(".col-md-6", [u.panel({title: "Tags", content: taglist})])
-    ])
+    ]);
     return v;
   };
 
@@ -56,17 +56,17 @@ var app = app || {};
             m("td", u.doclink(d.id)),  
             m("td", u.date(d.created)),  
             m("td", u.date(d.modified)),  
-            m("td", d.tags.map(function(t){return u.taglink(t)})),  
-          ])
+            m("td", d.tags.map(function(t){return u.taglink(t);})),  
+          ]);
         })
       ])
-    ])
+    ]);
     return m(".row", [
       title,
       m("p", "Total: "+docs.total),
       table
     ]);
-  }
+  };
 
   app.document = {vm: {}};
   app.document.vm.init = function() {
@@ -78,7 +78,7 @@ var app = app || {};
       vm.doc.then(function(doc){
         vm.content = doc.data;
       });
-    }
+    };
     this.getDoc();
     this.state = "view";
     switch (this.ext){
@@ -99,14 +99,14 @@ var app = app || {};
         break;
       default:
         this.mode = "text";
-    };
+    }
     this.edit = function(){
       vm.state = "edit";
       vm.editor.setReadOnly(false);
     };
     this.save = function(){
       var doc = {};
-      doc.id = vm.doc().id
+      doc.id = vm.doc().id;
       doc.tags = vm.doc().tags;
       doc.data = vm.editor.getValue();
       Doc.put(doc).then(function(){
@@ -123,23 +123,23 @@ var app = app || {};
         case "view":
           return [
             {title: "Edit", icon: "edit", action: vm.edit}
-          ]
+          ];
         default:
           return [
             {title: "Save", icon: "save", action: vm.save},
             {title: "Cancel", icon: "times-circle", action: vm.cancel}
-          ]
+          ];
       }
-    }
-  }
+    };
+  };
   app.document.main = function(){
     var vm = app.document.vm;
-    var title = m("span",[vm.id, m("span.pull-right", vm.doc().tags.map(function(t){return u.taglink(t)}))]);
+    var title = m("span",[vm.id, m("span.pull-right", vm.doc().tags.map(function(t){return u.taglink(t);}))]);
     return m("div", [
       m(".row", [u.toolbar({links: vm.tools()})]),
       m(".row", [u.panel({title: title, content:app.editor.view(vm)})])
-    ])
-  }
+    ]);
+  };
 
 
   // Guide Module

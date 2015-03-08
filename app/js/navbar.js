@@ -1,7 +1,7 @@
-  var app = app || {};
-  
 (function(){
   'use strict';
+  var app = window.LS || (window.LS = {});
+  var u = app.utils;
 
   app.navlinks = {
     controller: function(){
@@ -11,7 +11,7 @@
       init: function(){
         this.info = Info.get();
         this.activelink = function(url){
-          return (m.route().match(RegExp("^\/"+url))) ? "active" : "";
+          return (m.route().match(new RegExp("^\/"+url))) ? "active" : "";
         };
         this.guidelinks = [
           {path: "/guide/overview", title: "Overview"},
@@ -24,8 +24,8 @@
           return info.tags.map(function(tag){
             var key = Object.keys(tag)[0];
             return {path: "/tags/"+key, title: key+" ("+tag[key]+")"};
-          })
-        }
+          });
+        };
       }
     },
     view: function(ctrl){
@@ -34,9 +34,9 @@
         m("li", {class: vm.activelink("info")}, [m("a", {href: "/info", config: m.route}, "Info")]),
         u.dropdown({title: "Tags", links: vm.taglinks(vm.info()), active: vm.activelink("tags")}),
         u.dropdown({title: "Guide", links: vm.guidelinks, active: vm.activelink("guide")})
-      ])
+      ]);
     }
-  }
+  };
   
   app.navheader = {
     controller: function() {},
@@ -49,9 +49,9 @@
           m("span.icon-bar")
         ]),
         m("a.navbar-brand", {href: "/", config:m.route}, "LiteStore")
-      ])
+      ]);
     }
-  }
+  };
   
   app.searchbox = {
     controller: function() {},
@@ -63,9 +63,9 @@
               m("button.btn.btn-default[type='button']", [m("i.fa.fa-search")]))
           ])
         ]
-      )
+      );
     }
-  }
+  };
   
   app.navbar = {
     controller: function() {
@@ -82,7 +82,7 @@
             app.searchbox.view(ctrl.searchbox)
           ])
         ])  
-      ])
+      ]);
     }
-  }
+  };
 }());

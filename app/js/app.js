@@ -1,6 +1,6 @@
-var app = app || {};
 (function(){
   'use strict';
+  var app = window.LS || (window.LS = {});
 
   m.route.mode = "hash";
 
