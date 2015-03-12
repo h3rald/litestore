@@ -45,8 +45,13 @@ proc openDatastore*(file:string): Datastore =
   try:
     result.db = db.open(file, "", "", "")
     result.path = file
+    result.mirror = ""
   except:
     raise newException(EDatastoreUnavailable, "Datastore '$1' cannot be opened." % file)
+
+proc hasMirror(store: Datastore): bool =
+  return store.mirror.len > 0
+
 
 # Manage Documents
 
@@ -60,27 +65,35 @@ proc retrieveRawDocument*(store: Datastore, id: string, options: QueryOptions = 
   else:
     return $store.prepareJsonDocument(raw_document)
 
-proc createDocument*(store: Datastore,  id="", data = "", contenttype = "text/plain", binary = -1, searchable = 1): string =
+proc createDocument*(store: Datastore,  id="", rawdata = "", contenttype = "text/plain", binary = -1, searchable = 1): string =
   var id = id
   var contenttype = contenttype.replace(peg"""\;(.+)$""", "") # Strip charset for now
   var binary = checkIfBinary(binary, contenttype)
-  var data = data
+  var data = rawdata
   if binary == 1:
     data = data.encode(data.len*2)
   if id == "":
     id = $genOid()
   # Store document
-  store.db.exec(SQL_INSERT_DOCUMENT, id, data, contenttype, binary, searchable, currentTime())
-  if binary <= 0 and searchable >= 0:
-    # Add to search index
-    store.db.exec(SQL_INSERT_SEARCHCONTENT, id, data)
-  store.addDocumentSystemTags(id, contenttype)
+  var res = store.db.execAffectedRows(SQL_INSERT_DOCUMENT, id, data, contenttype, binary, searchable, currentTime())
+  if res > 0:
+    if binary <= 0 and searchable >= 0:
+      # Add to search index
+      store.db.exec(SQL_INSERT_SEARCHCONTENT, id, data)
+    store.addDocumentSystemTags(id, contenttype)
+    if store.hasMirror:
+      var filename = id.unixToNativePath
+      if fileExists(filename):
+        var file = filename.open(fmWrite)
+        file.write(rawdata)
+      else:
+        raise newException(EFileExists, "File already exists: $1" % filename)
   return $store.retrieveRawDocument(id)
 
-proc updateDocument*(store: Datastore, id: string, data: string, contenttype = "text/plain", binary = -1, searchable = 1): string =
+proc updateDocument*(store: Datastore, id: string, rawdata: string, contenttype = "text/plain", binary = -1, searchable = 1): string =
   var contenttype = contenttype.replace(peg"""\;(.+)$""", "") # Strip charset for now
   var binary = checkIfBinary(binary, contenttype)
-  var data = data
+  var data = rawdata
   if binary == 1:
     data = data.encode(data.len*2)
   var res = store.db.execAffectedRows(SQL_UPDATE_DOCUMENT, data, contenttype, binary, searchable, currentTime(), id)
@@ -88,6 +101,13 @@ proc updateDocument*(store: Datastore, id: string, data: string, contenttype = "
     #store.destroyDocumentSystemTags(id)
     #store.addDocumentSystemTags(id, contenttype)
     store.db.exec(SQL_UPDATE_SEARCHCONTENT, data, id)
+    if store.hasMirror:
+      var filename = id.unixToNativePath
+      if fileExists(filename):
+        var file = filename.open(fmWrite)
+        file.write(rawdata)
+      else:
+        raise newException(EFileNotFound, "File not found: $1" % filename)
     return $store.retrieveRawDocument(id)
   else:
     return ""
@@ -97,8 +117,15 @@ proc setDocumentModified*(store: Datastore, id: string): string =
 
 proc destroyDocument*(store: Datastore, id: string): int64 =
   result = store.db.execAffectedRows(SQL_DELETE_DOCUMENT, id)
-  store.db.exec(SQL_DELETE_SEARCHCONTENT, id)
-  store.db.exec(SQL_DELETE_DOCUMENT_TAGS, id)
+  if result > 0:
+    store.db.exec(SQL_DELETE_SEARCHCONTENT, id)
+    store.db.exec(SQL_DELETE_DOCUMENT_TAGS, id)
+    if store.hasMirror:
+      var filename = id.unixToNativePath
+      if fileExists(filename):
+        removeFile(id.unixToNativePath)
+      else:
+        raise newException(EFileNotFound, "File not found: $1" % filename)
 
 proc retrieveDocument*(store: Datastore, id: string, options: QueryOptions = newQueryOptions()): tuple[data: string, contenttype: string] =
   var options = options
@@ -166,6 +193,7 @@ proc retrieveTagsWithTotals*(store: Datastore): JsonNode =
   return %tag_array
 
 proc importDir*(store: Datastore, dir: string) =
+  # TODO: Only allow directory names (not paths)?
   if not dir.dirExists:
     raise newException(EDirectoryNotFound, "Directory '$1' not found." % dir)
   for f in dir.walkDirRec():
@@ -175,7 +203,7 @@ proc importDir*(store: Datastore, dir: string) =
       # Ignore hidden files
       continue
     let ext = f.splitFile.ext
-    var d_id = f
+    var d_id = f.replace("\\", "/")
     var d_contents = f.readFile
     var d_ct = "application/octet-stream"
     if CONTENT_TYPES.hasKey(ext):
@@ -191,7 +219,7 @@ proc importDir*(store: Datastore, dir: string) =
 proc  exportDir*(store: Datastore, dir: string) =
   let docs = store.db.getAllRows(SQL_SELECT_DOCUMENTS_BY_TAG, "$dir:"&dir)
   for doc in docs:
-    let file = doc[0]
+    let file = doc[0].unixToNativePath
     var data: string
     if doc[3].parseInt == 1:
       data = doc[1].decode
@@ -204,6 +232,13 @@ proc  deleteDir*(store: Datastore, dir: string) =
     store.db.exec(SQL_DELETE_DOCUMENTS_BY_TAG, "$dir:"&dir)
     store.db.exec(SQL_DELETE_SEARCHCONTENTS_BY_TAG, "$dir:"&dir)
     store.db.exec(SQL_DELETE_TAGS_BY_TAG, "$dir:"&dir)
+
+proc mountDir*(store: var Datastore, dir:string) =
+  if not dir.dirExists:
+    raise newException(EDirectoryNotFound, "Directory '$1' not found." % dir)
+  store.deleteDir(dir)
+  store.importDir(dir)
+  store.mirror = dir
 
 proc destroyDocumentsByTag*(store: Datastore, tag: string): int64 =
   result = 0

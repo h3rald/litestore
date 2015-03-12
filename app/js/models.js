@@ -2,6 +2,7 @@
   window.Page = {};
   window.Info = {};
   window.Doc = {};
+  var u = window.LS.utils;
   
   Page.get = function(id) {
     var content = m.prop("");

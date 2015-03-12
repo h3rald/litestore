@@ -6,10 +6,13 @@ type
   EDatastoreUnavailable* = object of Exception
   EInvalidTag* = object of Exception
   EDirectoryNotFound* = object of Exception
+  EFileNotFound* = object of Exception
+  EFileExists* = object of Exception
   EInvalidRequest* = object of Exception
   Datastore* = object
     db*: TDbConn
     path*: string
+    mirror*: string
   QueryOptions* = object
     select*: string
     single*:bool         
@@ -31,6 +34,7 @@ type
     operation*: Operation
     directory*: string
     file*: string
+    mirror*: bool
     readonly*: bool
     appname*: string
     appversion*: string

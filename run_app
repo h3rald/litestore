@@ -1,4 +1,2 @@
 #!/usr/bin/env bash
-./litestore --delete:app
-./litestore --import:app
-./litestore
+./litestore --mirror:app

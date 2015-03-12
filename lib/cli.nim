@@ -18,6 +18,7 @@ var
   directory = ""
   readonly = false
   logLevel = lvlInfo
+  mirror = false
   
 var f = newStringStream(cfgfile)
 if f != nil:
@@ -66,6 +67,7 @@ let
     -l, --log         Specify the log level: debug, info, warn, error, fatal, none (default: info)
     -p, --port        Specify port number (default: 9500).
     -r, --readonly    Allow only data retrieval operations.
+    -m, --mirror      Import the specified directory, run server and mirror database changes to filesystem.
     -v, --version     Display the program version.
 """
 
@@ -93,6 +95,12 @@ for kind, key, val in getOpt():
             fail(104, "Directory to import not specified.")
           operation = opImport
           directory = val
+        of "mirror", "m":
+          if val == "":
+            fail(104, "Directory to mirror not specified.")
+          operation = opRun
+          directory = val
+          mirror = true
         of "export":
           if val == "":
             fail(105, "Directory to export not specified.")
@@ -127,6 +135,7 @@ LS.appversion = version
 LS.readonly = readonly
 LS.appname = appname
 LS.favicon = favicon
+LS.mirror = mirror
 
 # Initialize loggers
 

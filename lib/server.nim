@@ -53,5 +53,7 @@ proc serve*(LS: LiteStore) =
     let res = req.route(LS)
     await req.respond(res.code, res.content, res.headers)
   info(LS.appname & " v" & LS.appversion & " started on " & LS.address & ":" & $LS.port & ".")
+  if LS.mirror:
+    info("Mirroring datastore changes to: " & LS.directory)
   asyncCheck server.serve(LS.port.Port, handleHttpRequest, LS.address)
 
