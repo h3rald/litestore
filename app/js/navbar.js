@@ -31,9 +31,12 @@
     view: function(ctrl){
       var vm = app.navlinks.vm;
       return m("ul.nav.navbar-nav", [
-        m("li", {class: vm.activelink("info")}, [m("a", {href: "/info", config: m.route}, "Info")]),
-        u.dropdown({title: "Tags", links: vm.taglinks(vm.info()), active: vm.activelink("tags")}),
-        u.dropdown({title: "Guide", links: vm.guidelinks, active: vm.activelink("guide")})
+        m("li", {class: vm.activelink("info")}, [m("a", {href: "/info", config: m.route}, 
+            [m("i.fa.fa-info-circle"), " Info"])]),
+        u.dropdown({title: "Tags", icon:"fa-tag", links: vm.taglinks(vm.info()), active: vm.activelink("tags")}),
+        u.dropdown({title: "Guide", icon:"fa-book", links: vm.guidelinks, active: vm.activelink("guide")}),
+        m("li", {class: vm.activelink("new")}, [m("a", {href: "/document/create/", config: m.route}, 
+            [m("i.fa.fa-plus-circle"), " New Document"])])
       ]);
     }
   };

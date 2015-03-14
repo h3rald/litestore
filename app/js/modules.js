@@ -9,7 +9,8 @@
     this.content = Info.get();
   };
   app.info.main = function(){
-    var info = app.info.vm.content();
+    var vm = app.info.vm;
+    var info = vm.content();
     var infolist = m("dl", [
           m("dt", "Version"),
           m("dd", info.version),
@@ -68,61 +69,120 @@
     ]);
   };
 
+  // Document module
   app.document = {vm: {}};
   app.document.vm.init = function() {
     var vm = this;
-    this.id = m.route.param("id");
-    this.ext = this.id.match(/\.(.+)$/)[1];
-    this.getDoc = function(cb){
-      vm.doc = Doc.get(vm.id);
+    vm.id = m.prop(m.route.param("id"));
+    vm.action = m.route.param("action");
+    vm.readOnly = true;
+    vm.contentType = m.prop("");
+    vm.existingId = m.prop();
+    vm.existingContentType = m.prop();
+    vm.existingContent = m.prop();
+    try {
+      vm.ext = vm.id().match(/\.(.+)$/)[1];
+    } catch(e) {
+      vm.ext = "";
+    }
+    vm.getDoc = function(cb){
+      vm.doc = Doc.get(vm.id());
       vm.doc.then(function(doc){
         vm.content = doc.data;
+        vm.tags = doc.tags;
       });
     };
-    this.getDoc();
-    this.state = "view";
-    switch (this.ext){
+    vm.tags = [];
+    switch (vm.action) {
+      case 'create':
+        vm.readOnly = false;
+        if (vm.existingId()) {
+          vm.id(vm.existingId());
+          vm.contentType(vm.existingContentType());
+          vm.content(vm.existingContent());
+          vm.existingId = m.prop();
+          vm.existingContentType = m.prop();
+          vm.existingContent = m.prop();
+        }
+        break;
+      case 'edit':
+        vm.getDoc();
+        vm.readOnly = false;
+        break;
+      case 'view':
+        vm.getDoc();
+        break;
+    }
+    switch (vm.ext){
       case 'js':
-        this.mode = "javascript";
+        vm.mode = "javascript";
         break;
       case 'css':
-        this.mode = "css";
+        vm.mode = "css";
         break;
       case 'html':
-        this.mode = "html";
+        vm.mode = "html";
         break;
       case 'json':
-        this.mode = "json";
+        vm.mode = "json";
         break;
       case 'md':
-        this.mode = "markdown";
+        vm.mode = "markdown";
         break;
       default:
-        this.mode = "text";
+        vm.mode = "text";
     }
-    this.edit = function(){
-      vm.state = "edit";
-      vm.editor.setReadOnly(false);
+    vm.edit = function(){
+      m.route("/document/edit/"+vm.id());
     };
-    this.save = function(){
+    vm.save = function(){
       var doc = {};
-      doc.id = vm.doc().id;
-      doc.tags = vm.doc().tags;
+      doc.id = vm.id();
       doc.data = vm.editor.getValue();
-      Doc.put(doc).then(function(){
-        m.route(m.route());
-      });
+      doc.tags = vm.tags;
+      var put = function(){
+        Doc.put(doc, vm.contentType()).then(function(){
+          LS.flash({type: "success", content: "Document saved successfully."});
+          m.route("/document/view/"+vm.id());
+        });
+      };
+      if (vm.action === "create") {
+        Doc.get(vm.id())
+          .then(function(){
+            LS.flash({type: "danger", content: "Document '"+vm.id()+"' already exists."});
+            vm.existingContent(doc.data);
+            vm.existingContentType(vm.contentType());
+            vm.existingId(vm.id());
+            m.route(m.route());
+          }, function(){put();});
+      } else {
+        put();
+      }
     };
-    this.cancel = function(){
-      vm.state = "view";
-      vm.editor.setReadOnly(true);
-      m.route(m.route());
+    vm.delete = function(){
+      var msg = "Do you want to delete document '"+vm.id()+"'?";
+      if (confirm(msg)) {
+        Doc.delete(vm.id()).then(function(){
+          LS.flash({type: "success", content: "Document '"+vm.id()+"' deleted successfully."});
+          m.route("/info");
+        });
+      } else {
+        m.route("/document/view/"+vm.id());
+      }
     };
-    this.tools = function(){
-      switch (vm.state){
+    vm.cancel = function(){
+      if (vm.action === "create"){
+        m.route("/info");
+      } else {
+        m.route("/document/view/"+vm.id());
+      }
+    };
+    vm.tools = function(){
+      switch (vm.action){
         case "view":
           return [
-            {title: "Edit", icon: "edit", action: vm.edit}
+            {title: "Edit", icon: "edit", action: vm.edit},
+            {title: "Delete", icon: "trash", action: vm.delete}
           ];
         default:
           return [
@@ -134,7 +194,23 @@
   };
   app.document.main = function(){
     var vm = app.document.vm;
-    var title = m("span",[vm.id, m("span.pull-right", vm.doc().tags.map(function(t){return u.taglink(t);}))]);
+    var titleLeft = vm.id();
+    var titleRight = m("span.pull-right", vm.tags.map(function(t){return u.taglink(t);}));
+    if (vm.action === "create"){
+        titleLeft = m("input", {
+          placeholder: "Specify document ID...",
+          onchange: m.withAttr("value", vm.id),
+          size: 35,
+          value: vm.id()
+        });
+        titleRight = m("span.pull-right", [m("input", {
+          placeholder: "Specify content type...",
+          onchange: m.withAttr("value", vm.contentType),
+          size: 20,
+          value: vm.contentType()
+        })]);
+    }
+    var title = m("span",[titleLeft, titleRight]);
     return m("div", [
       m(".row", [u.toolbar({links: vm.tools()})]),
       m(".row", [u.panel({title: title, content:app.editor.view(vm)})])
@@ -158,4 +234,7 @@
   u.layout(app.tags);
   u.layout(app.document);
 
-}());
+}());tags);
+  u.layout(app.document);
+
+}());));

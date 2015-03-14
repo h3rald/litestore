@@ -4,22 +4,24 @@
   var u = app.utils = {};
   
   /**
-   * @param mod a module
-   * @param vm a view-model (with init function)
-   * @param main the main view to load
+   * mod object:
+   * @property vm a view-model (with init function)
+   * @property main the main view to load
    */
   u.layout = function(mod) {
   
     mod.controller = mod.controller || function(){
       this.navbar = new app.navbar.controller();
       mod.vm.init();
+      mod.vm.flash = m.prop(u.flash());
+      LS.flash = m.prop();
     };
   
     mod.view = function(ctrl){
       return m("div", [
         m(".container", [
             app.navbar.view(ctrl.navbar),
-            m("main", [mod.main()])
+            m("main", [mod.vm.flash(), mod.main()])
           ])
       ]);
     };
@@ -37,12 +39,13 @@
   };
   u.dropdown = function(obj) {
     var el = "li.dropdown";
+    var icon = (obj.icon) ? m("i.fa."+obj.icon) : "";
     if (obj.active.length > 0) {
       el += "."+obj.active;
     }
     return m(el, [
       m("a.dropdown-toggle[href='#'][data-toggle='dropdown'][role='button'][aria-expanded='false']",
-      [m("span", obj.title+" "), m("span.caret")]),
+      [icon, m("span", " "+obj.title+" "), m("span.caret")]),
       m("ul.dropdown-menu[role='menu']", 
       obj.links.map(function(e){
         return m("li", 
@@ -55,7 +58,7 @@
   };
 
   u.doclink = function(id) {
-    return m("a", {href: "/document/"+id, config: m.route}, id);
+    return m("a", {href: "/document/view/"+id, config: m.route}, id);
   };
 
   u.date = function(date) {
@@ -72,18 +75,31 @@
       })  
     );
   };
+  
+  u.flash = function(){
+    if (LS.flash()){
+      return m(".row.alert.alert-dismissible.alert-"+LS.flash().type, [
+        m("button.close[data-dismiss='alert']", m.trust("&times;")),
+        LS.flash().content]);
+    } else {
+      return "";
+    }
+  };
 
-  u.getContentType = function(doc){
+  u.setContentType = function(doc, contentType){
     var type = "";
     var subtype = "";
-    doc.tags.forEach(function(tag){
-      var t = tag.match(/^\$type:(.+)/);
-      var s = tag.match(/^\$subtype:(.+)/);
-      if (t) type = t[1];
-      if (s) subtype = s[1];
-    });
+    if (doc.tags && doc.tags.length > 0) {
+      doc.tags.forEach(function(tag){
+        var t = tag.match(/^\$type:(.+)/);
+        var s = tag.match(/^\$subtype:(.+)/);
+        if (t) type = t[1];
+        if (s) subtype = s[1];
+      });
+      contentType = type+"/"+subtype;
+    }
     return function(xhr) {
-      xhr.setRequestHeader("Content-Type", type+"/"+subtype);
+      xhr.setRequestHeader("Content-Type", contentType);
     };
   };
 }());

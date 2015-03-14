@@ -52,6 +52,46 @@ proc openDatastore*(file:string): Datastore =
 proc hasMirror(store: Datastore): bool =
   return store.mirror.len > 0
 
+# Manage Tags
+
+proc createTag*(store: Datastore, tagid, documentid: string, system=false) =
+  if tagid.match(PEG_USER_TAG) or system and tagid.match(PEG_TAG):
+    store.db.exec(SQL_INSERT_TAG, tagid, documentid)
+  else:
+    raise newException(EInvalidTag, "Invalid Tag: $1" % tagid)
+
+proc destroyTag*(store: Datastore, tagid, documentid: string, system=false): int64 =
+  if tagid.match(PEG_USER_TAG) or system and tagid.match(PEG_TAG):
+    return store.db.execAffectedRows(SQL_DELETE_TAG, tagid, documentid)
+  else:
+    raise newException(EInvalidTag, "Invalid Tag: $1" % tagid)
+
+proc retrieveTag*(store: Datastore, id: string, options: QueryOptions = newQueryOptions()): string =
+  var options = options
+  options.single = true
+  var query = prepareSelectTagsQuery(options)
+  var raw_tag = store.db.getRow(query.sql, id)
+  return $(%[("id", %raw_tag[0]), ("documents", %(raw_tag[1].parseInt))])
+
+proc retrieveTags*(store: Datastore, options: QueryOptions = newQueryOptions()): string =
+  var query = prepareSelectTagsQuery(options)
+  var raw_tags = store.db.getAllRows(query.sql)
+  var tags = newSeq[JsonNode](0)
+  for tag in raw_tags:
+    tags.add(%[("id", %tag[0]), ("documents", %(tag[1].parseInt))])
+  return $(%tags)
+
+proc countTags*(store: Datastore): int64 =
+  return store.db.getRow(SQL_COUNT_TAGS)[0].parseInt
+
+proc retrieveTagsWithTotals*(store: Datastore): JsonNode =
+  var data = store.db.getAllRows(SQL_SELECT_TAGS_WITH_TOTALS)
+  var tag_array = newSeq[JsonNode](0)
+  for row in data:
+    var obj = newJObject()
+    obj[row[0]] = %row[1].parseInt
+    tag_array.add(obj)
+  return %tag_array
 
 # Manage Documents
 
@@ -82,8 +122,10 @@ proc createDocument*(store: Datastore,  id="", rawdata = "", contenttype = "text
       store.db.exec(SQL_INSERT_SEARCHCONTENT, id, data)
     store.addDocumentSystemTags(id, contenttype)
     if store.hasMirror:
+      # Add dir tag
+      store.createTag("$dir:"&store.mirror, id, true)
       var filename = id.unixToNativePath
-      if fileExists(filename):
+      if not fileExists(filename):
         var file = filename.open(fmWrite)
         file.write(rawdata)
       else:
@@ -150,47 +192,6 @@ proc retrieveRawDocuments*(store: Datastore, options: QueryOptions = newQueryOpt
 
 proc countDocuments*(store: Datastore): int64 =
   return store.db.getRow(SQL_COUNT_DOCUMENTS)[0].parseInt
-
-# Manage Tags
-
-proc createTag*(store: Datastore, tagid, documentid: string, system=false) =
-  if tagid.match(PEG_USER_TAG) or system and tagid.match(PEG_TAG):
-    store.db.exec(SQL_INSERT_TAG, tagid, documentid)
-  else:
-    raise newException(EInvalidTag, "Invalid Tag: $1" % tagid)
-
-proc destroyTag*(store: Datastore, tagid, documentid: string, system=false): int64 =
-  if tagid.match(PEG_USER_TAG) or system and tagid.match(PEG_TAG):
-    return store.db.execAffectedRows(SQL_DELETE_TAG, tagid, documentid)
-  else:
-    raise newException(EInvalidTag, "Invalid Tag: $1" % tagid)
-
-proc retrieveTag*(store: Datastore, id: string, options: QueryOptions = newQueryOptions()): string =
-  var options = options
-  options.single = true
-  var query = prepareSelectTagsQuery(options)
-  var raw_tag = store.db.getRow(query.sql, id)
-  return $(%[("id", %raw_tag[0]), ("documents", %(raw_tag[1].parseInt))])
-
-proc retrieveTags*(store: Datastore, options: QueryOptions = newQueryOptions()): string =
-  var query = prepareSelectTagsQuery(options)
-  var raw_tags = store.db.getAllRows(query.sql)
-  var tags = newSeq[JsonNode](0)
-  for tag in raw_tags:
-    tags.add(%[("id", %tag[0]), ("documents", %(tag[1].parseInt))])
-  return $(%tags)
-
-proc countTags*(store: Datastore): int64 =
-  return store.db.getRow(SQL_COUNT_TAGS)[0].parseInt
-
-proc retrieveTagsWithTotals*(store: Datastore): JsonNode =
-  var data = store.db.getAllRows(SQL_SELECT_TAGS_WITH_TOTALS)
-  var tag_array = newSeq[JsonNode](0)
-  for row in data:
-    var obj = newJObject()
-    obj[row[0]] = %row[1].parseInt
-    tag_array.add(obj)
-  return %tag_array
 
 proc importDir*(store: Datastore, dir: string) =
   # TODO: Only allow directory names (not paths)?

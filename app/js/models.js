@@ -37,8 +37,15 @@
       }).then(doc);
   };
   
-  Doc.put = function(doc){
-    xhrcfg = u.getContentType(doc);
+  Doc.delete = function(id){
+    return m.request({
+        method: "DELETE", 
+        url: "/v1/docs/"+id
+      });
+  };
+  
+  Doc.put = function(doc, contentType){
+    xhrcfg = u.setContentType(doc, contentType);
     return m.request({
         method: "PUT", 
         url: "/v1/docs/"+doc.id,
@@ -46,5 +53,5 @@
         serialize: function(data){return data;},
         config: xhrcfg
       });
-    };
+  };
 }());
