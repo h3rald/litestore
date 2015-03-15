@@ -6,7 +6,8 @@
   // Info Module
   app.info = {vm: {}};
   app.info.vm.init = function() {
-    this.content = Info.get();
+    var vm = this;
+    vm.content = Info.get().then(function(info){return info;}, vm.flashError);
   };
   app.info.main = function(){
     var vm = app.info.vm;

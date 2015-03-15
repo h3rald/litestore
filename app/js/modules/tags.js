@@ -6,8 +6,9 @@
   // Tags Module
   app.tags = {vm: {}};
   app.tags.vm.init = function(){
-    this.id = m.route.param("id");
-    this.docs = Doc.getByTag(this.id); 
+    var vm= this;
+    vm.id = m.route.param("id");
+    vm.docs = Doc.getByTag(vm.id).then(function(docs){return docs}, vm.flashError); 
   };
   app.tags.main = function(){
     var docs = app.tags.vm.docs();

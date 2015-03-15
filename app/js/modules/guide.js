@@ -8,7 +8,7 @@
   app.guide.vm.init = function() {
     var vm = this;
     vm.id = m.prop(m.route.param("id"));
-    vm.content = Page.get(vm.id());
+    vm.content = Page.get(vm.id()).then(function(content){return content}, vm.flashError);
     vm.edit = function(){
       m.route("/document/edit/app/md/"+vm.id()+".md");
     };
