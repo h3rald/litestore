@@ -8,7 +8,8 @@ import
   json,
   pegs, 
   strtabs,
-  base64
+  base64,
+  logging
 import
   lib/types,
   lib/utils, 
@@ -31,7 +32,11 @@ when isMainModule:
   try:
     LS.store = LS.file.openDatastore()
     if LS.mirror:
-      LS.store.mountDir(LS.directory)
+      try:
+        LS.store.mountDir(LS.directory)
+      except:
+        echo(getCurrentExceptionMsg())
+        fail(202, "Unable to mount directory '$1'" % [LS.directory])
   except:
     fail(201, "Unable to open datastore '$1'" % [LS.file])
   case LS.operation:

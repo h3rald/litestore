@@ -50,11 +50,11 @@ type
   ]
 
 let PEG_TAG* = peg"""
-^\$? [a-zA-Z0-9_\-?~:.@#^!]+$
+^\$? [a-zA-Z0-9_\-?~:.@#^!+]+$
 """
 
 let PEG_USER_TAG* = peg"""
-^[a-zA-Z0-9_\-?~:.@#^!]+$
+^[a-zA-Z0-9_\-?~:.@#^!+]+$
 """
 
 let PEG_URL* = peg"""

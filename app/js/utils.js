@@ -27,7 +27,9 @@
       return m("div", [
         m(".container", [
             app.navbar.view(ctrl.navbar),
-            m("main", [mod.vm.flash(), mod.main()])
+            m("main", [mod.vm.flash(), mod.main()]),
+            m("footer.footer.container.center", [
+              m("p")])
           ])
       ]);
     };

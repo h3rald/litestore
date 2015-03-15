@@ -7,16 +7,12 @@
   app.editor.config = function(obj){
     return function(element, isInitialized, context){
       var e = element;
-      var setHeight = function(){
-        e.style.height = (window.innerHeight-210)+"px";
-      };
 
       if (!isInitialized) {
         var editor = ace.edit(e);
         obj.editor = editor;
         e.style.position = "relative";
-        setHeight();
-        window.addEventListener("resize", setHeight);
+        editor.setOptions({ maxLines: Infinity });
         editor.setReadOnly(obj.readOnly);
         editor.setShowPrintMargin(false);
         editor.setTheme("ace/theme/github");
@@ -35,4 +31,4 @@
     return m(".editor.panel.panal-default", {config: app.editor.config(obj)}, obj.content);
   };
   
-}());));
+}());

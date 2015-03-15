@@ -18,7 +18,7 @@ proc parseQueryOption(fragment: string, options: var QueryOptions) =
   if pair.len < 2 or pair[1] == "":
     raise newException(EInvalidRequest, "Invalid query string fragment '$1'" % fragment)
   try:
-    pair[1] = pair[1].decodeURL
+    pair[1] = pair[1].replace("+", "%2B").decodeURL
   except:
     raise newException(EInvalidRequest, "Unable to decode query string fragment '$1'" % fragment)
   case pair[0]:
@@ -160,7 +160,7 @@ proc getRawDocuments(LS: LiteStore, options: QueryOptions = newQueryOptions()): 
       content["search"] = %(options.search.decodeURL)
     if options.tags != "":
       content["tags"] = newJArray()
-      for tag in options.tags.decodeURL.split(","):
+      for tag in options.tags.replace("+", "%2B").decodeURL.split(","):
         content["tags"].add(%tag)
     if orig_limit > 0:
       content["limit"] = %orig_limit

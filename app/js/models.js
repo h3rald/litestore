@@ -46,6 +46,7 @@
   
   Doc.put = function(doc, contentType){
     xhrcfg = u.setContentType(doc, contentType);
+    console.log("Doc.put - Saving Document:", doc);
     return m.request({
         method: "PUT", 
         url: "/v1/docs/"+doc.id,
