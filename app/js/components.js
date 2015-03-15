@@ -35,4 +35,4 @@
     return m(".editor.panel.panal-default", {config: app.editor.config(obj)}, obj.content);
   };
   
-}());
+}());));

@@ -126,7 +126,8 @@ proc createDocument*(store: Datastore,  id="", rawdata = "", contenttype = "text
       store.createTag("$dir:"&store.mirror, id, true)
       var filename = id.unixToNativePath
       if not fileExists(filename):
-        var file = filename.open(fmWrite)
+        filename.parentDir.createDir
+        var file = filename.open(fmReadWrite)
         file.write(rawdata)
       else:
         raise newException(EFileExists, "File already exists: $1" % filename)

@@ -13,8 +13,14 @@
     mod.controller = mod.controller || function(){
       this.navbar = new app.navbar.controller();
       mod.vm.init();
+      // Display flash if set on previous route
       mod.vm.flash = m.prop(u.flash());
       LS.flash = m.prop();
+      mod.vm.showFlash = function(obj){
+        LS.flash(obj);
+        mod.vm.flash(u.flash());
+        LS.flash = m.prop();
+      };
     };
   
     mod.view = function(ctrl){
