@@ -235,11 +235,12 @@ proc  deleteDir*(store: Datastore, dir: string) =
     store.db.exec(SQL_DELETE_SEARCHCONTENTS_BY_TAG, "$dir:"&dir)
     store.db.exec(SQL_DELETE_TAGS_BY_TAG, "$dir:"&dir)
 
-proc mountDir*(store: var Datastore, dir:string) =
+proc mountDir*(store: var Datastore, dir:string, reset=false) =
   if not dir.dirExists:
     raise newException(EDirectoryNotFound, "Directory '$1' not found." % dir)
-  store.deleteDir(dir)
-  store.importDir(dir)
+  if reset:
+    store.deleteDir(dir)
+    store.importDir(dir)
   store.mirror = dir
 
 proc destroyDocumentsByTag*(store: Datastore, tag: string): int64 =

@@ -21,13 +21,14 @@ And yes, you can even store the code of your client-side application inside the 
 
 #### Document Tagging
 
-#### Fulltext Search
+#### Full-text Search
 
-#### REST HTTP API
+#### RESTful HTTP API
 
 #### Directory Bulk Import/Export
 
+#### Directory Mirroring
+
 ### Architecture
 
--> ![LiteStore Architecture](images/litestore_arch.png) <-
-
+![LiteStore Architecture](images/litestore_arch.png)

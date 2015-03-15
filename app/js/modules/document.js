@@ -21,7 +21,7 @@
       vm.doc.then(function(doc){
         vm.content = doc.data;
         vm.tags = doc.tags;
-      });
+      }, vm.flashError);
     };
     vm.tags = [];
     switch (vm.action) {
@@ -70,9 +70,7 @@
         Doc.put(doc, vm.contentType()).then(function(){
           LS.flash({type: "success", content: "Document saved successfully."});
           m.route("/document/view/"+id);
-        }, function(obj){
-          vm.showFlash({type: "warning", content: obj.error});
-        });
+        }, vm.flashError);
       };
       if (vm.action === "create") {
         doc.id = "app/"+vm.id();
@@ -93,7 +91,7 @@
         Doc.delete(vm.id()).then(function(){
           LS.flash({type: "success", content: "Document '"+vm.id()+"' deleted successfully."});
           m.route("/info");
-        });
+        }, vm.flashError);
       } else {
         m.route("/document/view/"+vm.id());
       }
@@ -126,13 +124,13 @@
     var titleRight = m("span.pull-right", vm.tags.map(function(t){return u.taglink(t);}));
     if (vm.action === "create"){
         titleLeft = m("span", ["app/",m("input", {
-          placeholder: "Specify document ID...",
+          placeholder: "Document ID",
           onchange: m.withAttr("value", vm.id),
           size: 35,
           value: vm.id()
         })]);
         titleRight = m("span.pull-right", [m("input", {
-          placeholder: "Specify content type...",
+          placeholder: "Content Type",
           onchange: m.withAttr("value", vm.contentType),
           size: 25,
           value: vm.contentType()
@@ -140,6 +138,25 @@
     }
     var title = m("span",[titleLeft, titleRight]);
     return m("div", [
+      m(".row", [u.toolbar({links: vm.tools()})]),
+      m(".row", [u.panel({title: title, content:app.editor.view(vm)})])
+    ]);
+  };
+  
+    u.layout(app.document);
+}()););
+  };
+  
+    u.layout(app.document);
+}());leLeft, titleRight]);
+    return m("div", [
+      m(".row", [u.toolbar({links: vm.tools()})]),
+      m(".row", [u.panel({title: title, content:app.editor.view(vm)})])
+    ]);
+  };
+  
+    u.layout(app.document);
+}()); return m("div", [
       m(".row", [u.toolbar({links: vm.tools()})]),
       m(".row", [u.panel({title: title, content:app.editor.view(vm)})])
     ]);

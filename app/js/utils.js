@@ -21,6 +21,9 @@
         mod.vm.flash(u.flash());
         LS.flash = m.prop();
       };
+      mod.vm.flashError = function(obj){
+        mod.vm.showFlash({type: "warning", content: obj.error});
+      };
     };
   
     mod.view = function(ctrl){

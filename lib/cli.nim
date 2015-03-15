@@ -19,6 +19,7 @@ var
   readonly = false
   logLevel = lvlInfo
   mirror = false
+  reset = false
   
 var f = newStringStream(cfgfile)
 if f != nil:
@@ -59,16 +60,17 @@ let
     LS [-p:<port> -a:<address>] [<file>] [--import:<directory> | --export:<directory> | --delete:<directory>] 
 
   Options:
-    -a, --address     Specify address (default: 0.0.0.0).
-    -d, --delete      Delete the previously-imported specified directory.
-    --export          Export the previously-imported specified directory to the current directory.
-    -h, --help        Display this message.
-    --import          Import the specified directory (Store all its contents).
-    -l, --log         Specify the log level: debug, info, warn, error, fatal, none (default: info)
-    -p, --port        Specify port number (default: 9500).
-    -r, --readonly    Allow only data retrieval operations.
-    -m, --mirror      Import the specified directory, run server and mirror database changes to filesystem.
-    -v, --version     Display the program version.
+    -a, --address       Specify address (default: 127.0.0.1).
+    -d, --delete        Delete the previously-imported specified directory.
+    --export            Export the previously-imported specified directory to the current directory.
+    -h, --help          Display this message.
+    --import            Import the specified directory (Store all its contents).
+    -l, --log           Specify the log level: debug, info, warn, error, fatal, none (default: info)
+    -p, --port          Specify port number (default: 9500).
+    -r, --readonly      Allow only data retrieval operations.
+    -m, --mirror        Import the specified directory, run server and mirror database changes to filesystem.
+    --reset             If --mirror is specified, resets (deletes) any previously imported directory data.
+    -v, --version       Display the program version.
 """
 
 for kind, key, val in getOpt():
@@ -101,6 +103,8 @@ for kind, key, val in getOpt():
           operation = opRun
           directory = val
           mirror = true
+        of "reset":
+          reset = true
         of "export":
           if val == "":
             fail(105, "Directory to export not specified.")
@@ -136,6 +140,7 @@ LS.readonly = readonly
 LS.appname = appname
 LS.favicon = favicon
 LS.mirror = mirror
+LS.reset = reset
 
 # Initialize loggers
 

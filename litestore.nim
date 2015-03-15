@@ -33,7 +33,7 @@ when isMainModule:
     LS.store = LS.file.openDatastore()
     if LS.mirror:
       try:
-        LS.store.mountDir(LS.directory)
+        LS.store.mountDir(LS.directory, LS.reset)
       except:
         echo(getCurrentExceptionMsg())
         fail(202, "Unable to mount directory '$1'" % [LS.directory])
