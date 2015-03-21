@@ -1882,7 +1882,10 @@ span.label-primary a:hover {
   text-decoration: none;
 }
 .toolbar {
-  margin: 4px 0;
+  margin: 5px 0;
+}
+.search-result {
+  margin: 5px 0;
 }
 .note {
   -moz-background-clip: padding;

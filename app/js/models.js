@@ -29,6 +29,16 @@
       }).then(docs);
   };
   
+  Doc.search = function(search, offset, limit){
+    offset = offset || 0;
+    limit = limit || 10;
+    var docs = m.prop("");
+    return m.request({
+        method: "GET", 
+        url: "/v1/docs?contents=false&search="+search+"&limit="+limit+"&offset="+offset,
+      }).then(docs);
+  };
+
   Doc.get = function(id) {
     var doc = m.prop("");
     return m.request({

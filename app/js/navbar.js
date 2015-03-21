@@ -9,18 +9,19 @@
     },
     vm: {
       init: function(){
-        this.info = Info.get();
+        var vm = this;
+        vm.info = Info.get();
         this.activelink = function(url){
           return (m.route().match(new RegExp("^\/"+url))) ? "active" : "";
         };
-        this.guidelinks = [
+        vm.guidelinks = [
           {path: "/guide/overview", title: "Overview"},
           {path: "/guide/getting-started", title: "Getting Started"},
           {path: "/guide/usage", title: "Usage"},
           {path: "/guide/api", title: "API"},
           {path: "/guide/credits", title: "Credits"}
         ];
-        this.taglinks = function(info){ 
+        vm.taglinks = function(info){ 
           return info.tags.map(function(tag){
             var key = Object.keys(tag)[0];
             return {path: "/tags/"+key, title: key+" ("+tag[key]+")"};
@@ -44,6 +45,7 @@
   app.navheader = {
     controller: function() {},
     view: function(ctrl) {
+      var vm =  app.navlinks.vm;
       return m(".navbar-header", [
         m("button.navbar-toggle.collapsed[data-toggle='collapse'][data-target='#nav-collapse'][type='button']", [
           m("span.sr-only", "Toggle navigation"),
@@ -57,13 +59,45 @@
   };
   
   app.searchbox = {
-    controller: function() {},
+    controller: function() {
+      app.searchbox.vm.init();
+    },
+    vm: {
+      init: function(){
+        var vm =  this;
+        vm.query = m.prop("");
+        vm.keySearch = function(el, isInitialized, context){
+          $(el).keyup(function(event){
+            m.redraw.strategy("none");
+            vm.query($(el).val());
+            if (event.which == 13){
+              vm.search();
+            }
+          });
+        };
+        vm.search = function(){
+          m.route("/search?q="+vm.query());
+        };
+      }
+    },
     view: function(ctrl) {
+      var vm = app.searchbox.vm;
       return m("form.navbar-form.navbar-right[role='search']", [
           m(".input-group", [
-            m("input.form-control[type='text'i][placeholder='Search...']"),
+            m("input.form-control", {
+              type:"text", 
+              placeholder:"Search...",
+              onchange: m.withAttr("value", vm.query),
+              config: vm.keySearch,
+              value: vm.query()
+            }),
             m("span.input-group-btn", 
-              m("button.btn.btn-default[type='button']", [m("i.fa.fa-search")]))
+              m("button.btn.btn-default",
+                {
+                  type: "button",
+                  onclick: vm.search
+                }, 
+                [m("i.fa.fa-search")]))
           ])
         ]
       );
@@ -83,6 +117,19 @@
           m("#nav-collapse.collapse.navbar-collapse", [
             app.navlinks.view(ctrl.navlinks),
             app.searchbox.view(ctrl.searchbox)
+          ])
+        ])  
+      ]);
+    }
+  };
+}());    ])  
+      ]);
+    }
+  };
+}());   ]);
+    }
+  };
+}()););());;);());x)
           ])
         ])  
       ]);

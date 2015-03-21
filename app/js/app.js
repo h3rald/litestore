@@ -11,6 +11,7 @@
     "/tags/:id": app.tags,
     "/document/:action/:id...": app.document,
     "/guide/:id": app.guide,
-    "/new": app.create
+    "/new": app.create,
+    "/search": app.search
   });
 }());

@@ -39,15 +39,79 @@
   };
 
   u.panel = function(obj){
-    return m(".panel.panel-default", [
-      m(".panel-heading", [
+    var title = "";
+    var footer = "";
+    if (obj.title){
+      title = m(".panel-heading", [
         m("h2.panel-title", [obj.title])  
-      ]),
+      ]);
+    }
+    if (obj.footer){
+      footer = m(".panel-footer", obj.footer);
+    }
+    return m(".panel.panel-default", [
+      title,
       m(".panel-body", [
         obj.content
-      ])
+      ]),
+      footer
     ]);
   };
+  
+  /**
+   * - total
+   * - limit
+   * - offset
+   * - query
+   */
+  u.paginator = function(obj) {
+    var max_page = Math.ceil(obj.total/obj.limit)-1;
+    var c_page = Math.ceil(obj.offset/obj.limit);
+    var page = function(n, sign, disabled){
+      var klass;
+      if (disabled) {
+        klass = "disabled";
+      } else {
+        klass = (n === c_page) ? "active" : "inactive";
+      }
+      var first = (n === 0);
+      var last = (n == max_page);
+      var offset = obj.limit * n;
+      sign = sign || n+1;  
+      return m("li", {class: klass},
+          [m("a", {
+                    href: "/search?q="+obj.query+"&offset="+offset+"&limit="+obj.limit,
+                    config: m.route
+                  }, [m.trust(sign)]
+          )]
+        );
+    };
+    var pages = [];
+    var prev;
+    var next;
+    for (var i=0; i<=max_page; i++){
+      var p;
+      switch(i){
+        case c_page-1:
+          prev = page(i, "&laquo;");
+          break;
+        case c_page+1:
+          next = page(i, "&raquo;");
+          break;
+      }
+      if (c_page === 0){
+          prev = page(0, "&laquo;", true);
+      }
+      if (c_page === max_page){
+          next = page(max_page, "&raquo;", true);
+      }
+      pages.push(page(i));
+    }
+    pages.unshift(prev);
+    pages.push(next);
+    return m("nav", [m("ul.pagination", pages)]);
+  };
+  
   u.dropdown = function(obj) {
     var el = "li.dropdown";
     var icon = (obj.icon) ? m("i.fa."+obj.icon) : "";
@@ -113,4 +177,5 @@
       xhr.setRequestHeader("Content-Type", contentType);
     };
   };
+}());};
 }());
