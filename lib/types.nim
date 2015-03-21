@@ -12,7 +12,7 @@ type
   Datastore* = object
     db*: TDbConn
     path*: string
-    mirror*: string
+    mount*: string
   QueryOptions* = object
     select*: string
     single*:bool         
@@ -34,7 +34,7 @@ type
     operation*: Operation
     directory*: string
     file*: string
-    mirror*: bool
+    mount*: bool
     readonly*: bool
     appname*: string
     appversion*: string

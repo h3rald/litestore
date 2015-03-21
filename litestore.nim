@@ -31,7 +31,7 @@ when isMainModule:
       fail(200, "Unable to create datastore '$1'" % [LS.file])
   try:
     LS.store = LS.file.openDatastore()
-    if LS.mirror:
+    if LS.mount:
       try:
         LS.store.mountDir(LS.directory, LS.reset)
       except:

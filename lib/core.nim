@@ -45,12 +45,12 @@ proc openDatastore*(file:string): Datastore =
   try:
     result.db = db.open(file, "", "", "")
     result.path = file
-    result.mirror = ""
+    result.mount = ""
   except:
     raise newException(EDatastoreUnavailable, "Datastore '$1' cannot be opened." % file)
 
 proc hasMirror(store: Datastore): bool =
-  return store.mirror.len > 0
+  return store.mount.len > 0
 
 # Manage Tags
 
@@ -123,7 +123,7 @@ proc createDocument*(store: Datastore,  id="", rawdata = "", contenttype = "text
     store.addDocumentSystemTags(id, contenttype)
     if store.hasMirror:
       # Add dir tag
-      store.createTag("$dir:"&store.mirror, id, true)
+      store.createTag("$dir:"&store.mount, id, true)
       var filename = id.unixToNativePath
       if not fileExists(filename):
         filename.parentDir.createDir
@@ -241,7 +241,7 @@ proc mountDir*(store: var Datastore, dir:string, reset=false) =
   if reset:
     store.deleteDir(dir)
     store.importDir(dir)
-  store.mirror = dir
+  store.mount = dir
 
 proc destroyDocumentsByTag*(store: Datastore, tag: string): int64 =
   result = 0
