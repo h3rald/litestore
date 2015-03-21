@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-./litestore --mirror:app
+./litestore --mount:app

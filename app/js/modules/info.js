@@ -17,10 +17,8 @@
           m("dd", info.version),
           m("dt", "Size"),
           m("dd", info.size),
-          m("dt", "Loaded directory"),
+          m("dt", "Mounted directory"),
           m("dd", info.directory),
-          m("dt", "Mirroring"),
-          m("dd", info.mirror),
           m("dt", "Read-only"),
           m("dd", info.read_only),
           m("dt", "Total Documents"),
@@ -36,6 +34,12 @@
     var v = m(".row", [
       m(".col-md-6", [u.panel({title: "Datastore Information", content: infolist})]),
       m(".col-md-6", [u.panel({title: "Tags", content: taglist})])
+    ]);
+    return v;
+  };
+  u.layout(app.info);
+
+}());nt: taglist})])
     ]);
     return v;
   };
