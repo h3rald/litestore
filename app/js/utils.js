@@ -3,6 +3,42 @@
   var app = window.LS || (window.LS = {});
   var u = app.utils = {};
   
+  
+  u.markdown = function(s) {
+    var hs = new marked.Renderer();
+    var md = new marked.Renderer();
+    hs.blockquote = function(q){
+      var lines = q.split("\n");
+      if (lines[0]){
+        var r = /^<p>\s*%(.+?)%\s*/;
+        var matches = lines[0].match(r);
+        if (matches) {
+          var klass = matches[1];
+          if (klass){
+            return "<div class=\""+klass+"\">\n"+q.replace(r, "<p>")+"\n</div>";
+          }
+        }
+      }
+      return md.blockquote(q);
+    };
+    hs.link = function(href, title, text){
+      var components = href.match(/^([a-z]+):(.+)$/);
+      if (components && components.length > 2){
+        var protocol = components[1];
+        var value = components[2];
+        if (protocol === "class"){
+          return "<span class=\""+value+"\">"+text+"</span>";
+        } else if (protocol === "id"){
+          return "<a id=\""+value+"\">"+text+"</a>";
+        } else if (protocol === "abbr"){
+          return "<abbr title=\""+value+"\">"+text+"</abbr>";
+        }
+      }
+      return md.link(href, title, text);
+    };
+    return marked(s, {renderer: hs});
+  };
+  
   /**
    * mod object:
    * @property vm a view-model (with init function)

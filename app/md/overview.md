@@ -2,6 +2,11 @@
 
 LiteStore is a self-contained, RESTful, multi-format document store written in [Nim](http://www.nim-lang.org). It aims to be a very simple and lightweight backend suitable for prototypes and testing REST APIs.
 
+> %note%
+> Note
+> 
+> This is a note.
+
 ### Rationale 
 
 If you ever wanted to build a simple single-page application in your favorite framework, just to try something out or as a prototype, you inevitably had to answer the question _"What backend should I use?"_

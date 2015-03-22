@@ -10,7 +10,7 @@
         method: "GET", 
         url: "md/"+id+".md",
         deserialize: function(value) {return value;}
-      }).then(function(content){ return marked(content);});
+      }).then(function(content){ return u.markdown(content);});
   };
   
   Info.get = function(){
