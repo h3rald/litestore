@@ -93,6 +93,9 @@
       }
     };
     vm.tools = function(){
+      if (app.system().read_only) {
+        return [];
+      }
       switch (vm.action){
         case "view":
           return [

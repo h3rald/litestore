@@ -5,13 +5,9 @@
 
   // Info Module
   app.info = {vm: {}};
-  app.info.vm.init = function() {
-    var vm = this;
-    vm.content = Info.get().then(function(info){return info;}, vm.flashError);
-  };
+  app.info.vm.init = function() {};
   app.info.main = function(){
-    var vm = app.info.vm;
-    var info = vm.content();
+    var info = app.system();
     var infolist = m("dl", [
           m("dt", "Version"),
           m("dd", info.version),

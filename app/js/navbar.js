@@ -31,14 +31,17 @@
     },
     view: function(ctrl){
       var vm = app.navlinks.vm;
-      return m("ul.nav.navbar-nav", [
+      var links = [
         m("li", {class: vm.activelink("info")}, [m("a", {href: "/info", config: m.route}, 
             [m("i.fa.fa-info-circle"), " Info"])]),
         u.dropdown({title: "Guide", icon:"fa-book", links: vm.guidelinks, active: vm.activelink("guide")}),
-        u.dropdown({title: "Tags", icon:"fa-tag", links: vm.taglinks(vm.info()), active: vm.activelink("tags")}),
-        m("li", {class: vm.activelink("new")}, [m("a", {href: "/document/create/", config: m.route}, 
-            [m("i.fa.fa-plus-circle"), " New"])])
-      ]);
+        u.dropdown({title: "Tags", icon:"fa-tag", links: vm.taglinks(vm.info()), active: vm.activelink("tags")})];
+      if (!app.system().read_only) {
+        links.push(m("li", 
+          {class: vm.activelink("new")}, [m("a", {href: "/document/create/", config: m.route}, 
+            [m("i.fa.fa-plus-circle"), " New"])]));
+      }
+      return m("ul.nav.navbar-nav", links);
     }
   };
   
@@ -122,4 +125,4 @@
       ]);
     }
   };
-}()); 
+}());
