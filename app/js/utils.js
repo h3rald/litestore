@@ -165,7 +165,14 @@
   };
 
   u.taglink = function(tag) {
-    return m("span.label.label-primary", [m("a", {href: "/tags/"+tag, config:m.route}, tag)]);
+    return m("span.label.label-primary", 
+      [m("i.fa.fa-tag"), " ", m("a", {href: "/tags/"+tag, config:m.route}, tag)]);
+  };
+  
+  u.tagbutton = function(tag, n) {
+    return m("a", 
+      {href: "/tags/"+tag, config:m.route},
+      [m("i.fa.fa-tag"), " "+tag+" ", m("span.badge", n)]);
   };
 
   u.doclink = function(id) {

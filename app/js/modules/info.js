@@ -8,23 +8,26 @@
   app.info.vm.init = function() {};
   app.info.main = function(){
     var info = app.system();
-    var infolist = m("dl", [
-          m("dt", "Version"),
-          m("dd", info.version),
-          m("dt", "Size"),
-          m("dd", info.size),
-          m("dt", "Mounted directory"),
-          m("dd", info.directory),
-          m("dt", "Read-only"),
-          m("dd", info.read_only),
-          m("dt", "Total Documents"),
-          m("dd", info.total_documents),
-          m("dt", "Total Tags"),
-          m("dd", info.total_tags)
+    var li = function(title, content, hide) {
+      if (hide) {
+        return "";
+      } else {
+        return m("li", [m("span", title+": "), m("strong", content)]);
+      }
+    };
+    var readonly = info.read_only ? m("span.label.label-success", "Yes") : m("span.label.label-danger", "No") 
+    var infolist = m("ul.list-unstyled", [
+          li("Version", info.version),
+          li("Size", info.size),
+          li("Mounted Directory", info.directory, info.directory.length===0),
+          li("Read-Only", readonly),
+          li("Total Documents", m("span.badge", info.total_documents)),
+          li("Total Tags", m("span.badge", info.total_tags)),
     ]);
-    var taglist = m("ul", info.tags.map(function(tag){
+    var taglist = m("ul.list-unstyled", info.tags.map(function(tag){
         var key = Object.keys(tag)[0];
-        return m("li", [m("a", {href: "/tags/"+key, config: m.route}, key+" ("+tag[key]+")")]);
+        return m("li", [u.tagbutton(key, tag[key])]);
+        //return m("li", [m("a", {href: "/tags/"+key, config: m.route}, key+" ("+tag[key]+")")]);
         })
       );
     var v = m(".row", [
