@@ -39,10 +39,4 @@
   };
   u.layout(app.info);
 
-}());nt: taglist})])
-    ]);
-    return v;
-  };
-  u.layout(app.info);
-
-}());
+}())

@@ -72,4 +72,4 @@ proc ctJsonHeader*(): StringTableRef =
   return CT_JSON.newStringTable
 
 proc newQueryOptions*(): QueryOptions =
-  return QueryOptions(select: "*", single: false, limit: 0, offset: 0, orderby: "", tags: "", search: "")
+  return QueryOptions(select: "id, data, content_type, binary, searchable, created, modified", single: false, limit: 0, offset: 0, orderby: "", tags: "", search: "")

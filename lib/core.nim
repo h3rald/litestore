@@ -103,7 +103,7 @@ proc retrieveRawDocument*(store: Datastore, id: string, options: QueryOptions = 
   if  raw_document[0] == "":
     return ""
   else:
-    return $store.prepareJsonDocument(raw_document)
+    return $store.prepareJsonDocument(raw_document, options.select.split(", "))
 
 proc createDocument*(store: Datastore,  id="", rawdata = "", contenttype = "text/plain", binary = -1, searchable = 1): string =
   var id = id
@@ -119,7 +119,7 @@ proc createDocument*(store: Datastore,  id="", rawdata = "", contenttype = "text
   if res > 0:
     if binary <= 0 and searchable >= 0:
       # Add to search index
-      store.db.exec(SQL_INSERT_SEARCHCONTENT, id, data)
+      store.db.exec(SQL_INSERT_SEARCHCONTENT, id, data.stripXml)
     store.addDocumentSystemTags(id, contenttype)
     if store.hasMirror:
       # Add dir tag
@@ -127,8 +127,7 @@ proc createDocument*(store: Datastore,  id="", rawdata = "", contenttype = "text
       var filename = id.unixToNativePath
       if not fileExists(filename):
         filename.parentDir.createDir
-        var file = filename.open(fmReadWrite)
-        file.write(rawdata)
+        filename.writeFile(rawdata)
       else:
         raise newException(EFileExists, "File already exists: $1" % filename)
   return $store.retrieveRawDocument(id)
@@ -141,14 +140,11 @@ proc updateDocument*(store: Datastore, id: string, rawdata: string, contenttype 
     data = data.encode(data.len*2)
   var res = store.db.execAffectedRows(SQL_UPDATE_DOCUMENT, data, contenttype, binary, searchable, currentTime(), id)
   if res > 0:
-    #store.destroyDocumentSystemTags(id)
-    #store.addDocumentSystemTags(id, contenttype)
-    store.db.exec(SQL_UPDATE_SEARCHCONTENT, data, id)
+    store.db.exec(SQL_UPDATE_SEARCHCONTENT, data.stripXml, id)
     if store.hasMirror:
       var filename = id.unixToNativePath
       if fileExists(filename):
-        var file = filename.open(fmWrite)
-        file.write(rawdata)
+        filename.writeFile(rawdata)
       else:
         raise newException(EFileNotFound, "File not found: $1" % filename)
     return $store.retrieveRawDocument(id)
@@ -183,12 +179,12 @@ proc retrieveDocument*(store: Datastore, id: string, options: QueryOptions = new
     else:
       return (data: raw_document[1], contenttype: raw_document[2])
 
-proc retrieveRawDocuments*(store: Datastore, options: QueryOptions = newQueryOptions()): JsonNode =
+proc retrieveRawDocuments*(store: Datastore, options: var QueryOptions = newQueryOptions()): JsonNode =
   var select = prepareSelectDocumentsQuery(options)
   var raw_documents = store.db.getAllRows(select.sql)
   var documents = newSeq[JsonNode](0)
   for doc in raw_documents:
-    documents.add store.prepareJsonDocument(doc)
+    documents.add store.prepareJsonDocument(doc, options.select.split(", "))
   return %documents
 
 proc countDocuments*(store: Datastore): int64 =

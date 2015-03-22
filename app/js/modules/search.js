@@ -24,9 +24,9 @@
     var total = m("p.col-md-12", [m("strong", result.total), " hits"]);
     var resultPanel = function(res){
       var obj = {};
-      obj.title = res.id;
+      obj.title = m("a", {href: "/document/view/"+res.id, config: m.route}, [res.id]);
       obj.content = m("div", [
-        m("p", ["Created on: ", u.date(res.created)]),
+        m("p", [m.trust(res.highlight)]),
         m("p", res.tags.map(function(tag){
           return u.taglink(tag);
         }))
@@ -47,4 +47,4 @@
 
   u.layout(app.search);
 
-}());
+}())

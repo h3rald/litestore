@@ -19,25 +19,30 @@ proc selectDocumentsByTags(tags: string): string =
       raise newException(EInvalidTag, "Invalid tag '$1'" % tag)
     result = result & "AND id IN (" & select_tagged & tag & "\") "
    
-proc prepareSelectDocumentsQuery*(options: QueryOptions): string =
-  result = "SELECT " & options.select & " "
+proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
+  result = "SELECT "
   if options.search.len > 0:
+    if options.select != "COUNT(id)":
+      options.select = options.select & ", snippet(searchcontents) AS highlight "
+    result = result & options.select
     result = result & "FROM documents, searchcontents "
     result = result & "WHERE documents.id = searchcontents.document_id "
   else:
-    result = result & "FROM documents WHERE 1=1 "
+    result = result & options.select
+    result = result & " FROM documents WHERE 1=1 "
   if options.single:
     result = result & "AND id = ?"
   if options.tags.len > 0:
     result = result & options.tags.selectDocumentsByTags()
   if options.search.len > 0:
-    result = result & "AND content MATCH \"" & options.search & "\""
+    result = result & "AND searchcontents MATCH \"" & options.search & "\" "
   if options.orderby.len > 0:
     result = result & "ORDER BY " & options.orderby & " " 
   if options.limit > 0:
     result = result & "LIMIT " & $options.limit & " "
     if options.offset > 0:
       result = result & "OFFSET " & $options.offset & " "
+  debug(result)
 
 proc prepareSelectTagsQuery*(options: QueryOptions): string =
   result = "SELECT tag_id, COUNT(document_ID) "
@@ -49,8 +54,9 @@ proc prepareSelectTagsQuery*(options: QueryOptions): string =
     result = result & "ORDER BY " & options.orderby&" " 
   if options.limit > 0:
     result = result & "LIMIT " & $options.limit & " "
+  debug(result)
 
-proc prepareJsonDocument*(store:Datastore, doc: TRow): JsonNode =
+proc prepareJsonDocument*(store:Datastore, doc: TRow, cols:seq[string]): JsonNode =
   var raw_tags = store.db.getAllRows(SQL_SELECT_DOCUMENT_TAGS, doc[0])
   var tags = newSeq[JsonNode](0)
   for tag in raw_tags:
@@ -58,18 +64,21 @@ proc prepareJsonDocument*(store:Datastore, doc: TRow): JsonNode =
   if doc.len == 1:
     # COUNT(id)
     return %(doc[0].parseInt)
-  elif doc.len > 6:
-    return % [("id", %doc[0]), 
-             ("data", %doc[1]), 
-             ("created", %doc[5]),
-             ("modified", %doc[6]),
-             ("tags", %tags)]
-  else:
-    # data was not retrieved
-    return % [("id", %doc[0]), 
-             ("created", %doc[4]),
-             ("modified", %doc[5]),
-             ("tags", %tags)]
+  var res = newSeq[tuple[key: string, val: JsonNode]](0)
+  var count = 0
+  for s in cols:
+    var key = s
+    if s.contains(" "):
+      let chunks = s.split(" ")
+      key = chunks[chunks.len-2]
+    res.add((key, %doc[count]))
+    count.inc
+  res.add(("tags", %tags))
+  return %res
+
+proc stripXml*(s: string): string =
+  let pTag = "\\<\\/?[a-zA-Z!$?%][^<>]+\\>".peg
+  return s.replace(pTag)
 
 proc checkIfBinary*(binary:int, contenttype:string): int =
   if binary == -1 and contenttype.isBinary:
@@ -97,8 +106,10 @@ proc fail*(code, msg) =
   stderr.writeln(msg)
   quit(code)
 
-proc resError*(code: HttpCode, message: string): Response =
+proc resError*(code: HttpCode, message: string, trace = ""): Response =
   warn(message)
+  if trace.len > 0:
+    debug(trace)
   result.code = code
   result.content = """{"error":"$1"}""" % message
   result.headers = ctJsonHeader()

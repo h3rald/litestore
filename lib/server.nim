@@ -42,7 +42,9 @@ proc route(req: Request, LS: LiteStore): Response =
         else:
           return resError(Http400, "Bad request - Invalid resource: $1" % info.resource)
   except:
-    return resError(Http400, "Bad request: $1" % getCurrentExceptionMsg())
+    let e = getCurrentException()
+    let trace = e.getStackTrace()
+    return resError(Http500, "Internal Server Error: $1" % getCurrentExceptionMsg(), trace)
 
 setControlCHook(handleCtrlC)
 

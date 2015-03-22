@@ -20,7 +20,7 @@ import
 from asyncdispatch import runForever
 
 {.compile: "vendor/sqlite/libsqlite3.c".}
-{.passC: "-DSQLITE_OMIT_LOAD_EXTENSION=1 -DSQLITE_ENABLE_FTS4=1 -DSQLITE_ENABLE_LOCKING_STYLE=0 -DSQLITE_THREADSAFE=0".}
+{.passC: "-DSQLITE_ENABLE_FTS4=1 -DSQLITE_ENABLE_LOCKING_STYLE=0 -DSQLITE_THREADSAFE=0".}
 
 when isMainModule:
   # Initialize Datastore

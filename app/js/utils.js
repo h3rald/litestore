@@ -177,5 +177,4 @@
       xhr.setRequestHeader("Content-Type", contentType);
     };
   };
-}());};
 }());
