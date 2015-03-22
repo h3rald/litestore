@@ -3,10 +3,9 @@
   var app = window.LS || (window.LS = {});
   
   app.flash = m.prop();
-  app.system = m.prop();
+  app.system = {};
   app.init = function(info){
-    app.system(info);
-    console.log(app.system());
+    app.system = info;
     m.route.mode = "hash";
 
     m.route(document.body, "/info", {

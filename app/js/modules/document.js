@@ -93,7 +93,7 @@
       }
     };
     vm.tools = function(){
-      if (app.system().read_only) {
+      if (app.system.read_only) {
         return [];
       }
       switch (vm.action){

@@ -12,7 +12,7 @@
     vm.edit = function(){
       m.route("/document/edit/app/md/"+vm.id()+".md");
     };
-    vm.links = app.system().read_only ? m.prop([]) : m.prop([{action: vm.edit, title: "Edit", icon: "edit"}]);
+    vm.links = app.system.read_only ? m.prop([]) : m.prop([{action: vm.edit, title: "Edit", icon: "edit"}]);
   };
   app.guide.main = function(){
     return m("article.row", [
