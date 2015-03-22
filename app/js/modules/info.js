@@ -7,7 +7,7 @@
   app.info = {vm: {}};
   app.info.vm.init = function() {};
   app.info.main = function(){
-    var info = app.system();
+    var info = app.system;
     var li = function(title, content, hide) {
       if (hide) {
         return "";
