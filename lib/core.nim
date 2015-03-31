@@ -1,6 +1,6 @@
 import 
   sqlite3, 
-  db_sqlite as db, 
+  db_sqlite as db,
   strutils, 
   os,
   oids,
@@ -44,6 +44,8 @@ proc openDatastore*(file:string): Datastore =
     raise newException(EDatastoreDoesNotExist, "Datastore '$1' does not exists." % file)
   try:
     result.db = db.open(file, "", "", "")
+    # Register custom function
+    discard result.db.create_function("rank", -1, SQLITE_ANY, cast[pointer](SQLITE_DETERMINISTIC), okapi_bm25, nil, nil)
     result.path = file
     result.mount = ""
   except:
@@ -103,7 +105,7 @@ proc retrieveRawDocument*(store: Datastore, id: string, options: QueryOptions = 
   if  raw_document[0] == "":
     return ""
   else:
-    return $store.prepareJsonDocument(raw_document, options.select.split(", "))
+    return $store.prepareJsonDocument(raw_document, options.select)
 
 proc createDocument*(store: Datastore,  id="", rawdata = "", contenttype = "text/plain", binary = -1, searchable = 1): string =
   var id = id
@@ -184,7 +186,7 @@ proc retrieveRawDocuments*(store: Datastore, options: var QueryOptions = newQuer
   var raw_documents = store.db.getAllRows(select.sql)
   var documents = newSeq[JsonNode](0)
   for doc in raw_documents:
-    documents.add store.prepareJsonDocument(doc, options.select.split(", "))
+    documents.add store.prepareJsonDocument(doc, options.select)
   return %documents
 
 proc countDocuments*(store: Datastore): int64 =

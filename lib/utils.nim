@@ -1,4 +1,4 @@
-import json, db_sqlite, strutils, pegs, asyncdispatch, asynchttpserver2, times, logging
+import json, db_sqlite, strutils, pegs, asyncdispatch, asynchttpserver2, times, logging, math, sqlite3
 import types, queries, contenttypes
 
 proc dbQuote*(s: string): string =
@@ -22,13 +22,15 @@ proc selectDocumentsByTags(tags: string): string =
 proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
   result = "SELECT "
   if options.search.len > 0:
-    if options.select != "COUNT(id)":
-      options.select = options.select & ", snippet(searchcontents) AS highlight "
-    result = result & options.select
-    result = result & "FROM documents, searchcontents "
+    if options.select[0] != "COUNT(id)":
+      options.select.add("snippet(searchcontents) AS highlight")
+      options.select.add("rank(matchinfo(searchcontents, 'pcxnal'), 1.20, 0.75, 1.5, 0.5) AS rank")
+      options.orderby = "rank DESC"
+    result = result & options.select.join(", ")
+    result = result & " FROM documents, searchcontents "
     result = result & "WHERE documents.id = searchcontents.document_id "
   else:
-    result = result & options.select
+    result = result & options.select.join(", ")
     result = result & " FROM documents WHERE 1=1 "
   if options.single:
     result = result & "AND id = ?"
@@ -36,7 +38,7 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
     result = result & options.tags.selectDocumentsByTags()
   if options.search.len > 0:
     result = result & "AND searchcontents MATCH \"" & options.search & "\" "
-  if options.orderby.len > 0:
+  if options.orderby.len > 0 and options.select[0] != "COUNT(id)":
     result = result & "ORDER BY " & options.orderby & " " 
   if options.limit > 0:
     result = result & "LIMIT " & $options.limit & " "
@@ -70,7 +72,7 @@ proc prepareJsonDocument*(store:Datastore, doc: TRow, cols:seq[string]): JsonNod
     var key = s
     if s.contains(" "):
       let chunks = s.split(" ")
-      key = chunks[chunks.len-2]
+      key = chunks[chunks.len-1]
     res.add((key, %doc[count]))
     count.inc
   res.add(("tags", %tags))
@@ -116,3 +118,30 @@ proc resError*(code: HttpCode, message: string, trace = ""): Response =
 
 proc resDocumentNotFound*(id): Response =
   resError(Http404, "Document '$1' not found." % id)
+
+proc okapi_bm25*(pCtx: Pcontext, nVal: int32, apVal: PValueArg) {.cdecl.} =
+  var firstElement = value_blob(apVal[0])
+  var matchinfo = cast[ptr uarray[int32]](firstElement)
+  var searchTextCol = value_int(apVal[1])
+  var K1 = if nVal >= 3: value_double(apVal[2]) else: 1.2
+  var B = if nVal >= 4: value_double(apVal[3]) else: 0.75
+  var P_OFFSET = 0
+  var C_OFFSET = 1
+  var X_OFFSET = 2
+  var termCount = matchinfo[P_OFFSET].int32
+  var colCount = matchinfo[C_OFFSET].int32
+  var N_OFFSET = X_OFFSET + 3*termCount*colCount
+  var A_OFFSET = N_OFFSET + 1
+  var L_OFFSET = A_OFFSET + colCount
+  var totalDocs = matchinfo[N_OFFSET].float
+  var avgLength = matchinfo[A_OFFSET + searchTextCol].float
+  var docLength = matchinfo[L_OFFSET + searchTextCol].float
+  var sum = 0.0;
+  for i in 0..termCount-1:
+    var currentX = X_OFFSET + (3 * searchTextCol * (i + 1))
+    var termFrequency = matchinfo[currentX].float
+    var docsWithTerm = matchinfo[currentX + 2].float
+    var idf: float = ln((totalDocs - docsWithTerm + 0.5) / (docsWithTerm + 0.5))
+    var rightSide: float = (termFrequency * (K1 + 1)) / (termFrequency + (K1 * (1 - B + (B * (docLength / avgLength)))))
+    sum = sum + (idf * rightSide)
+  pCtx.result_double(sum)

@@ -150,7 +150,7 @@ proc getRawDocuments(LS: LiteStore, options: QueryOptions = newQueryOptions()): 
   let orig_offset = options.offset
   options.limit = 0
   options.offset = 0
-  options.select = "COUNT(id)"
+  options.select = @["COUNT(id)"]
   let total = LS.store.retrieveRawDocuments(options)[0].num
   if docs.len == 0:
     result = resError(Http404, "No documents found.")
@@ -233,7 +233,7 @@ proc patchDocument(LS: LiteStore, id: string, body: string): Response =
   if jbody.kind != JArray:
     return resError(Http400, "Bad request: PATCH request body is not an array.")
   var options = newQueryOptions()
-  options.select = "id, content_type, binary, searchable, created, modified"
+  options.select = @["id", "content_type", "binary", "searchable", "created", "modified"]
   let doc = LS.store.retrieveRawDocument(id, options)
   if doc == "":
     return resDocumentNotFound(id)
@@ -294,7 +294,7 @@ proc options(req: Request, LS: LiteStore, resource: string, id = ""): Response =
 
 proc head(req: Request, LS: LiteStore, resource: string, id = ""): Response =
   var options = newQueryOptions()
-  options.select = "id, content_type, binary, searchable, created, modified"
+  options.select = @["id", "content_type", "binary", "searchable", "created", "modified"]
   try:
     parseQueryOptions(req.url.query, options);
     if id != "":
@@ -311,7 +311,7 @@ proc get(req: Request, LS: LiteStore, resource: string, id = ""): Response =
     of "docs":
       var options = newQueryOptions()
       if req.url.query.contains("contents=false"):
-        options.select = "id, content_type, binary, searchable, created, modified"
+        options.select = @["id", "content_type", "binary", "searchable", "created", "modified"]
       try:
         parseQueryOptions(req.url.query, options);
         if id != "":
@@ -322,7 +322,7 @@ proc get(req: Request, LS: LiteStore, resource: string, id = ""): Response =
         else:
           return LS.getRawDocuments(options)
       except:
-        return resError(Http400, "Bad request - $1" % getCurrentExceptionMsg())
+        return resError(Http500, "Internal Server Error - $1" % getCurrentExceptionMsg())
     of "info":
       if id != "":
         return resError(Http404, "Info '$1' not found." % id)

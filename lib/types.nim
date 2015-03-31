@@ -9,12 +9,13 @@ type
   EFileNotFound* = object of Exception
   EFileExists* = object of Exception
   EInvalidRequest* = object of Exception
+  uarray* {.unchecked.} [T] = array[0..0, T] 
   Datastore* = object
     db*: TDbConn
     path*: string
     mount*: string
   QueryOptions* = object
-    select*: string
+    select*: seq[string]
     single*:bool         
     limit*: int           
     offset*: int           
@@ -72,4 +73,4 @@ proc ctJsonHeader*(): StringTableRef =
   return CT_JSON.newStringTable
 
 proc newQueryOptions*(): QueryOptions =
-  return QueryOptions(select: "id, data, content_type, binary, searchable, created, modified", single: false, limit: 0, offset: 0, orderby: "", tags: "", search: "")
+  return QueryOptions(select: @["id", "data", "content_type", "binary", "searchable", "created", "modified"], single: false, limit: 0, offset: 0, orderby: "", tags: "", search: "")
