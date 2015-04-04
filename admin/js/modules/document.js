@@ -7,6 +7,7 @@
   app.document = {vm: {}};
   app.document.vm.init = function() {
     var vm = this;
+    vm.dir = app.system.directory;
     vm.id = m.prop(m.route.param("id"));
     vm.action = m.route.param("action");
     vm.readOnly = true;
@@ -24,9 +25,9 @@
       }, vm.flashError);
     };
     vm.viewDocument = function(){
-      if (vm.ext === "md" && vm.id().match(/^app\/md\//)) {
+      if (vm.ext === "md" && vm.id().match(new Regexp("^"+vm.dir+"\/md\/"))) {
         // If editing a documentation page, go back to the guide.
-        m.route("/guide/"+vm.id().replace(/\.md$/, "").replace(/^app\/md\//, ""));
+        m.route("/guide/"+vm.id().replace(/\.md$/, "").replace(new Regexp("^"+vm.dir+"\/md\/"), ""));
       } else {
         m.route("/document/view/"+vm.id());
       }
@@ -62,7 +63,7 @@
         }, vm.flashError);
       };
       if (vm.action === "create") {
-        doc.id = "app/"+vm.id();
+        doc.id = vm.dir+"/"+vm.id();
         vm.id(doc.id);
         Doc.get(doc.id)
           .then(function(){
@@ -115,7 +116,7 @@
     var titleLeft = vm.id();
     var titleRight = m("span.pull-right", vm.tags.map(function(t){return u.taglink(t);}));
     if (vm.action === "create"){
-        titleLeft = m("span", ["app/",m("input", {
+        titleLeft = m("span", [vm.dir+"/",m("input", {
           placeholder: "Document ID",
           onchange: m.withAttr("value", function(value){
             vm.id(value);
