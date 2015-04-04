@@ -24,7 +24,7 @@
           li("Total Documents", m("span.badge", info.total_documents)),
           li("Total Tags", m("span.badge", info.total_tags)),
     ])]);
-    var logo = m(".col-md-6", [m("img", {src: "/v1/docs/app/images/litestore.png"})]);
+    var logo = m(".col-md-6", [m("img", {src: "images/litestore.png"})]);
     var taglist = m("ul.list-unstyled", info.tags.map(function(tag){
         var key = Object.keys(tag)[0];
         return m("li", [u.tagbutton(key, tag[key])]);

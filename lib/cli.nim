@@ -9,7 +9,7 @@ import
   utils
 
 const cfgfile = "litestore.nimble".slurp
-const favicon = "app/favicon.ico".slurp
+const favicon = "admin/favicon.ico".slurp
 
 var 
   file*, address*, version*, appname*: string

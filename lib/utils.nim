@@ -24,7 +24,7 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
   if options.search.len > 0:
     if options.select[0] != "COUNT(id)":
       options.select.add("snippet(searchcontents) AS highlight")
-      options.select.add("rank(matchinfo(searchcontents, 'pcxnal'), 1.20, 0.75, 1.5, 0.5) AS rank")
+      options.select.add("rank(matchinfo(searchcontents, 'pcxnal'), 1.20, 0.75) AS rank")
       options.orderby = "rank DESC"
     result = result & options.select.join(", ")
     result = result & " FROM documents, searchcontents "

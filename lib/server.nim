@@ -31,6 +31,10 @@ proc route(req: Request, LS: LiteStore): Response =
     return result
   try:
     var info = req.parseApiUrl
+    if info.version == "docs" or info.version == "info":
+      info.version = "v1"
+      info.id = info.resource
+      info.resource = "docs"
     if info.version == "v1" and info.resource.match(peg"^docs / info$"):
       return api_v1.route(req, LS, info.resource, info.id)
     else:
