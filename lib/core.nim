@@ -45,7 +45,7 @@ proc openDatastore*(file:string): Datastore =
   try:
     result.db = db.open(file, "", "", "")
     # Register custom function
-    discard result.db.create_function("rank", -1, SQLITE_ANY, cast[pointer](SQLITE_DETERMINISTIC), okapi_bm25, nil, nil)
+    discard result.db.create_function("rank", -1, SQLITE_ANY, cast[pointer](SQLITE_DETERMINISTIC), okapi_bm25f_kb, nil, nil)
     result.path = file
     result.mount = ""
   except:
