@@ -12,6 +12,7 @@
     vm.action = m.route.param("action");
     vm.readOnly = true;
     vm.contentType = m.prop("");
+    vm.updatedTags = m.prop("");
     try {
       vm.ext = vm.id().match(/\.(.+)$/)[1];
     } catch(e) {
@@ -31,7 +32,7 @@
       } else {
         m.route("/document/view/"+vm.id());
       }
-    }
+    };
     vm.tags = [];
     switch (vm.action) {
       case 'create':
@@ -46,6 +47,21 @@
         vm.getDoc();
         break;
     }
+    vm.editTagsDialogCfg = {
+      title: "Edit Tags",
+      id: "edit-tags-modal",
+      action: function(){
+        // TODO
+        console.log(vm.updatedTags());
+      },
+      actionText: "Update",
+      content: m("input", {
+            type: "text", 
+            class:"form-control", 
+            onchange: m.withAttr("value", vm.updatedTags),
+            placeholder: "Enter comma-separated tags..."
+          })
+    };
     vm.edit = function(){
       vm.editor.setReadOnly(false);
       vm.action = "edit";
@@ -97,10 +113,15 @@
       if (app.system.read_only) {
         return [];
       }
+      // Configure edit tags popover
+      var cfg = {};
+      cfg.title = "Edit Tags";
+      cfg.contentId = "#edit-tags-popover";
       switch (vm.action){
         case "view":
           return [
-            {title: "Edit", icon: "edit", action: vm.edit},
+            {title: "Edit Content", icon: "edit", action: vm.edit},
+            {title: "Edit Tags", icon: "tags", action: function(){$("#edit-tags-modal").modal()}},
             {title: "Delete", icon: "trash", action: vm.delete}
           ];
         default:
@@ -134,6 +155,7 @@
     }
     var title = m("span",[titleLeft, titleRight]);
     return m("div", [
+      u.modal(vm.editTagsDialogCfg),
       m(".row", [u.toolbar({links: vm.tools()})]),
       m(".row", [u.panel({title: title, content:app.editor.view(vm)})])
     ]);

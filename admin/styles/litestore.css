@@ -1887,6 +1887,10 @@ span.label-primary a:hover {
 .search-result {
   margin: 5px 0;
 }
+.popover {
+  max-width: 800px;
+  width: auto;
+}
 .note {
   -moz-background-clip: padding;
   -webkit-background-clip: padding-box;

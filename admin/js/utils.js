@@ -189,7 +189,7 @@
 
   u.toolbar = function(obj){
     return m("nav.toolbar.btn-group[role='group'][aria-label='...'].pull-right", obj.links.map(function(l){
-      return m("a.btn.btn-default", {onclick:l.action}, [m("i.fa.fa-"+l.icon), " "+l.title]);
+      return m("a.btn.btn-default", {onclick:l.action, config: l.config}, [m("i.fa.fa-"+l.icon), " "+l.title]);
       })  
     );
   };
@@ -202,6 +202,45 @@
     } else {
       return "";
     }
+  };
+  
+  /**
+   * obj:
+   * - id
+   */
+  u.showModal = function(id){
+    return function(el, isInitialized){
+      $(id).modal();
+    };
+  };
+  
+  /**
+   * obj:
+   * - id
+   * - content
+   * - title
+   * - action
+   * - actionText
+   */
+  u.modal = function(obj) {
+    return m(".modal.fade", 
+      {id: obj.id, tabindex: "-1", role: "dialog"},
+      [
+        m(".modal-dialog", [
+          m(".modal-content", [
+            m(".modal-header", [
+              m("button", {type: "button", class: "close", "data-dismiss": "modal"}, 
+              [m.trust("&times;")]),
+              m("h4.modal-title", obj.title)
+            ]),
+            m(".modal-body", [obj.content]),
+            m(".modal-footer", [
+              m("button.btn.btn-default[data-dismiss='modal']", "Close"),
+              m("button.btn.btn-default[data-dismiss='modal']", {onclick: obj.action}, obj.actionText)
+            ])
+          ])
+        ])
+      ]);
   };
 
   u.setContentType = function(doc, contentType){
