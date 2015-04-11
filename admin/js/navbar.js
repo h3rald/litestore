@@ -69,16 +69,17 @@
         var vm =  this;
         vm.query = m.prop("");
         vm.keySearch = function(el, isInitialized, context){
-          $(el).keyup(function(event){
+          $(el).keypress(function(event){
             m.redraw.strategy("none");
             vm.query($(el).val());
             if (event.which == 13){
               vm.search();
+              return false;
             }
           });
         };
         vm.search = function(){
-          m.route("/search?q="+vm.query());
+          m.route("/search/"+vm.query());
         };
       }
     },

@@ -8,8 +8,10 @@
   app.search.vm.init = function(){
     var vm = this;
     vm.query = m.route.param("q");
-    vm.offset = m.route.param("offset") || 0;
     vm.limit = m.route.param("limit") || 10;
+    vm.page = m.route.param("page") || 1;
+    vm.page -= 1; // pages are 0-based
+    vm.offset = vm.page * vm.limit;
     vm.result = m.prop({total: 0, results: []});
     vm.total = 0;
     Doc.search(vm.query, vm.offset, vm.limit).then(function(result){

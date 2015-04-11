@@ -1,6 +1,9 @@
 import json, db_sqlite, strutils, pegs, asyncdispatch, asynchttpserver2, times, logging, math, sqlite3
 import types, queries, contenttypes
 
+proc dbg*(args: varargs[string, `$`]) =
+  echo "DEBUG - "&args.join(" ")
+
 proc dbQuote*(s: string): string =
   result = "'"
   for c in items(s):
@@ -12,12 +15,12 @@ proc currentTime*(): string =
   return getTime().getGMTime().format("yyyy-MM-dd'T'hh:mm:ss'Z'")
 
 proc selectDocumentsByTags(tags: string): string =
-  var select_tagged = "SELECT document_id FROM tags WHERE tag_id = \""
+  var select_tagged = "SELECT document_id FROM tags WHERE tag_id = '"
   result = ""
   for tag in tags.split(','):
     if not tag.match(PEG_TAG):
       raise newException(EInvalidTag, "Invalid tag '$1'" % tag)
-    result = result & "AND id IN (" & select_tagged & tag & "\") "
+    result = result & "AND id IN (" & select_tagged & tag & "') "
    
 proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
   result = "SELECT "
@@ -37,14 +40,14 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
   if options.tags.len > 0:
     result = result & options.tags.selectDocumentsByTags()
   if options.search.len > 0:
-    result = result & "AND searchcontents MATCH \"" & options.search & "\" "
+    result = result & "AND searchcontents MATCH '" & options.search.replace("'", "''") & "' "
   if options.orderby.len > 0 and options.select[0] != "COUNT(id)":
     result = result & "ORDER BY " & options.orderby & " " 
   if options.limit > 0:
     result = result & "LIMIT " & $options.limit & " "
     if options.offset > 0:
       result = result & "OFFSET " & $options.offset & " "
-  debug(result)
+  dbg(result)
 
 proc prepareSelectTagsQuery*(options: QueryOptions): string =
   result = "SELECT tag_id, COUNT(document_ID) "
@@ -56,7 +59,7 @@ proc prepareSelectTagsQuery*(options: QueryOptions): string =
     result = result & "ORDER BY " & options.orderby&" " 
   if options.limit > 0:
     result = result & "LIMIT " & $options.limit & " "
-  debug(result)
+  dbg(result)
 
 proc prepareJsonDocument*(store:Datastore, doc: TRow, cols:seq[string]): JsonNode =
   var raw_tags = store.db.getAllRows(SQL_SELECT_DOCUMENT_TAGS, doc[0])
@@ -111,7 +114,7 @@ proc fail*(code, msg) =
 proc resError*(code: HttpCode, message: string, trace = ""): Response =
   warn(message)
   if trace.len > 0:
-    debug(trace)
+    dbg(trace)
   result.code = code
   result.content = """{"error":"$1"}""" % message
   result.headers = ctJsonHeader()

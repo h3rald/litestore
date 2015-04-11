@@ -116,7 +116,7 @@
       sign = sign || n+1;  
       return m("li", {class: klass},
           [m("a", {
-                    href: "/search?q="+obj.query+"&offset="+offset+"&limit="+obj.limit,
+                    href: "/search/"+obj.query+"/"+(n+1), // assuming 10 elements per page //+"/"+obj.limit,
                     config: m.route
                   }, [m.trust(sign)]
           )]
