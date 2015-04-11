@@ -1867,14 +1867,14 @@ span.ext,
 span.kwd {
   font-weight: bold;
 }
-span.label-primary {
+span.tag-label {
   margin: auto 2px;
   font-weight: normal;
 }
-span.label-primary a {
+span.tag-label a {
   color: #efefef;
 }
-span.label-primary a:hover {
+span.tag-label a:hover {
   color: #fff;
   text-decoration: none;
 }

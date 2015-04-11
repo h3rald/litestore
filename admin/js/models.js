@@ -65,4 +65,37 @@
         config: xhrcfg
       });
   };
+  
+  Doc.patch = function(id, updatedTags){
+    console.log(updatedTags);
+    return Doc.get(id).then(function(doc){
+      var tags = doc.tags;
+      console.log(tags);
+      var count = 0;
+      var ops = [];
+      tags.forEach(function(tag){
+        if (updatedTags[count]){
+          if (updatedTags[count] != tag){
+            // update tag
+            ops.push({"op": "replace", "path": "/tags/"+count, "value": updatedTags[count]});
+          }
+        } else {
+          // delete tag
+          ops.push({"op": "remove", "path": "/tags/"+count});
+        }
+        count++;
+      });
+      if (updatedTags.length > tags.length) {
+        for (i = tags.length; i< updatedTags.length; i++){
+          // add tag
+          ops.push({"op": "add", "path": "/tags/"+i, "value": updatedTags[i]});
+        }
+      }
+      return m.request({
+        method: "PATCH",
+        url: "/v1/docs/"+id,
+        data: ops
+      });
+    });
+  };
 }());

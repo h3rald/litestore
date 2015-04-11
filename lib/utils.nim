@@ -1,10 +1,6 @@
 import json, db_sqlite, strutils, pegs, asyncdispatch, asynchttpserver2, times, logging, math, sqlite3
 import types, queries, contenttypes
 
-proc dbg*(args: varargs[string, `$`]) =
-  if logging.level <= lvlDebug:
-    echo "DEBUG - "&args.join(" ")
-
 proc dbQuote*(s: string): string =
   result = "'"
   for c in items(s):
@@ -48,7 +44,7 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
     result = result & "LIMIT " & $options.limit & " "
     if options.offset > 0:
       result = result & "OFFSET " & $options.offset & " "
-  dbg(result)
+  debug(result.replace("$", "$$"))
 
 proc prepareSelectTagsQuery*(options: QueryOptions): string =
   result = "SELECT tag_id, COUNT(document_ID) "
@@ -60,7 +56,7 @@ proc prepareSelectTagsQuery*(options: QueryOptions): string =
     result = result & "ORDER BY " & options.orderby&" " 
   if options.limit > 0:
     result = result & "LIMIT " & $options.limit & " "
-  dbg(result)
+  debug(result.replace("$", "$$"))
 
 proc prepareJsonDocument*(store:Datastore, doc: TRow, cols:seq[string]): JsonNode =
   var raw_tags = store.db.getAllRows(SQL_SELECT_DOCUMENT_TAGS, doc[0])
@@ -83,11 +79,9 @@ proc prepareJsonDocument*(store:Datastore, doc: TRow, cols:seq[string]): JsonNod
   return %res
 
 proc toPlainText*(s: string): string =
-  let subs = @[
-    (pattern: peg"""\<\/?[^<>]+\>""", repl: ""),
-    (pattern: peg"""{[_*/+!=?%$^-]+} {(!$1 .)+} $1""", repl: "$2")
-  ]
-  return s.parallelReplace(subs)
+  var tags = peg"""'<' [^<>]+ '>'"""
+  var markup = peg"""{[_*/+!=?%$^~]+} {(!$1 .)+} $1"""
+  return s.replace(tags).replacef(markup, "$2")
 
 proc checkIfBinary*(binary:int, contenttype:string): int =
   if binary == -1 and contenttype.isBinary:
@@ -116,9 +110,9 @@ proc fail*(code, msg) =
   quit(code)
 
 proc resError*(code: HttpCode, message: string, trace = ""): Response =
-  warn(message)
+  warn(message.replace("$", "$$"))
   if trace.len > 0:
-    dbg(trace)
+    debug(trace.replace("$", "$$"))
   result.code = code
   result.content = """{"error":"$1"}""" % message
   result.headers = ctJsonHeader()

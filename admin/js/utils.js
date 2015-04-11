@@ -165,7 +165,8 @@
   };
 
   u.taglink = function(tag) {
-    return m("span.label.label-primary", 
+    var color = /^\$/.test(tag) ? "warning" : "primary";
+    return m("span.tag-label.label.label-"+color, 
       [m("i.fa.fa-tag"), " ", m("a", {href: "/tags/"+tag, config:m.route}, tag)]);
   };
   
@@ -204,13 +205,9 @@
     }
   };
   
-  /**
-   * obj:
-   * - id
-   */
-  u.showModal = function(id){
-    return function(el, isInitialized){
-      $(id).modal();
+  u.showModal = function(sel){
+    return function(){
+      $(sel).modal();
     };
   };
   
@@ -236,7 +233,7 @@
             m(".modal-body", [obj.content]),
             m(".modal-footer", [
               m("button.btn.btn-default[data-dismiss='modal']", "Close"),
-              m("button.btn.btn-default[data-dismiss='modal']", {onclick: obj.action}, obj.actionText)
+              m("button.btn.btn-primary[data-dismiss='modal']", {onclick: obj.action}, obj.actionText)
             ])
           ])
         ])
