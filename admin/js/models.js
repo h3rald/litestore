@@ -67,10 +67,8 @@
   };
   
   Doc.patch = function(id, updatedTags){
-    console.log(updatedTags);
     return Doc.get(id).then(function(doc){
       var tags = doc.tags;
-      console.log(tags);
       var count = 0;
       var ops = [];
       tags.forEach(function(tag){
@@ -91,6 +89,7 @@
           ops.push({"op": "add", "path": "/tags/"+i, "value": updatedTags[i]});
         }
       }
+      console.log("Doc.patch - Saving Tags:", ops);
       return m.request({
         method: "PATCH",
         url: "/v1/docs/"+id,

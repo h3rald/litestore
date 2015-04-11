@@ -14,6 +14,8 @@
     vm.contentType = m.prop("");
     vm.updatedTags = m.prop("");
     vm.content = "";
+    vm.binary = false;
+    vm.image = false;
     vm.tags = [];
     try {
       vm.ext = vm.id().match(/\.(.+)$/)[1];
@@ -21,13 +23,19 @@
       vm.ext = "";
     }
     
-    // Retrieve single document & populate
+    // Retrieve single document & update relevant variables
     vm.getDoc = function(cb){
       vm.doc = Doc.get(vm.id());
       vm.doc.then(function(doc){
         vm.content = doc.data;
         vm.tags = doc.tags;
         vm.updatedTags(vm.tags.filter(function(t){return !/^\$/.test(t)}).join(", "));
+        if (vm.tags.filter(function(t){return t === "$format:binary"}).length > 0) {
+          vm.binary = true;
+          if (vm.tags.filter(function(t){return t === "$type:image"}).length > 0) {
+            vm.image = true;
+          }
+        }
       }, vm.flashError);
     };
     
@@ -128,19 +136,20 @@
       var cfg = {};
       cfg.title = "Edit Tags";
       cfg.contentId = "#edit-tags-popover";
+      var tools = [];
       switch (vm.action){
         case "view":
-          return [
-            {title: "Edit Content", icon: "edit", action: vm.edit},
-            {title: "Edit Tags", icon: "tags", action: u.showModal("#edit-tags-modal")},
-            {title: "Delete", icon: "trash", action: u.showModal("#delete-document-modal")}
-          ];
+          if (!vm.binary) {
+            tools.push({title: "Edit Content", icon: "edit", action: vm.edit});
+          }
+          tools.push({title: "Edit Tags", icon: "tags", action: u.showModal("#edit-tags-modal")});
+          tools.push({title: "Delete", icon: "trash", action: u.showModal("#delete-document-modal")});
+          break;
         default:
-          return [
-            {title: "Save", icon: "save", action: vm.save},
-            {title: "Cancel", icon: "times-circle", action: vm.cancel}
-          ];
+          tools.push({title: "Save", icon: "save", action: vm.save});
+          tools.push({title: "Cancel", icon: "times-circle", action: vm.cancel});
       }
+      return tools;
     };
   };
   
@@ -195,12 +204,18 @@
           value: vm.contentType()
         })]);
     }
+    var panelContent;
+    if (vm.image){
+      panelContent = m("div.text-center", [m("img", {src: "/docs/"+vm.id(), title: vm.id()})]);
+    } else {
+      panelContent = app.editor.view(vm);
+    }
     var title = m("span",[titleLeft, titleRight]);
     return m("div", [
       u.modal(deleteDialogCfg),
       u.modal(editTagsDialogCfg),
       m(".row", [u.toolbar({links: vm.tools()})]),
-      m(".row", [u.panel({title: title, content:app.editor.view(vm)})])
+      m(".row", [u.panel({title: title, content:panelContent})])
     ]);
   };
   
