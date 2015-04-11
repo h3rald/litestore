@@ -121,9 +121,9 @@ proc createDocument*(store: Datastore,  id="", rawdata = "", contenttype = "text
   if res > 0:
     if binary <= 0 and searchable >= 0:
       # Add to search index
-      store.db.exec(SQL_INSERT_SEARCHCONTENT, id, data.stripXml)
+      store.db.exec(SQL_INSERT_SEARCHCONTENT, id, data.toPlainText)
     store.addDocumentSystemTags(id, contenttype)
-    if store.hasMirror:
+    if store.hasMirror and id.startsWith(store.mount):
       # Add dir tag
       store.createTag("$dir:"&store.mount, id, true)
       var filename = id.unixToNativePath
@@ -142,8 +142,8 @@ proc updateDocument*(store: Datastore, id: string, rawdata: string, contenttype 
     data = data.encode(data.len*2)
   var res = store.db.execAffectedRows(SQL_UPDATE_DOCUMENT, data, contenttype, binary, searchable, currentTime(), id)
   if res > 0:
-    store.db.exec(SQL_UPDATE_SEARCHCONTENT, data.stripXml, id)
-    if store.hasMirror:
+    store.db.exec(SQL_UPDATE_SEARCHCONTENT, data.toPlainText, id)
+    if store.hasMirror and id.startsWith(store.mount):
       var filename = id.unixToNativePath
       if fileExists(filename):
         filename.writeFile(rawdata)
@@ -161,7 +161,7 @@ proc destroyDocument*(store: Datastore, id: string): int64 =
   if result > 0:
     store.db.exec(SQL_DELETE_SEARCHCONTENT, id)
     store.db.exec(SQL_DELETE_DOCUMENT_TAGS, id)
-    if store.hasMirror:
+    if store.hasMirror and id.startsWith(store.mount):
       var filename = id.unixToNativePath
       if fileExists(filename):
         removeFile(id.unixToNativePath)

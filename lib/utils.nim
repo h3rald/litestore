@@ -2,7 +2,8 @@ import json, db_sqlite, strutils, pegs, asyncdispatch, asynchttpserver2, times, 
 import types, queries, contenttypes
 
 proc dbg*(args: varargs[string, `$`]) =
-  echo "DEBUG - "&args.join(" ")
+  if logging.level <= lvlDebug:
+    echo "DEBUG - "&args.join(" ")
 
 proc dbQuote*(s: string): string =
   result = "'"
@@ -81,9 +82,12 @@ proc prepareJsonDocument*(store:Datastore, doc: TRow, cols:seq[string]): JsonNod
   res.add(("tags", %tags))
   return %res
 
-proc stripXml*(s: string): string =
-  let pTag = "\\<\\/?[a-zA-Z!$?%][^<>]+\\>".peg
-  return s.replace(pTag)
+proc toPlainText*(s: string): string =
+  let subs = @[
+    (pattern: peg"""\<\/?[^<>]+\>""", repl: ""),
+    (pattern: peg"""{[_*/+!=?%$^-]+} {(!$1 .)+} $1""", repl: "$2")
+  ]
+  return s.parallelReplace(subs)
 
 proc checkIfBinary*(binary:int, contenttype:string): int =
   if binary == -1 and contenttype.isBinary:

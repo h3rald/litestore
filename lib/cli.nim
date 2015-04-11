@@ -17,6 +17,7 @@ var
   operation = opRun
   directory = ""
   readonly = false
+  logLevelLabel = "INFO"
   logLevel = lvlInfo
   mount = false
   reset = false
@@ -89,7 +90,8 @@ for kind, key, val in getOpt():
           if val == "":
             fail(102, "Log level not specified.")
           try:
-            logLevel = logging.LevelNames.find(val.toUpper).Level
+            logLevelLabel = val.toUpper
+            logLevel = logging.LevelNames.find(logLevelLabel).Level
           except:
             fail(103, "Invalid log level '$1'" % val)
         of "import":
@@ -139,10 +141,12 @@ LS.appversion = version
 LS.readonly = readonly
 LS.appname = appname
 LS.favicon = favicon
+LS.loglevel = logLevelLabel
 LS.mount = mount
 LS.reset = reset
 
 # Initialize loggers
 
+logging.level = logLevel
 logging.handlers.add(newConsoleLogger(logLevel, "$date $time - "))
 logging.handlers.add(newFileLogger("litestore.log.txt", fmAppend, logLevel, fmtStr = "$date $time - "))

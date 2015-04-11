@@ -20,6 +20,7 @@
           li("Version", info.version),
           li("Size", info.size),
           li("Mounted Directory", info.directory, info.directory.length===0),
+          li("Log Level", info.log_level),
           li("Read-Only", readonly),
           li("Total Documents", m("span.badge", info.total_documents)),
           li("Total Tags", m("span.badge", info.total_tags)),

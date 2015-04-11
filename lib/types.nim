@@ -40,6 +40,7 @@ type
     appname*: string
     appversion*: string
     favicon*:string
+    loglevel*:string
     reset*: bool
   Response* = tuple[
     code: HttpCode,

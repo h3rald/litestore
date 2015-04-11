@@ -182,6 +182,7 @@ proc getInfo(LS: LiteStore): Response =
   content["version"] = %(LS.appname & " v" & LS.appversion)
   content["size"] = %($((LS.file.getFileSize().float/(1024*1024)).formatFloat(ffDecimal, 2)) & " MB")
   content["read_only"] = %LS.readonly
+  content["log_level"] = %LS.loglevel
   content["directory"] = %LS.directory
   content["mount"] = %LS.mount
   content["total_documents"] = %total_docs
