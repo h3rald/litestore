@@ -78,29 +78,21 @@
    <ul>
     <li><a href="#Multiformat.documents">Multiformat documents</a></li>
     <li><a href="#Document.Tagging">Document Tagging</a></li>
-    <li><a href="#Fulltext.Search">Fulltext Search</a></li>
-    <li><a href="#REST.HTTP.API">REST HTTP API</a></li>
+    <li><a href="#Full-text.Search">Full-text Search</a></li>
+    <li><a href="#RESTful.HTTP.API">RESTful HTTP API</a></li>
     <li><a href="#Directory.Bulk.Import.Export">Directory Bulk Import/Export</a></li>
+    <li><a href="#Directory.Mounting.and.Mirroring....Use.Cases">Directory Mounting and Mirroring### Use Cases</a></li>
+    <li><a href="#SPA.prototyping.backend">SPA prototyping backend</a></li>
+    <li><a href="#Personal.Wiki.CMS.backend">Personal Wiki/CMS backend</a></li>
+    <li><a href="#Static.site.backend">Static site backend</a></li>
+    <li><a href="#Lightweight.file.server....Architecture">Lightweight file server### Architecture</a></li>
    </ul>
    </li>
-   <li><a href="#Architecture">Architecture</a></li>
-  </ul>
-  </li>
-  <li><a href="#Getting.Started">Getting Started</a>
-  <ul>
-   <li><a href="#Downloading.Pre-build.Binaries">Downloading Pre-build Binaries</a></li>
+   <li><a href="#Downloading.Pre-built.Binaries">Downloading Pre-built Binaries</a></li>
    <li><a href="#Installing.Using.Nimble">Installing Using Nimble</a></li>
-   <li><a href="#Building.from.Source">Building from Source</a></li>
-  </ul>
-  </li>
-  <li><a href="#Usage">Usage</a>
-  <ul>
+   <li><a href="#Building.from.Source...Usage">Building from Source## Usage</a></li>
    <li><a href="#Command.Line.Syntax">Command Line Syntax</a></li>
-   <li><a href="#Examples">Examples</a></li>
-  </ul>
-  </li>
-  <li><a href="#REST.API.Reference">REST API Reference</a>
-  <ul>
+   <li><a href="#Examples...REST.API.Reference">Examples## REST API Reference</a></li>
    <li><a href="#info.-.LiteStore.Information">info - LiteStore Information</a>
    <ul>
     <li><a href="#OPTIONS.info">OPTIONS info</a>
@@ -150,15 +142,15 @@
   <div id="main">
 <h2 id="Overview">Overview<a href="#document-top" title="Go to top"></a></h2>
 
-<p>LiteStore is a self-contained, RESTful, multi-format document store written in <a href="http://www.nim-lang.org">Nim</a>. It aims to be a very simple and lightweight backend suitable for prototypes and testing REST APIs.</p>
+<p>LiteStore is a lightweight, self-contained, RESTful, multi-format document store server written in <a href="http://www.nim-lang.org">Nim</a>. It aims to be a very simple and lightweight backend ideal for prototyping and testing REST APIs and single-page applications.</p>
 
 <h3 id="Rationale">Rationale<a href="#document-top" title="Go to top"></a></h3>
 
 <p>If you ever wanted to build a simple single-page application in your favorite framework, just to try something out or as a prototype, you inevitably had to answer the question <em>&ldquo;What backend should I use?&rdquo;</em></p>
 
-<p>Sure, setting up a simple REST service using <a href="http://www.sinatrarb.com">Sinatra</a> or <a href="http://expressjs.com">Express.js</a> is not very hard, but if you want to distribute it, that will become a prerequisite for your app: you&rsquo;ll either distribute it with it, or install it beforehand on any machine you want to try your app on. Which is a shame, really, because single-page-applications are meant to be running anywhere <em>provided that they can access their backend</em>.</p>
+<p>Sure, setting up a simple REST service using <a href="http://www.sinatrarb.com">Sinatra</a> or <a href="http://expressjs.com">Express.js</a> is not very hard, but if you want to distribute it, that backend will become a prerequisite for your app: you&rsquo;ll either distribute it with it, or install it beforehand on any machine you want to try your app on. Which is a shame, really, because single-page-applications are meant to be running anywhere <em>provided that they can access their backend</em>.</p>
 
-<p>LiteStore aims to solve this problem. Using LiteStore, you only need to take <em>two files</em> with you, at all times:</p>
+<p>LiteStore aims to solve this problem. When you use LiteStore as the backend for your app, you only need to take <em>two files</em> with you, at all times:</p>
 
 <ul>
 <li>The <span class="cmd">litestore</span> executable file for your platform of choice (that&rsquo;s about 2MB in size)</li>
@@ -170,35 +162,41 @@
 
 <h3 id="Key.Features">Key Features<a href="#document-top" title="Go to top"></a></h3>
 
+<p>Despite being fairly small and self-contained, LiteStore comes with many useful features that are essential for many use cases.</p>
+
 <h4 id="Multiformat.documents">Multiformat documents<a href="#document-top" title="Go to top"></a></h4>
+
+<p>LiteStore can be used to store documents in virtually any format</p>
 
 <h4 id="Document.Tagging">Document Tagging<a href="#document-top" title="Go to top"></a></h4>
 
-<h4 id="Fulltext.Search">Fulltext Search<a href="#document-top" title="Go to top"></a></h4>
+<h4 id="Full-text.Search">Full-text Search<a href="#document-top" title="Go to top"></a></h4>
 
-<h4 id="REST.HTTP.API">REST HTTP API<a href="#document-top" title="Go to top"></a></h4>
+<h4 id="RESTful.HTTP.API">RESTful HTTP API<a href="#document-top" title="Go to top"></a></h4>
 
 <h4 id="Directory.Bulk.Import.Export">Directory Bulk Import/Export<a href="#document-top" title="Go to top"></a></h4>
 
-<h3 id="Architecture">Architecture<a href="#document-top" title="Go to top"></a></h3>
+<h4 id="Directory.Mounting.and.Mirroring....Use.Cases">Directory Mounting and Mirroring### Use Cases<a href="#document-top" title="Go to top"></a></h4>
 
-<p style="text-align:center;"> <img src="data:image/png;base64,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" alt="LiteStore Architecture" /></p>
+<h4 id="SPA.prototyping.backend">SPA prototyping backend<a href="#document-top" title="Go to top"></a></h4>
 
-<h2 id="Getting.Started">Getting Started<a href="#document-top" title="Go to top"></a></h2>
+<h4 id="Personal.Wiki.CMS.backend">Personal Wiki/CMS backend<a href="#document-top" title="Go to top"></a></h4>
 
-<h3 id="Downloading.Pre-build.Binaries">Downloading Pre-build Binaries<a href="#document-top" title="Go to top"></a></h3>
+<h4 id="Static.site.backend">Static site backend<a href="#document-top" title="Go to top"></a></h4>
+
+<h4 id="Lightweight.file.server....Architecture">Lightweight file server### Architecture<a href="#document-top" title="Go to top"></a></h4>
+
+<p><img src="data:image/png;base64,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" alt="LiteStore Architecture" />## Getting Started</p>
+
+<h3 id="Downloading.Pre-built.Binaries">Downloading Pre-built Binaries<a href="#document-top" title="Go to top"></a></h3>
 
 <h3 id="Installing.Using.Nimble">Installing Using Nimble<a href="#document-top" title="Go to top"></a></h3>
 
-<h3 id="Building.from.Source">Building from Source<a href="#document-top" title="Go to top"></a></h3>
-
-<h2 id="Usage">Usage<a href="#document-top" title="Go to top"></a></h2>
+<h3 id="Building.from.Source...Usage">Building from Source## Usage<a href="#document-top" title="Go to top"></a></h3>
 
 <h3 id="Command.Line.Syntax">Command Line Syntax<a href="#document-top" title="Go to top"></a></h3>
 
-<h3 id="Examples">Examples<a href="#document-top" title="Go to top"></a></h3>
-
-<h2 id="REST.API.Reference">REST API Reference<a href="#document-top" title="Go to top"></a></h2>
+<h3 id="Examples...REST.API.Reference">Examples## REST API Reference<a href="#document-top" title="Go to top"></a></h3>
 
 <h3 id="info.-.LiteStore.Information">info - LiteStore Information<a href="#document-top" title="Go to top"></a></h3>
 
@@ -210,10 +208,11 @@
 
 <h5 id="Example">Example<a href="#document-top" title="Go to top"></a></h5>
 
-<div class="terminal"><p>curl -i -X OPTIONS http://0.0.0.0:9500info<br/>
-HTTP/1.1 200 OK <br/>
-Content-Length: 0<br/>
-Allow: GET,OPTIONS</p></div>
+<pre><code>curl -i -X OPTIONS http://127.0.0.1:9500/v1/inf
+HTTP/1.1 200 OK
+Content-Length: 0
+Allow: GET,OPTIONS
+</code></pre>
 
 <h4 id="GET.info">GET info<a href="#document-top" title="Go to top"></a></h4>
 
@@ -293,10 +292,11 @@ Allow: GET,OPTIONS</p></div>
 
 <h5 id="Example">Example<a href="#document-top" title="Go to top"></a></h5>
 
-<div class="terminal"><p>curl -i -X OPTIONS http://0.0.0.0:9500/v1/docs<br/>
-HTTP/1.1 200 OK <br/>
-Content-Length: 0<br/>
-Allow: HEAD,GET,POST,OPTIONS</p></div>
+<pre><code>curl -i -X OPTIONS http://0.0.0.0:9500/v1/docs  
+HTTP/1.1 200 OK   
+Content-Length: 0  
+Allow: HEAD,GET,POST,OPTIONS
+</code></pre>
 
 <h4 id="OPTIONS.docs.:id">OPTIONS docs/:id<a href="#document-top" title="Go to top"></a></h4>
 
@@ -304,10 +304,11 @@ Allow: HEAD,GET,POST,OPTIONS</p></div>
 
 <h5 id="Example">Example<a href="#document-top" title="Go to top"></a></h5>
 
-<div class="terminal"><p>curl -i -X OPTIONS http://0.0.0.0:9500/v1/docs/test<br/>
-HTTP/1.1 200 OK <br/>
-Content-Length: 0<br/>
-Allow: HEAD,GET,PUT,PATCH,DELETE,OPTIONS</p></div>
+<pre><code>curl -i -X OPTIONS http://0.0.0.0:9500/v1/docs/test  
+HTTP/1.1 200 OK   
+Content-Length: 0  
+Allow: HEAD,GET,PUT,PATCH,DELETE,OPTIONS
+</code></pre>
 
 <h4 id="POST.docs">POST docs<a href="#document-top" title="Go to top"></a></h4>
 
@@ -328,7 +329,7 @@ Allow: HEAD,GET,PUT,PATCH,DELETE,OPTIONS</p></div>
 <h2 id="Credits">Credits<a href="#document-top" title="Go to top"></a></h2>
   </div>
   <div id="footer">
-    <p><span class="copy"></span> Fabio Cevasco &ndash; February 21, 2015</p>
+    <p><span class="copy"></span> Fabio Cevasco &ndash; April 12, 2015</p>
     <p><span>Powered by</span> <a href="https://h3rald.com/hastyscribe"><span class="hastyscribe"></span></a></p>
   </div>
 </body>
