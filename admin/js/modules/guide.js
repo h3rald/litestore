@@ -10,7 +10,7 @@
     vm.id = m.prop(m.route.param("id"));
     vm.content = Page.get(vm.id()).then(function(content){return content}, vm.flashError);
     vm.edit = function(){
-      m.route("/document/edit/app/md/"+vm.id()+".md");
+      m.route("/document/edit/"+app.system.directory+"/md/"+vm.id()+".md");
     };
     vm.links = app.system.read_only ? m.prop([]) : m.prop([{action: vm.edit, title: "Edit", icon: "edit"}]);
   };

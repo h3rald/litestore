@@ -14,6 +14,7 @@
     vm.contentType = m.prop("");
     vm.updatedTags = m.prop("");
     vm.content = "";
+    vm.uploader = new app.uploader(vm.id() || "");
     vm.binary = false;
     vm.image = false;
     vm.tags = [];
@@ -58,7 +59,7 @@
     vm.viewDocument = function(){
       if (vm.ext === "md" && vm.id().match(new RegExp("^"+vm.dir+"\/md\/"))) {
         // If editing a documentation page, go back to the guide.
-        m.route("/guide/"+vm.id().replace(/\.md$/, "").replace(new Regexp("^"+vm.dir+"\/md\/"), ""));
+        m.route("/guide/"+vm.id().replace(/\.md$/, "").replace(new RegExp("^"+vm.dir+"\/md\/"), ""));
       } else {
         m.route("/document/view/"+vm.id());
       }
@@ -101,7 +102,11 @@
     vm.delete = function(){
       Doc.delete(vm.id()).then(function(){
         LS.flash({type: "success", content: "Document '"+vm.id()+"' deleted successfully."});
-        m.route("/info");
+        // Tags may be changed, update infos
+        Info.get().then(function(info){
+          app.system = info;
+           m.route("/info");
+        });
       }, vm.flashError);
     };
     
@@ -127,6 +132,20 @@
       }, vm.flashError);
     };
     
+    // File uploader callbacks.
+    vm.uploader.onSuccess = function(data){
+      vm.id(data.id);
+      LS.flash({type: "success", content: "Document '"+vm.id()+"' uploader successfully."});
+      Info.get().then(function(info){
+        app.system = info;
+        vm.viewDocument();
+      });
+    };
+    
+    vm.uploader.onFailure = function(data){
+      vm.flashError;
+    };
+    
     // Populate tools based on current action
     vm.tools = function(){
       if (app.system.read_only) {
@@ -139,6 +158,7 @@
       var tools = [];
       switch (vm.action){
         case "view":
+          tools.push({title: "Upload", icon: "upload", action: vm.uploader.showModal()});
           if (!vm.binary) {
             tools.push({title: "Edit Content", icon: "edit", action: vm.edit});
           }
@@ -146,6 +166,7 @@
           tools.push({title: "Delete", icon: "trash", action: u.showModal("#delete-document-modal")});
           break;
         default:
+          tools.push({title: "Upload", icon: "upload", action: vm.uploader.showModal()});
           tools.push({title: "Save", icon: "save", action: vm.save});
           tools.push({title: "Cancel", icon: "times-circle", action: vm.cancel});
       }
@@ -199,7 +220,10 @@
         })]);
         titleRight = m("span.pull-right", [m("input", {
           placeholder: "Content Type",
-          onchange: m.withAttr("value", vm.contentType),
+          onchange: m.withAttr("value", function(value){
+            vm.contentType(value);
+            vm.uploader.vm.contentType(value);
+          }),
           size: 25,
           value: vm.contentType()
         })]);
@@ -211,7 +235,9 @@
       panelContent = app.editor.view(vm);
     }
     var title = m("span",[titleLeft, titleRight]);
+    
     return m("div", [
+      vm.uploader.view(),
       u.modal(deleteDialogCfg),
       u.modal(editTagsDialogCfg),
       m(".row", [u.toolbar({links: vm.tools()})]),

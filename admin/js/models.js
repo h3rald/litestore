@@ -66,6 +66,16 @@
       });
   };
   
+  Doc.upload = function(doc) {
+    console.log("Doc.put - Uploading Document:", doc);
+    return m.request({
+      method: "PUT",
+      url: "/v1/docs/"+doc.id,
+      data: doc.data,
+      serialize: function(data) {return data}
+    });
+  };
+  
   Doc.patch = function(id, updatedTags){
     return Doc.get(id).then(function(doc){
       var tags = doc.tags;

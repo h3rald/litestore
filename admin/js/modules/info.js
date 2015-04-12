@@ -16,7 +16,7 @@
       }
     };
     var readonly = info.read_only ? m("span.label.label-success", "Yes") : m("span.label.label-danger", "No"); 
-    var infolist = m(".col-md-6", [m("ul.list-unstyled", [
+    var infolist = m(".col-sm-6", [m("ul.list-unstyled", [
           li("Version", info.version),
           li("Size", info.size),
           li("Mounted Directory", info.directory, info.directory.length===0),
@@ -25,7 +25,7 @@
           li("Total Documents", m("span.badge", info.total_documents)),
           li("Total Tags", m("span.badge", info.total_tags)),
     ])]);
-    var logo = m(".col-md-6", [m("img", {src: "images/litestore.png"})]);
+    var logo = m(".col-sm-6", [m("img", {src: "images/litestore.png"})]);
     var taglist = m("ul.list-unstyled", info.tags.map(function(tag){
         var key = Object.keys(tag)[0];
         return m("li", [u.tagbutton(key, tag[key])]);

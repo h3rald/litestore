@@ -1,6 +1,6 @@
 ## Getting Started
 
-### Downloading Pre-build Binaries
+### Downloading Pre-built Binaries
 
 ### Installing Using Nimble
 

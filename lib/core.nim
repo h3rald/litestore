@@ -111,9 +111,10 @@ proc createDocument*(store: Datastore,  id="", rawdata = "", contenttype = "text
   var id = id
   var contenttype = contenttype.replace(peg"""\;(.+)$""", "") # Strip charset for now
   var binary = checkIfBinary(binary, contenttype)
-  var data = rawdata
+  var searchable = searchable
   if binary == 1:
-    data = data.encode(data.len*2)
+    searchable = 0
+  var data = rawdata
   if id == "":
     id = $genOid()
   # Store document
@@ -138,11 +139,13 @@ proc updateDocument*(store: Datastore, id: string, rawdata: string, contenttype 
   var contenttype = contenttype.replace(peg"""\;(.+)$""", "") # Strip charset for now
   var binary = checkIfBinary(binary, contenttype)
   var data = rawdata
+  var searchable = searchable
   if binary == 1:
-    data = data.encode(data.len*2)
+    searchable = 0
   var res = store.db.execAffectedRows(SQL_UPDATE_DOCUMENT, data, contenttype, binary, searchable, currentTime(), id)
   if res > 0:
-    store.db.exec(SQL_UPDATE_SEARCHCONTENT, data.toPlainText, id)
+    if binary <= 0 and searchable >= 0:
+      store.db.exec(SQL_UPDATE_SEARCHCONTENT, data.toPlainText, id)
     if store.hasMirror and id.startsWith(store.mount):
       var filename = id.unixToNativePath
       if fileExists(filename):
@@ -213,6 +216,7 @@ proc importDir*(store: Datastore, dir: string) =
     if d_ct.isBinary:
       d_binary = 1
       d_searchable = 0
+      d_contents = d_contents.encode(d_contents.len*2) # Encode in Base64.
     discard store.createDocument(d_id, d_contents, d_ct, d_binary, d_searchable)
     store.db.exec(SQL_INSERT_TAG, "$dir:"&dir, d_id)
 
