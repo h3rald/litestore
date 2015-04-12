@@ -15,6 +15,8 @@
         };
         vm.guidelinks = [
           {path: "/guide/overview", title: "Overview"},
+          {path: "/guide/use-cases", title: "Use Cases"},
+          {path: "/guide/architecture", title: "Architecture"},
           {path: "/guide/getting-started", title: "Getting Started"},
           {path: "/guide/usage", title: "Usage"},
           {path: "/guide/api", title: "API"},

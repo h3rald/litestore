@@ -17,7 +17,7 @@ And yes, you can even store the code of your client-side application inside the 
 
 ### Key Features
 
-Despite being fairly small and self-contained, LiteStore comes with many useful features that are essential for many [use cases](#Use.Cases).
+Despite being fairly small and self-contained, LiteStore comes with many useful features that are essential for many use cases.
 
 #### Multiformat documents
 
@@ -32,17 +32,3 @@ LiteStore can be used to store documents in virtually any format
 #### Directory Bulk Import/Export
 
 #### Directory Mounting and Mirroring
-
-### Use Cases
-
-#### SPA prototyping backend
-
-#### Personal Wiki/CMS backend
-
-#### Static site backend
-
-#### Lightweight file server
-
-### Architecture
-
-![LiteStore Architecture](images/litestore_arch.png)
