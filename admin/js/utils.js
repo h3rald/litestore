@@ -186,7 +186,7 @@
       m("ul.dropdown-menu[role='menu']", 
       obj.links.map(function(e){
         return m("li", 
-      [m("a", {href: e.path, config: m.route}, e.title)]);}))
+      [m("a", {href: e.path, config: m.route}, m.trust(e.title))]);}))
     ]);
   };
 

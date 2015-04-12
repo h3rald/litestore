@@ -222,7 +222,6 @@
           placeholder: "Content Type",
           onchange: m.withAttr("value", function(value){
             vm.contentType(value);
-            vm.uploader.vm.contentType(value);
           }),
           size: 25,
           value: vm.contentType()

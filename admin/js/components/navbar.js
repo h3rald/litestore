@@ -10,13 +10,14 @@
     vm: {
       init: function(){
         var vm = this;
+        var caret = "<i class='fa fa-angle-right'></i> ";
         this.activelink = function(url){
           return (m.route().match(new RegExp("^\/"+url))) ? "active" : "";
         };
         vm.guidelinks = [
           {path: "/guide/overview", title: "Overview"},
-          {path: "/guide/use-cases", title: "Use Cases"},
-          {path: "/guide/architecture", title: "Architecture"},
+          {path: "/guide/use-cases", title: caret+"Use Cases"},
+          {path: "/guide/architecture", title: caret+"Architecture"},
           {path: "/guide/getting-started", title: "Getting Started"},
           {path: "/guide/usage", title: "Usage"},
           {path: "/guide/api", title: "API"},
