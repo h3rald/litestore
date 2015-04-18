@@ -58,7 +58,7 @@
           m("span.icon-bar"),
           m("span.icon-bar")
         ]),
-        m("a.navbar-brand", {href: "/", config:m.route}, "LiteStore")
+        m("a.navbar-brand", {href: "/", config:m.route}, "LiteStore Admin")
       ]);
     }
   };

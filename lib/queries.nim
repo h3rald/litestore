@@ -17,7 +17,8 @@ modified TEXT)
 const SQL_CREATE_SEARCHCONTENTS_TABLE* = sql"""
 CREATE VIRTUAL TABLE searchcontents USING fts4(
 document_id TEXT,
-content TEXT)
+content TEXT, 
+tokenize=porter)
 """
 
 const SQL_CREATE_TAGS_TABLE* = sql"""

@@ -1,9 +1,11 @@
 ### Use Cases
 
-#### SPA prototyping backend
+#### Lightweight Document Store
 
-#### Personal Wiki/CMS backend
+#### SPA Prototyping Backend
 
-#### Static site backend
+#### Personal Wiki/CMS Backend
 
-#### Lightweight file server
+#### Static Site Backend
+
+#### Lightweight File Server
