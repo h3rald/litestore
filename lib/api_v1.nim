@@ -1,4 +1,4 @@
-import asynchttpserver2, asyncdispatch, strutils, cgi, strtabs, pegs, json, os
+import asynchttpserver2, asyncdispatch, strutils, cgi, strtabs, pegs, json, os, times
 import types, core, utils
 
 # Helper procs
@@ -119,6 +119,7 @@ proc getRawDocument(LS: LiteStore, id: string, options = newQueryOptions()): Res
     result.code = Http200
 
 proc getDocument(LS: LiteStore, id: string, options = newQueryOptions()): Response =
+  let id = id.decodeURL
   let doc = LS.store.retrieveDocument(id, options)
   if doc.data == "":
     result = resDocumentNotFound(id)
@@ -145,6 +146,7 @@ proc deleteDocument(LS: LiteStore, id: string): Response =
 
 proc getRawDocuments(LS: LiteStore, options: QueryOptions = newQueryOptions()): Response =
   var options = options
+  let t0 = cpuTime()
   let docs = LS.store.retrieveRawDocuments(options)
   let orig_limit = options.limit
   let orig_offset = options.offset
@@ -169,6 +171,7 @@ proc getRawDocuments(LS: LiteStore, options: QueryOptions = newQueryOptions()): 
     if options.orderby != "":
       content["sort"] = %options.orderby
     content["total"] = %total
+    content["execution-time"] = %(cputime()-t0)
     content["results"] = docs
     result.headers = ctJsonHeader()
     result.content = content.pretty
@@ -234,7 +237,7 @@ proc patchDocument(LS: LiteStore, id: string, body: string): Response =
   if jbody.kind != JArray:
     return resError(Http400, "Bad request: PATCH request body is not an array.")
   var options = newQueryOptions()
-  options.select = @["id", "content_type", "binary", "searchable", "created", "modified"]
+  options.select = @["documents.id AS id", "content_type", "binary", "searchable", "created", "modified"]
   let doc = LS.store.retrieveRawDocument(id, options)
   if doc == "":
     return resDocumentNotFound(id)
@@ -295,7 +298,7 @@ proc options(req: Request, LS: LiteStore, resource: string, id = ""): Response =
 
 proc head(req: Request, LS: LiteStore, resource: string, id = ""): Response =
   var options = newQueryOptions()
-  options.select = @["id", "content_type", "binary", "searchable", "created", "modified"]
+  options.select = @["documents.id AS id", "content_type", "binary", "searchable", "created", "modified"]
   try:
     parseQueryOptions(req.url.query, options);
     if id != "":
@@ -312,7 +315,7 @@ proc get(req: Request, LS: LiteStore, resource: string, id = ""): Response =
     of "docs":
       var options = newQueryOptions()
       if req.url.query.contains("contents=false"):
-        options.select = @["id", "content_type", "binary", "searchable", "created", "modified"]
+        options.select = @["documents.id AS id", "content_type", "binary", "searchable", "created", "modified"]
       try:
         parseQueryOptions(req.url.query, options);
         if id != "":

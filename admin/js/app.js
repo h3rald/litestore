@@ -11,6 +11,7 @@
     m.route(document.body, "/info", {
       "/info": app.info,
       "/tags/:id": app.tags,
+      "/html/:id...": app.htmldoc,
       "/document/:action/:id...": app.document,
       "/guide/:id": app.guide,
       "/new": app.create,

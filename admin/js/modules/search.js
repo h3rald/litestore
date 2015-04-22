@@ -14,19 +14,22 @@
     vm.offset = vm.page * vm.limit;
     vm.result = m.prop({total: 0, results: []});
     vm.total = 0;
+    vm.execTime = 0;
     Doc.search(vm.query, vm.offset, vm.limit).then(function(result){
       vm.result(result);
       vm.total = result.total;
+      vm.execTime = (result["execution-time"]*1000).toFixed(0);
     }, vm.flashError); 
   };
   app.search.main = function(){
     var vm = app.search.vm;
     var result = vm.result();
     var title = m("h2.col-md-12", ["You searched for: ", m("em", vm.query)]);
-    var total = m("p.col-md-12", [m("strong", result.total), " hits"]);
+    var total = m("p.col-md-12", [m("strong", result.total), " hits ("+vm.execTime+" ms)"]);
     var resultPanel = function(res){
       var obj = {};
-      obj.title = m("a", {href: "/document/view/"+res.id, config: m.route}, [res.id]);
+      var path = (res.id.match(/\.html?$/)) ? "/html/" : "/document/view/";
+      obj.title = m("a", {href: path+res.id, config: m.route}, [res.id]);
       obj.content = m("div", [
         m("p", [m.trust(res.highlight)]),
         m("p", res.tags.map(function(tag){
