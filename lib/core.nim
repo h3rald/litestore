@@ -140,11 +140,11 @@ proc createDocument*(store: Datastore,  id="", rawdata = "", contenttype = "text
   # Store document
   try:
     store.begin()
-    var res = store.db.execAffectedRows(SQL_INSERT_DOCUMENT, id, data, contenttype, binary, searchable, currentTime())
+    var res = store.db.insertID(SQL_INSERT_DOCUMENT, id, data, contenttype, binary, searchable, currentTime())
     if res > 0:
       if binary <= 0 and searchable >= 0:
         # Add to search index
-        store.db.exec(SQL_INSERT_SEARCHCONTENT, id, data.toPlainText)
+        store.db.exec(SQL_INSERT_SEARCHCONTENT, res, id, data.toPlainText)
       store.addDocumentSystemTags(id, contenttype)
       if store.hasMirror and id.startsWith(store.mount):
         # Add dir tag

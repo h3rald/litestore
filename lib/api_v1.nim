@@ -152,7 +152,7 @@ proc getRawDocuments(LS: LiteStore, options: QueryOptions = newQueryOptions()): 
   let orig_offset = options.offset
   options.limit = 0
   options.offset = 0
-  options.select = @["COUNT(id)"]
+  options.select = @["COUNT(documents.id)"]
   let total = LS.store.retrieveRawDocuments(options)[0].num
   if docs.len == 0:
     result = resError(Http404, "No documents found.")

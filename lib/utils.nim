@@ -22,14 +22,14 @@ proc selectDocumentsByTags(tags: string): string =
 proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
   result = "SELECT "
   if options.search.len > 0:
-    if options.select[0] != "COUNT(id)":
+    if options.select[0] != "COUNT(documents.id)":
       var rank = "rank(matchinfo(searchcontents, 'pcxnal'), 1.20, 0.75, 5.0, 0.5) AS rank"
       options.select.add("snippet(searchcontents) AS highlight")
       options.select.add("ranktable.rank AS rank")
       options.select.add(rank)
       options.orderby = "rank DESC"
       # Create inner select 
-      var innerSelect = "SELECT document_id as id, " & rank & " FROM searchcontents WHERE searchcontents MATCH '" & options.search.replace("'", "''") & "' "
+      var innerSelect = "SELECT docid, " & rank & " FROM searchcontents WHERE searchcontents MATCH '" & options.search.replace("'", "''") & "' "
       if options.tags.len > 0:
         innerSelect = innerSelect & options.tags.selectDocumentsByTags()
       innerSelect = innerSelect & " ORDER BY rank DESC "
@@ -39,11 +39,12 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
           innerSelect = innerSelect & " OFFSET " & $options.offset
       result = result & options.select.join(", ")
       result = result & " FROM documents, searchcontents, (" & innerSelect & ") AS ranktable "
-      result = result & "WHERE documents.id = ranktable.id AND documents.id = searchcontents.document_id "
+      result = result & "WHERE ranktable.docid = documents.rowid AND documents.id = searchcontents.id "
     else:
       result = result & options.select.join(", ")
       result = result & " FROM documents, searchcontents "
-      result = result & "WHERE documents.id = searchcontents.document_id "
+      result = result & "WHERE searchcontents.id = documents.id "
+      options.orderby = ""
   else:
     result = result & options.select.join(", ")
     result = result & " FROM documents WHERE 1=1 "
@@ -62,7 +63,7 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
   debug(result.replace("$", "$$"))
  
 proc prepareSelectTagsQuery*(options: QueryOptions): string =
-  result = "SELECT tag_id, COUNT(document_ID) "
+  result = "SELECT tag_id, COUNT(document_id) "
   result = result & "FROM tags "
   if options.single:
     result = result & "WHERE tag_id = ?"

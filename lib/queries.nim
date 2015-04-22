@@ -5,7 +5,8 @@ import db_sqlite
 
 const SQL_CREATE_DOCUMENTS_TABLE* = sql"""
 CREATE TABLE documents (
-id TEXT PRIMARY KEY,
+rowid INTEGER PRIMARY KEY,
+id TEST,
 data TEXT,
 content_type TEXT,
 binary INTEGER,
@@ -16,8 +17,8 @@ modified TEXT)
 
 const SQL_CREATE_SEARCHCONTENTS_TABLE* = sql"""
 CREATE VIRTUAL TABLE searchcontents USING fts4(
-document_id TEXT,
-content TEXT, 
+id TEXT,
+data TEXT, 
 tokenize=porter)
 """
 
@@ -83,19 +84,19 @@ document_id = ? AND tag_id LIKE "$%"
 
 const SQL_INSERT_SEARCHCONTENT* = sql"""
 INSERT INTO searchcontents
-(document_id, content)
-VALUES (?, ?)
+(docid, id, data)
+VALUES (?, ?, ?)
 """
 
 const SQL_DELETE_SEARCHCONTENT* = sql"""
 DELETE FROM searchcontents WHERE
-document_id = ?
+id = ?
 """
 
 const SQL_UPDATE_SEARCHCONTENT* = sql"""
 UPDATE searchcontents
-SET content = ?
-WHERE document_id = ?
+SET data = ?
+WHERE id = ?
 """
 
 const SQL_SELECT_DOCUMENTS_BY_TAG* = sql"""
@@ -131,7 +132,7 @@ WHERE documents.id IN
 
 const SQL_DELETE_SEARCHCONTENTS_BY_TAG* = sql"""
 DELETE FROM searchcontents
-WHERE document_id IN 
+WHERE id IN 
 (SELECT document_id FROM tags WHERE tag_id = ?)
 """
 
