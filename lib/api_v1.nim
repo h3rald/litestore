@@ -119,7 +119,6 @@ proc getRawDocument(LS: LiteStore, id: string, options = newQueryOptions()): Res
     result.code = Http200
 
 proc getDocument(LS: LiteStore, id: string, options = newQueryOptions()): Response =
-  let id = id.decodeURL
   let doc = LS.store.retrieveDocument(id, options)
   if doc.data == "":
     result = resDocumentNotFound(id)
@@ -152,7 +151,7 @@ proc getRawDocuments(LS: LiteStore, options: QueryOptions = newQueryOptions()): 
   let orig_offset = options.offset
   options.limit = 0
   options.offset = 0
-  options.select = @["COUNT(documents.id)"]
+  options.select = @["COUNT(docid)"]
   let total = LS.store.retrieveRawDocuments(options)[0].num
   if docs.len == 0:
     result = resError(Http404, "No documents found.")
@@ -311,6 +310,7 @@ proc head(req: Request, LS: LiteStore, resource: string, id = ""): Response =
     return resError(Http400, "Bad request - $1" % getCurrentExceptionMsg())
 
 proc get(req: Request, LS: LiteStore, resource: string, id = ""): Response =
+  let  id = id.decodeURL
   case resource:
     of "docs":
       var options = newQueryOptions()

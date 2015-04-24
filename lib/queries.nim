@@ -5,7 +5,7 @@ import db_sqlite
 
 const SQL_CREATE_DOCUMENTS_TABLE* = sql"""
 CREATE TABLE documents (
-rowid INTEGER PRIMARY KEY,
+docid INTEGER PRIMARY KEY,
 id TEST,
 data TEXT,
 content_type TEXT,

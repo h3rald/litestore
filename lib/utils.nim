@@ -22,11 +22,11 @@ proc selectDocumentsByTags(tags: string): string =
 proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
   result = "SELECT "
   if options.search.len > 0:
-    if options.select[0] != "COUNT(documents.id)":
-      var rank = "rank(matchinfo(searchcontents, 'pcxnal'), 1.20, 0.75, 5.0, 0.5) AS rank"
-      options.select.add("snippet(searchcontents) AS highlight")
+    if options.select[0] != "COUNT(docid)":
+      let rank = "rank(matchinfo(searchcontents, 'pcxnal'), 1.20, 0.75, 5.0, 0.5) AS rank"
+      let snippet = "snippet(searchcontents, \"<strong>\", \"</strong>\", \"<strong>&hellip;</strong>\", -1, 30) as highlight" 
+      options.select.add(snippet)
       options.select.add("ranktable.rank AS rank")
-      options.select.add(rank)
       options.orderby = "rank DESC"
       # Create inner select 
       var innerSelect = "SELECT docid, " & rank & " FROM searchcontents WHERE searchcontents MATCH '" & options.search.replace("'", "''") & "' "
@@ -38,12 +38,12 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
         if options.offset > 0:
           innerSelect = innerSelect & " OFFSET " & $options.offset
       result = result & options.select.join(", ")
-      result = result & " FROM documents, searchcontents, (" & innerSelect & ") AS ranktable "
-      result = result & "WHERE ranktable.docid = documents.rowid AND documents.id = searchcontents.id "
+      result = result & " FROM documents JOIN (" & innerSelect & ") as ranktable USING(docid) JOIN searchcontents USING(docid) "
+      result = result & "WHERE 1=1 "
     else:
       result = result & options.select.join(", ")
-      result = result & " FROM documents, searchcontents "
-      result = result & "WHERE searchcontents.id = documents.id "
+      result = result & " FROM searchcontents "
+      result = result & "WHERE 1=1 "
       options.orderby = ""
   else:
     result = result & options.select.join(", ")
@@ -56,7 +56,7 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
     result = result & "AND searchcontents MATCH '" & options.search.replace("'", "''") & "' "
   if options.orderby.len > 0 and options.select[0] != "COUNT(id)":
     result = result & "ORDER BY " & options.orderby & " " 
-  if options.limit > 0:
+  if options.search.len == 0 and options.limit > 0:
     result = result & "LIMIT " & $options.limit & " "
     if options.offset > 0:
       result = result & "OFFSET " & $options.offset & " "
