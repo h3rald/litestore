@@ -15,6 +15,10 @@ created TEXT,
 modified TEXT)
 """
 
+const SQL_CREATE_DOCID_INDEX* = sql"""
+CREATE INDEX docid_index ON documents(docid)
+"""
+
 const SQL_CREATE_SEARCHCONTENTS_TABLE* = sql"""
 CREATE VIRTUAL TABLE searchcontents USING fts4(
 id TEXT,

@@ -26,6 +26,7 @@ proc createDatastore*(file:string) =
     raise newException(EDatastoreExists, "Datastore '$1' already exists." % file)
   let store = db.open(file, "", "", "")
   store.exec(SQL_CREATE_DOCUMENTS_TABLE)
+  store.exec(SQL_CREATE_DOCID_INDEX)
   store.exec(SQL_CREATE_SEARCHCONTENTS_TABLE)
   store.exec(SQL_CREATE_TAGS_TABLE)
 
