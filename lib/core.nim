@@ -9,7 +9,7 @@ import
   strtabs,
   strutils,
   base64,
-  logging,
+  #logging,
   math
 import
   types,
@@ -60,18 +60,18 @@ proc hasMirror(store: Datastore): bool =
 
 proc begin(store: Datastore) =
   if not LS_TRANSACTION:
-    store.db.exec("BEGIN".sql)
     LS_TRANSACTION = true
+    store.db.exec("BEGIN".sql)
 
 proc commit(store: Datastore) =
   if LS_TRANSACTION:
-    store.db.exec("COMMIT".sql)
     LS_TRANSACTION = false
+    store.db.exec("COMMIT".sql)
 
 proc rollback(store: Datastore) =
   if LS_TRANSACTION:
-    store.db.exec("ROLLBACK".sql)
     LS_TRANSACTION = false
+    store.db.exec("ROLLBACK".sql)
 
 # Manage Tags
 
@@ -183,9 +183,9 @@ proc updateDocument*(store: Datastore, id: string, rawdata: string, contenttype 
           filename.writeFile(rawdata)
         else:
           raise newException(EFileNotFound, "File not found: $1" % filename)
-      return $store.retrieveRawDocument(id)
+      result = $store.retrieveRawDocument(id)
     else:
-      return ""
+      result = ""
     if singleOp:
       store.commit()
   except:

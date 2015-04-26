@@ -2,8 +2,8 @@ import
   parseopt2,
   parsecfg,
   streams,
-  strutils,
-  logging
+  #logging,
+  strutils
 import
   types,
   utils
@@ -18,7 +18,7 @@ var
   directory = ""
   readonly = false
   logLevelLabel = "INFO"
-  logLevel = lvlInfo
+  #logLevel = lvlInfo
   mount = false
   reset = false
   
@@ -90,8 +90,9 @@ for kind, key, val in getOpt():
           if val == "":
             fail(102, "Log level not specified.")
           try:
-            logLevelLabel = val.toUpper
-            logLevel = logging.LevelNames.find(logLevelLabel).Level
+            discard
+            #logLevelLabel = val.toUpper
+            #logLevel = logging.LevelNames.find(logLevelLabel).Level
           except:
             fail(103, "Invalid log level '$1'" % val)
         of "import":
@@ -130,7 +131,7 @@ for kind, key, val in getOpt():
     else:
       discard
 
-var LS*: LiteStore
+var LS* {.threadvar.}: LiteStore
 
 LS.port = port
 LS.address = address
@@ -147,6 +148,6 @@ LS.reset = reset
 
 # Initialize loggers
 
-logging.level = logLevel
-logging.handlers.add(newConsoleLogger(logLevel, "$date $time - "))
-logging.handlers.add(newFileLogger("litestore.log.txt", fmAppend, logLevel, fmtStr = "$date $time - "))
+#logging.level = logLevel
+#logging.handlers.add(newConsoleLogger(logLevel, "$date $time - "))
+#logging.handlers.add(newFileLogger("litestore.log.txt", fmAppend, logLevel, fmtStr = "$date $time - "))

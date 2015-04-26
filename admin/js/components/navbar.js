@@ -72,7 +72,9 @@
         var vm =  this;
         vm.query = m.prop("");
         vm.keySearch = function(el, isInitialized, context){
+          if (isInitialized) return;
           $(el).keypress(function(event){
+            if (isInitialized) return;
             m.redraw.strategy("none");
             vm.query($(el).val());
             if (event.which == 13){

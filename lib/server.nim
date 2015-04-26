@@ -1,5 +1,16 @@
-import asynchttpserver2, asyncdispatch, times, strutils, pegs, strtabs, cgi, logging
-import types, utils, api_v1
+import 
+  asynchttpserver2,
+  asyncdispatch, 
+  times, 
+  strutils, 
+  pegs, 
+  strtabs, 
+  #logging,
+  cgi 
+import 
+  types, 
+  utils, 
+  api_v1
 
 proc getReqInfo(req: Request): string =
   var url = req.url.path
@@ -27,7 +38,7 @@ proc processApiUrl(req: Request, LS: LiteStore, info: ResourceInfo): Response =
         return resError(Http400, "Bad request - Invalid resource: $1" % info.resource)
 
 
-proc process(req: Request, LS: LiteStore): Response =
+proc process(req: Request, LS: LiteStore): Response {.gcsafe.}=
   var matches = @["", "", ""]
   template route(req, peg: expr, op: stmt): stmt {.immediate.}=
     if req.url.path.find(peg, matches) != -1:
@@ -67,7 +78,7 @@ setControlCHook(handleCtrlC)
 
 proc serve*(LS: LiteStore) =
   var server = newAsyncHttpServer()
-  proc handleHttpRequest(req: Request): Future[void] {.async.} =
+  proc handleHttpRequest(req: Request): Future[void] {.async, gcsafe, closure.} =
     info(getReqInfo(req).replace("$", "$$"))
     let res = req.process(LS)
     await req.respond(res.code, res.content, res.headers)

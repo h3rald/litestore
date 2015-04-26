@@ -1,4 +1,4 @@
-import json, db_sqlite, strutils, pegs, asyncdispatch, asynchttpserver2, times, logging, math, sqlite3
+import json, db_sqlite, strutils, pegs, asyncdispatch, asynchttpserver2, times, math, sqlite3, strutils
 import types, queries, contenttypes
 
 proc dbQuote*(s: string): string =
@@ -8,8 +8,24 @@ proc dbQuote*(s: string): string =
     else: add(result, c)
   add(result, '\'')
 
-proc currentTime*(): string =
-  return getTime().getGMTime().format("yyyy-MM-dd'T'hh:mm:ss'Z'")
+proc currentTime*(plain = false): string =
+  if plain:
+    return getTime().getGMTime().format("yyyy-MM-dd' @ 'hh:mm:ss")
+  else:
+    return getTime().getGMTime().format("yyyy-MM-dd'T'hh:mm:ss'Z'")
+
+proc msg(kind, message: string, params: varargs[string, `$`]) =
+  let s = format(message, params)
+  echo currentTime(true), " ", kind, ": ", s
+
+proc info*(message: string, params: varargs[string, `$`]) = 
+  msg("   INFO", message, params)
+
+proc warn*(message: string, params: varargs[string, `$`]) = 
+  msg("WARNING", message, params)
+
+proc  debug*(message: string, params: varargs[string, `$`]) = 
+  msg("  DEBUG", message, params)
 
 proc selectDocumentsByTags(tags: string): string =
   var select_tagged = "SELECT document_id FROM tags WHERE tag_id = '"

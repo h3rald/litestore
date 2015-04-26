@@ -52,24 +52,18 @@ type
     version: string
   ]
 
-let PEG_TAG* = peg"""
-^\$? [a-zA-Z0-9_\-?~:.@#^!+]+$
-"""
+var 
+  PEG_TAG* {.threadvar.}: Peg
+  PEG_USER_TAG* {.threadvar.}: Peg
+  PEG_DEFAULT_URL* {.threadvar.}: Peg
+  PEG_URL* {.threadvar.}: Peg
 
-let PEG_USER_TAG* = peg"""
-^[a-zA-Z0-9_\-?~:.@#^!+]+$
-"""
+PEG_TAG = peg"""^\$? [a-zA-Z0-9_\-?~:.@#^!+]+$"""
+PEG_USER_TAG = peg"""^[a-zA-Z0-9_\-?~:.@#^!+]+$"""
+PEG_DEFAULT_URL = peg"""^\/{(docs / info)} (\/ {(.+)} / \/?)$"""
+PEG_URL = peg"""^\/({(v\d+)} \/) {([^\/]+)} (\/ {(.+)} / \/?)$"""
 
-let PEG_DEFAULT_URL* = peg"""
-  ^\/{(docs / info)} (\/ {(.+)} / \/?)$
-"""
-
-let PEG_URL* = peg"""
-  ^\/({(v\d+)} \/) {([^\/]+)} (\/ {(.+)} / \/?)$
-"""
-
-const 
-  CT_JSON* = {"Content-Type": "application/json"}
+const CT_JSON* = {"Content-Type": "application/json"}
 
 proc ctHeader*(ct: string): StringTableRef =
   return {"Content-Type": ct}.newStringTable

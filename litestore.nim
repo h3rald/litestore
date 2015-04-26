@@ -8,8 +8,8 @@ import
   json,
   pegs, 
   strtabs,
-  base64,
-  logging
+  #logging,
+  base64
 import
   lib/types,
   lib/utils, 

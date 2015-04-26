@@ -121,7 +121,7 @@ SELECT COUNT(DISTINCT tag_id) FROM tags
 """
 
 const SQL_COUNT_DOCUMENTS* = sql"""
-SELECT COUNT(id) FROM documents 
+SELECT COUNT(docid) FROM documents 
 """
 
 const SQL_DELETE_DOCUMENTS_BY_TAG* = sql"""

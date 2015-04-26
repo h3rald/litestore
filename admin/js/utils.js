@@ -127,7 +127,7 @@
    * - query
    */
   u.paginator = function(obj) {
-    var max_page = Math.ceil(obj.total/obj.limit)-1;
+    var max_page = Math.min(14, Math.ceil(obj.total/obj.limit)-1);
     var c_page = Math.ceil(obj.offset/obj.limit);
     var page = function(n, sign, disabled){
       var klass;
