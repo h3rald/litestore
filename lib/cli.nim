@@ -2,9 +2,9 @@ import
   parseopt2,
   parsecfg,
   streams,
-  #logging,
   strutils
 import
+  logger,
   types,
   utils
 
@@ -72,7 +72,7 @@ let
     -a, --address       Specify server address (default: 127.0.0.1).
     -d, --directory     Specify a directory to import, export, delete, or mount.
     -h, --help          Display this message.
-    -l, --log           Specify the log level: debug, info, warn, error, fatal, none (default: info)
+    -l, --log           Specify the log level: debug, info, warn, error, none (default: info)
     -m, --mount         Mirror database changes to the specified directory on the filesystem.
     -p, --port          Specify server port number (default: 9500).
     -r, --readonly      Allow only data retrieval operations.
@@ -113,12 +113,19 @@ for kind, key, val in getOpt():
         of "log", "l":
           if val == "":
             fail(102, "Log level not specified.")
-          try:
-            discard
-            #logLevelLabel = val.toUpper
-            #logLevel = logging.LevelNames.find(logLevelLabel).Level
-          except:
-            fail(103, "Invalid log level '$1'" % val)
+          case val:
+            of "info":
+              LOG.level = lvInfo
+            of "warn":
+              LOG.level = lvWarn
+            of "debug":
+              LOG.level = lvDebug
+            of "error":
+              LOG.level = lvError
+            of "none":
+              LOG.level = lvNone
+            else:
+              fail(103, "Invalid log level '$1'" % val)
         of "directory", "d":
           if val == "":
             fail(104, "Directory not specified.")
@@ -143,6 +150,7 @@ for kind, key, val in getOpt():
 if directory == nil and (operation in [opDelete, opImport, opExport] or mount):
   fail(105, "Directory option not specified.")
 
+# Initialize LiteStore
 var LS* {.threadvar.}: LiteStore
 
 LS.port = port
@@ -154,12 +162,5 @@ LS.appversion = version
 LS.readonly = readonly
 LS.appname = appname
 LS.favicon = favicon
-LS.loglevel = logLevelLabel
 LS.mount = mount
 LS.reset = reset
-
-# Initialize loggers
-
-#logging.level = logLevel
-#logging.handlers.add(newConsoleLogger(logLevel, "$date $time - "))
-#logging.handlers.add(newFileLogger("litestore.log.txt", fmAppend, logLevel, fmtStr = "$date $time - "))

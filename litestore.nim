@@ -11,6 +11,7 @@ import
   base64
 import
   lib/types,
+  lib/logger,
   lib/utils, 
   lib/core,
   lib/cli,
@@ -23,13 +24,16 @@ from asyncdispatch import runForever
 {.passC: "-DSQLITE_ENABLE_FTS4=1 -DSQLITE_ENABLE_LOCKING_STYLE=1".}
 
 when isMainModule:
+
   # Initialize Datastore
   if not LS.file.fileExists:
     try:
-      info("Creating datastore: ", LS.file)
+      LOG.debug("Creating datastore: ", LS.file)
       LS.file.createDatastore()
     except:
+      eWarn()
       fail(200, "Unable to create datastore '$1'" % [LS.file])
+
   # Manage vacuum operation separately
   if LS.operation == opVacuum:
     let data = db.open(LS.file, "", "", "")
@@ -40,6 +44,7 @@ when isMainModule:
       eWarn()
       quit(203)
     quit(0)
+
   # Open Datastore and execute operation
   try:
     LS.store = LS.file.openDatastore()
@@ -47,7 +52,7 @@ when isMainModule:
       try:
         LS.store.mountDir(LS.directory, LS.reset)
       except:
-        echo(getCurrentExceptionMsg())
+        eWarn()
         fail(202, "Unable to mount directory '$1'" % [LS.directory])
   except:
     fail(201, "Unable to open datastore '$1'" % [LS.file])

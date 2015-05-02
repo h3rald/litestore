@@ -34,6 +34,14 @@ type
     opDelete,
     opVacuum,
     opOptimize
+  LogLevel* = enum
+    lvDebug
+    lvInfo
+    lvWarn
+    lvError
+    lvNone
+  Logger* = object
+    level*: LogLevel
   LiteStore* = object
     store*: Datastore
     address*: string

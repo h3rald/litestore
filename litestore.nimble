@@ -13,4 +13,4 @@ address       = "127.0.0.1"
 port          = 9500
 
 [Deps]
-requires: "nimrod >= 0.10.2"
+requires: "nimrod >= 0.11.0"

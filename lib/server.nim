@@ -5,7 +5,7 @@ import
   strutils, 
   pegs, 
   strtabs, 
-  #logging,
+  logger,
   cgi 
 import 
   types, 
@@ -22,7 +22,7 @@ proc getReqInfo(req: Request): string =
 
 proc handleCtrlC() {.noconv.} =
   echo ""
-  info("Exiting...")
+  LOG.info("Exiting...")
   quit()
 
 proc processApiUrl(req: Request, LS: LiteStore, info: ResourceInfo): Response = 
@@ -79,11 +79,11 @@ setControlCHook(handleCtrlC)
 proc serve*(LS: LiteStore) =
   var server = newAsyncHttpServer()
   proc handleHttpRequest(req: Request): Future[void] {.async, gcsafe, closure.} =
-    info(getReqInfo(req).replace("$", "$$"))
+    LOG.info(getReqInfo(req).replace("$", "$$"))
     let res = req.process(LS)
     await req.respond(res.code, res.content, res.headers)
-  info(LS.appname & " v" & LS.appversion & " started on " & LS.address & ":" & $LS.port & ".")
+  LOG.info(LS.appname & " v" & LS.appversion & " started on " & LS.address & ":" & $LS.port & ".")
   if LS.mount:
-    info("Mirroring datastore changes to: " & LS.directory)
+    LOG.info("Mirroring datastore changes to: " & LS.directory)
   asyncCheck server.serve(LS.port.Port, handleHttpRequest, LS.address)
 

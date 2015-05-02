@@ -1,5 +1,18 @@
-import json, db_sqlite, strutils, pegs, asyncdispatch, asynchttpserver2, times, math, sqlite3, strutils
-import types, queries, contenttypes
+import 
+  json,
+  db_sqlite, 
+  strutils, 
+  pegs, 
+  asyncdispatch, 
+  asynchttpserver2, 
+  math, 
+  sqlite3 
+
+import 
+  types, 
+  queries, 
+  contenttypes, 
+  logger
 
 proc dbQuote*(s: string): string =
   result = "'"
@@ -7,25 +20,6 @@ proc dbQuote*(s: string): string =
     if c == '\'': add(result, "''")
     else: add(result, c)
   add(result, '\'')
-
-proc currentTime*(plain = false): string =
-  if plain:
-    return getTime().getGMTime().format("yyyy-MM-dd' @ 'hh:mm:ss")
-  else:
-    return getTime().getGMTime().format("yyyy-MM-dd'T'hh:mm:ss'Z'")
-
-proc msg(kind, message: string, params: varargs[string, `$`]) =
-  let s = format(message, params)
-  echo currentTime(true), " ", kind, ": ", s
-
-proc info*(message: string, params: varargs[string, `$`]) = 
-  msg("   INFO", message, params)
-
-proc warn*(message: string, params: varargs[string, `$`]) = 
-  msg("WARNING", message, params)
-
-proc  debug*(message: string, params: varargs[string, `$`]) = 
-  msg("  DEBUG", message, params)
 
 proc selectDocumentsByTags(tags: string): string =
   var select_tagged = "SELECT document_id FROM tags WHERE tag_id = '"
@@ -76,7 +70,7 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
     result = result & "LIMIT " & $options.limit & " "
     if options.offset > 0:
       result = result & "OFFSET " & $options.offset & " "
-  debug(result.replace("$", "$$"))
+  LOG.debug(result.replace("$", "$$"))
  
 proc prepareSelectTagsQuery*(options: QueryOptions): string =
   result = "SELECT tag_id, COUNT(document_id) "
@@ -88,7 +82,7 @@ proc prepareSelectTagsQuery*(options: QueryOptions): string =
     result = result & "ORDER BY " & options.orderby&" " 
   if options.limit > 0:
     result = result & "LIMIT " & $options.limit & " "
-  debug(result.replace("$", "$$"))
+  LOG.debug(result.replace("$", "$$"))
 
 proc prepareJsonDocument*(store:Datastore, doc: TRow, cols:seq[string]): JsonNode =
   var raw_tags = store.db.getAllRows(SQL_SELECT_DOCUMENT_TAGS, doc[0])
@@ -138,13 +132,13 @@ proc destroyDocumentSystemTags*(store: Datastore, docid) =
   store.db.exec(SQL_DELETE_DOCUMENT_SYSTEM_TAGS, docid)
 
 proc fail*(code, msg) =
-  stderr.writeln(msg)
+  LOG.error(msg)
   quit(code)
 
 proc resError*(code: HttpCode, message: string, trace = ""): Response =
-  warn(message.replace("$", "$$"))
+  LOG.warn(message.replace("$", "$$"))
   if trace.len > 0:
-    debug(trace.replace("$", "$$"))
+    LOG.debug(trace.replace("$", "$$"))
   result.code = code
   result.content = """{"error":"$1"}""" % message
   result.headers = ctJsonHeader()
@@ -154,8 +148,8 @@ proc resDocumentNotFound*(id): Response =
 
 proc eWarn*() =
   var e = getCurrentException()
-  warn(e.msg)
-  debug(getStackTrace(e))
+  LOG.warn(e.msg)
+  LOG.debug(getStackTrace(e))
 
 #  Created by Joshua Wilson on 27/05/14.
 #  Copyright (c) 2014 Joshua Wilson. All rights reserved.

@@ -15,6 +15,7 @@ import
   types,
   contenttypes,
   queries,
+  logger,
   utils
 
 # Manage Datastores
@@ -36,15 +37,15 @@ proc dropIndexes(db: TDbConn) =
 proc createDatastore*(file:string) = 
   if file.fileExists():
     raise newException(EDatastoreExists, "Datastore '$1' already exists." % file)
-  debug("Creating datastore '$1'", file)
+  LOG.debug("Creating datastore '$1'", file)
   let data = db.open(file, "", "", "")
-  debug("Creating tables")
+  LOG.debug("Creating tables")
   data.exec(SQL_CREATE_DOCUMENTS_TABLE)
   data.exec(SQL_CREATE_SEARCHDATA_TABLE)
   data.exec(SQL_CREATE_TAGS_TABLE)
-  debug("Creating indexes")
+  LOG.debug("Creating indexes")
   data.createIndexes()
-  debug("Database created")
+  LOG.debug("Database created")
 
 proc closeDatastore*(store:Datastore) = 
   try:
@@ -66,13 +67,13 @@ proc openDatastore*(file:string): Datastore =
   try:
     result.db = db.open(file, "", "", "")
     # Register custom function & PRAGMAs
-    debug("Registering custom functions...")
+    LOG.debug("Registering custom functions...")
     discard result.db.create_function("rank", -1, SQLITE_ANY, cast[pointer](SQLITE_DETERMINISTIC), okapi_bm25f_kb, nil, nil)
-    debug("Executing PRAGMAs...")
+    LOG.debug("Executing PRAGMAs...")
     discard result.db.tryExec("PRAGMA locking_mode = exclusive".sql)
     discard result.db.tryExec("PRAGMA page_size = 4096".sql)
     discard result.db.tryExec("PRAGMA cache_size = 10000".sql)
-    debug("Done.")
+    LOG.debug("Done.")
     result.path = file
     result.mount = ""
   except:
@@ -83,19 +84,19 @@ proc hasMirror(store: Datastore): bool =
 
 proc begin(store: Datastore) =
   if not LS_TRANSACTION:
-    debug("Beginning transaction")
+    LOG.debug("Beginning transaction")
     LS_TRANSACTION = true
     store.db.exec("BEGIN".sql)
 
 proc commit(store: Datastore) =
   if LS_TRANSACTION:
-    debug("Committing transaction")
+    LOG.debug("Committing transaction")
     LS_TRANSACTION = false
     store.db.exec("COMMIT".sql)
 
 proc rollback(store: Datastore) =
   if LS_TRANSACTION:
-    debug("Rolling back transaction")
+    LOG.debug("Rolling back transaction")
     LS_TRANSACTION = false
     store.db.exec("ROLLBACK".sql)
 
@@ -297,14 +298,14 @@ proc importFile*(store: Datastore, f: string, dir = "") =
 proc optimize*(store: Datastore) =
   try:
     store.begin()
-    debug("Reindexing columns...")
+    LOG.debug("Reindexing columns...")
     store.db.exec(SQL_REINDEX)
-    debug("Rebuilding full-text index...")
+    LOG.debug("Rebuilding full-text index...")
     store.db.exec(SQL_REBUILD)
-    debug("Optimixing full-text index...")
+    LOG.debug("Optimixing full-text index...")
     store.db.exec(SQL_OPTIMIZE)
     store.commit()
-    debug("Done")
+    LOG.debug("Done")
   except:
     eWarn()
 
@@ -334,8 +335,8 @@ proc importDir*(store: Datastore, dir: string) =
   var cFiles = 0
   var cBatches = 0
   store.begin()
-  info("Importing $1 files in $2 batches", files.len, nBatches)
-  debug("Dropping column indexes...")
+  LOG.info("Importing $1 files in $2 batches", files.len, nBatches)
+  LOG.debug("Dropping column indexes...")
   store.db.dropIndexes()
   for f in files: 
     try:
@@ -344,16 +345,16 @@ proc importDir*(store: Datastore, dir: string) =
       if (cFiles-1) mod batchSize == 0:
         cBatches.inc
         store.commit()
-        info("Importing batch $1/$2...", cBatches, nBatches)
+        LOG.info("Importing batch $1/$2...", cBatches, nBatches)
         store.begin()
     except:
-      warn("Unable to import file: $1", f)
+      LOG.warn("Unable to import file: $1", f)
       eWarn()
       store.rollback()
-  debug("Recreating column indexes...")
+  LOG.debug("Recreating column indexes...")
   store.db.createIndexes()
   store.commit()
-  info("Imported $1/$2 files", cFiles, files.len)
+  LOG.info("Imported $1/$2 files", cFiles, files.len)
 
 proc  exportDir*(store: Datastore, dir: string) =
   let docs = store.db.getAllRows(SQL_SELECT_DOCUMENTS_BY_TAG, "$dir:"&dir)
