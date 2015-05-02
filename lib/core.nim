@@ -21,14 +21,30 @@ import
 
 var LS_TRANSACTION = false
 
+proc createIndexes(db: TDbConn) =
+  db.exec SQL_CREATE_INDEX_DOCUMENTS_DOCID
+  db.exec SQL_CREATE_INDEX_DOCUMENTS_ID
+  db.exec SQL_CREATE_INDEX_TAGS_TAG_ID
+  db.exec SQL_CREATE_INDEX_TAGS_DOCUMENT_ID
+
+proc dropIndexes(db: TDbConn) = 
+  db.exec SQL_DROP_INDEX_DOCUMENTS_DOCID
+  db.exec SQL_DROP_INDEX_DOCUMENTS_ID
+  db.exec SQL_DROP_INDEX_TAGS_TAG_ID
+  db.exec SQL_DROP_INDEX_TAGS_DOCUMENT_ID
+
 proc createDatastore*(file:string) = 
   if file.fileExists():
     raise newException(EDatastoreExists, "Datastore '$1' already exists." % file)
-  let store = db.open(file, "", "", "")
-  store.exec(SQL_CREATE_DOCUMENTS_TABLE)
-  store.exec(SQL_CREATE_DOCID_INDEX)
-  store.exec(SQL_CREATE_SEARCHCONTENTS_TABLE)
-  store.exec(SQL_CREATE_TAGS_TABLE)
+  debug("Creating datastore '$1'", file)
+  let data = db.open(file, "", "", "")
+  debug("Creating tables")
+  data.exec(SQL_CREATE_DOCUMENTS_TABLE)
+  data.exec(SQL_CREATE_SEARCHDATA_TABLE)
+  data.exec(SQL_CREATE_TAGS_TABLE)
+  debug("Creating indexes")
+  data.createIndexes()
+  debug("Database created")
 
 proc closeDatastore*(store:Datastore) = 
   try:
@@ -49,8 +65,14 @@ proc openDatastore*(file:string): Datastore =
     raise newException(EDatastoreDoesNotExist, "Datastore '$1' does not exists." % file)
   try:
     result.db = db.open(file, "", "", "")
-    # Register custom function
+    # Register custom function & PRAGMAs
+    debug("Registering custom functions...")
     discard result.db.create_function("rank", -1, SQLITE_ANY, cast[pointer](SQLITE_DETERMINISTIC), okapi_bm25f_kb, nil, nil)
+    debug("Executing PRAGMAs...")
+    discard result.db.tryExec("PRAGMA locking_mode = exclusive".sql)
+    discard result.db.tryExec("PRAGMA page_size = 4096".sql)
+    discard result.db.tryExec("PRAGMA cache_size = 10000".sql)
+    debug("Done.")
     result.path = file
     result.mount = ""
   except:
@@ -61,16 +83,19 @@ proc hasMirror(store: Datastore): bool =
 
 proc begin(store: Datastore) =
   if not LS_TRANSACTION:
+    debug("Beginning transaction")
     LS_TRANSACTION = true
     store.db.exec("BEGIN".sql)
 
 proc commit(store: Datastore) =
   if LS_TRANSACTION:
+    debug("Committing transaction")
     LS_TRANSACTION = false
     store.db.exec("COMMIT".sql)
 
 proc rollback(store: Datastore) =
   if LS_TRANSACTION:
+    debug("Rolling back transaction")
     LS_TRANSACTION = false
     store.db.exec("ROLLBACK".sql)
 
@@ -269,6 +294,28 @@ proc importFile*(store: Datastore, f: string, dir = "") =
   if singleOp:
     store.commit()
 
+proc optimize*(store: Datastore) =
+  try:
+    store.begin()
+    debug("Reindexing columns...")
+    store.db.exec(SQL_REINDEX)
+    debug("Rebuilding full-text index...")
+    store.db.exec(SQL_REBUILD)
+    debug("Optimixing full-text index...")
+    store.db.exec(SQL_OPTIMIZE)
+    store.commit()
+    debug("Done")
+  except:
+    eWarn()
+
+proc vacuum*(store: Datastore) =
+  try:
+    db.close(store.db)
+    let data = db.open(store.path, "", "", "")
+    data.exec(SQL_VACUUM)
+  except:
+    eWarn()
+
 proc importDir*(store: Datastore, dir: string) =
   # TODO: Only allow directory names (not paths)?
   var files = newSeq[string]()
@@ -286,23 +333,27 @@ proc importDir*(store: Datastore, dir: string) =
   let nBatches = ceil(files.len/batchSize).toInt
   var cFiles = 0
   var cBatches = 0
-  info("Importing $1 files in $2 batches", files.len, nBatches)
   store.begin()
+  info("Importing $1 files in $2 batches", files.len, nBatches)
+  debug("Dropping column indexes...")
+  store.db.dropIndexes()
   for f in files: 
     try:
       store.importFile(f, dir)
       cFiles.inc
       if (cFiles-1) mod batchSize == 0:
         cBatches.inc
-        info("Importing batch $1/$2...", cBatches, nBatches)
         store.commit()
+        info("Importing batch $1/$2...", cBatches, nBatches)
         store.begin()
     except:
       warn("Unable to import file: $1", f)
       eWarn()
       store.rollback()
-  info("Imported $1/$2 files", cFiles, files.len)
+  debug("Recreating column indexes...")
+  store.db.createIndexes()
   store.commit()
+  info("Imported $1/$2 files", cFiles, files.len)
 
 proc  exportDir*(store: Datastore, dir: string) =
   let docs = store.db.getAllRows(SQL_SELECT_DOCUMENTS_BY_TAG, "$dir:"&dir)
@@ -318,7 +369,7 @@ proc  exportDir*(store: Datastore, dir: string) =
 
 proc  deleteDir*(store: Datastore, dir: string) =
     store.db.exec(SQL_DELETE_DOCUMENTS_BY_TAG, "$dir:"&dir)
-    store.db.exec(SQL_DELETE_SEARCHCONTENTS_BY_TAG, "$dir:"&dir)
+    store.db.exec(SQL_DELETE_SEARCHDATA_BY_TAG, "$dir:"&dir)
     store.db.exec(SQL_DELETE_TAGS_BY_TAG, "$dir:"&dir)
 
 proc mountDir*(store: var Datastore, dir:string, reset=false) =

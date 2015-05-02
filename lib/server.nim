@@ -44,7 +44,7 @@ proc process(req: Request, LS: LiteStore): Response {.gcsafe.}=
     if req.url.path.find(peg, matches) != -1:
       op
   try: 
-    var info: ResourceInfo = (version: "", resource: "", id: "")
+    var info: ResourceInfo
     req.route peg"^\/?$":
       info.version = "v1"
       info.resource = "info"

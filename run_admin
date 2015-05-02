@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-./litestore --mount:admin -l:info
+./litestore -d:admin -m -l:info

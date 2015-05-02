@@ -27,7 +27,13 @@ type
     startswith*: bool
     endswith*: bool
     negated*: bool
-  Operation* = enum opRun, opImport, opExport, opDelete
+  Operation* = enum 
+    opRun, 
+    opImport, 
+    opExport, 
+    opDelete,
+    opVacuum,
+    opOptimize
   LiteStore* = object
     store*: Datastore
     address*: string

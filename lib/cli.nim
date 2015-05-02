@@ -15,7 +15,7 @@ var
   file*, address*, version*, appname*: string
   port*: int
   operation = opRun
-  directory = ""
+  directory:string = nil
   readonly = false
   logLevelLabel = "INFO"
   #logLevel = lvlInfo
@@ -58,24 +58,46 @@ let
   (c) 2015 Fabio Cevasco
 
   Usage:
-    LS [-p:<port> -a:<address>] [<file>] [--import:<directory> | --export:<directory> | --delete:<directory>] 
+    LS [command] [option1 option2 ...]
+
+  Commands:
+    run                 Starts LiteStore server.
+    delete              Delete a previously-imported specified directory (requires -d).
+    import              Import the specified directory into the datastore (requires -d).
+    export              Export the previously-imported specified directory to the current directory (requires -d).
+    optimize            Optimize search indexes.
+    vacuum              Vacuum datastore.
 
   Options:
-    -a, --address       Specify address (default: 127.0.0.1).
-    -d, --delete        Delete the previously-imported specified directory.
-    --export            Export the previously-imported specified directory to the current directory.
+    -a, --address       Specify server address (default: 127.0.0.1).
+    -d, --directory     Specify a directory to import, export, delete, or mount.
     -h, --help          Display this message.
-    --import            Import the specified directory (Store all its contents).
     -l, --log           Specify the log level: debug, info, warn, error, fatal, none (default: info)
-    -p, --port          Specify port number (default: 9500).
+    -m, --mount         Mirror database changes to the specified directory on the filesystem.
+    -p, --port          Specify server port number (default: 9500).
     -r, --readonly      Allow only data retrieval operations.
-    -m, --mount        Run server and mirror database changes to the specified directory on the filesystem.
-    --reset             If --mount is specified, resets (deletes) any previously imported directory data.
+    -s, --store         Specify a datastore file (default: data.db)
     -v, --version       Display the program version.
 """
 
 for kind, key, val in getOpt():
   case kind:
+    of cmdArgument:
+      case key:
+        of "run":
+          operation = opRun
+        of "import":
+          operation = opImport
+        of "export":
+          operation = opExport
+        of "delete":
+          operation = opDelete
+        of "optimize":
+          operation = opOptimize
+        of "vacuum":
+          operation = opVacuum
+        else:
+          discard
     of cmdLongOption, cmdShortOption:
       case key:
         of "address", "a":
@@ -86,6 +108,8 @@ for kind, key, val in getOpt():
           if val == "":
             fail(101, "Port not specified.")
           port = val.parseInt
+        of "store", "s":
+          file = val
         of "log", "l":
           if val == "":
             fail(102, "Log level not specified.")
@@ -95,27 +119,12 @@ for kind, key, val in getOpt():
             #logLevel = logging.LevelNames.find(logLevelLabel).Level
           except:
             fail(103, "Invalid log level '$1'" % val)
-        of "import":
+        of "directory", "d":
           if val == "":
-            fail(104, "Directory to import not specified.")
-          operation = opImport
+            fail(104, "Directory not specified.")
           directory = val
         of "mount", "m":
-          if val == "":
-            fail(104, "Directory to mount not specified.")
-          operation = opRun
-          directory = val
           mount = true
-        of "reset":
-          reset = true
-        of "export":
-          if val == "":
-            fail(105, "Directory to export not specified.")
-          operation = opExport
-          directory = val
-        of "delete", "d":
-          operation = opDelete
-          directory = val
         of "version", "v":
           echo version
           quit(0)
@@ -126,10 +135,13 @@ for kind, key, val in getOpt():
           readonly = true
         else:
           discard
-    of cmdArgument:
-      file = key
     else:
       discard
+
+# Validation
+
+if directory == nil and (operation in [opDelete, opImport, opExport] or mount):
+  fail(105, "Directory option not specified.")
 
 var LS* {.threadvar.}: LiteStore
 

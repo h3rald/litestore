@@ -15,12 +15,27 @@ created TEXT,
 modified TEXT)
 """
 
-const SQL_CREATE_DOCID_INDEX* = sql"""
-CREATE INDEX docid_index ON documents(docid)
-"""
 
-const SQL_CREATE_SEARCHCONTENTS_TABLE* = sql"""
-CREATE VIRTUAL TABLE searchcontents USING fts4(
+
+const
+  SQL_CREATE_INDEX_DOCUMENTS_DOCID* = sql"CREATE INDEX IF NOT EXISTS documents_docid ON documents(docid)"
+  SQL_CREATE_INDEX_DOCUMENTS_ID* = sql"CREATE INDEX IF NOT EXISTS documents_id ON documents(id)"
+  SQL_CREATE_INDEX_TAGS_DOCUMENT_ID* = sql"CREATE INDEX IF NOT EXISTS tags_document_id ON tags(document_id)"
+  SQL_CREATE_INDEX_TAGS_TAG_ID* = sql"CREATE INDEX IF NOT EXISTS tags_tag_id ON tags(tag_id)"
+
+  SQL_DROP_INDEX_DOCUMENTS_DOCID* = sql"DROP INDEX IF EXISTS documents_docid" 
+  SQL_DROP_INDEX_DOCUMENTS_ID* = sql"DROP INDEX IF EXISTS documents_id"
+  SQL_DROP_INDEX_TAGS_DOCUMENT_ID* = sql"DROP INDEX IF EXISTS tags_document_id"
+  SQL_DROP_INDEX_TAGS_TAG_ID* = sql"DROP INDEX IF EXISTS tags_tag_id"
+  
+  SQL_REINDEX* = sql"REINDEX"
+  SQL_OPTIMIZE* = sql"INSERT INTO searchdata(searchdata) VALUES('optimize')"
+  SQL_REBUILD* = sql"INSERT INTO searchdata(searchdata) VALUES('rebuild')"
+  
+  SQL_VACUUM* = sql"VACUUM"
+
+const SQL_CREATE_SEARCHDATA_TABLE* = sql"""
+CREATE VIRTUAL TABLE searchdata USING fts4(
 id TEXT,
 data TEXT, 
 tokenize=porter)
@@ -87,18 +102,18 @@ document_id = ? AND tag_id LIKE "$%"
 """
 
 const SQL_INSERT_SEARCHCONTENT* = sql"""
-INSERT INTO searchcontents
+INSERT INTO searchdata
 (docid, id, data)
 VALUES (?, ?, ?)
 """
 
 const SQL_DELETE_SEARCHCONTENT* = sql"""
-DELETE FROM searchcontents WHERE
+DELETE FROM searchdata WHERE
 id = ?
 """
 
 const SQL_UPDATE_SEARCHCONTENT* = sql"""
-UPDATE searchcontents
+UPDATE searchdata
 SET data = ?
 WHERE id = ?
 """
@@ -134,8 +149,8 @@ WHERE documents.id IN
 (SELECT document_id FROM tags WHERE tag_id = ?)
 """
 
-const SQL_DELETE_SEARCHCONTENTS_BY_TAG* = sql"""
-DELETE FROM searchcontents
+const SQL_DELETE_SEARCHDATA_BY_TAG* = sql"""
+DELETE FROM searchdata
 WHERE id IN 
 (SELECT document_id FROM tags WHERE tag_id = ?)
 """
