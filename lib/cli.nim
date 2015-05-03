@@ -60,7 +60,7 @@ let
     LS [command] [option1 option2 ...]
 
   Commands:
-    run                 Starts LiteStore server.
+    run                 Start LiteStore server (default if no command specified).
     delete              Delete a previously-imported specified directory (requires -d).
     import              Import the specified directory into the datastore (requires -d).
     export              Export the previously-imported specified directory to the current directory (requires -d).

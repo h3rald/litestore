@@ -111,7 +111,12 @@
   </li>
   <li><a href="#Usage">Usage</a>
   <ul>
-   <li><a href="#Command.Line.Syntax">Command Line Syntax</a></li>
+   <li><a href="#Command.Line.Syntax">Command Line Syntax</a>
+   <ul>
+    <li><a href="#Commands">Commands</a></li>
+    <li><a href="#Options">Options</a></li>
+   </ul>
+   </li>
    <li><a href="#Examples">Examples</a>
    <ul>
     <li><a href="#Starting.the.HTTP.Server">Starting the HTTP Server</a></li>
@@ -306,17 +311,84 @@
 
 <h3 id="Command.Line.Syntax">Command Line Syntax<a href="#document-top" title="Go to top"></a></h3>
 
+<p><span class="kwd">litestore</span> <strong>[</strong> <em>command</em> <strong>]</strong> <strong>[</strong> <em>option1</em>, <em>option2</em>, &hellip; <strong>]</strong></p>
+
+<h4 id="Commands">Commands<a href="#document-top" title="Go to top"></a></h4>
+
+<ul>
+<li><strong>run</strong> &mdash; Start LiteStore server (default if no command specified).</li>
+<li><strong>delete</strong> &mdash; Delete a previously-imported specified directory (requires -d).</li>
+<li><strong>import</strong> &mdash; Import the specified directory into the datastore (requires -d).</li>
+<li><strong>export</strong> &mdash; Export the previously-imported specified directory to the current directory (requires -d).</li>
+<li><strong>optimize</strong> &mdash; Optimize search indexes.</li>
+<li><strong>vacuum</strong> &mdash; Vacuum datastore.</li>
+</ul>
+
+
+<h4 id="Options">Options<a href="#document-top" title="Go to top"></a></h4>
+
+<ul>
+<li><strong>-a</strong>, <strong>--address</strong> &mdash; Specify server address (default: 127.0.0.1).</li>
+<li><strong>-d</strong>, <strong>--directory</strong> &mdash; Specify a directory to import, export, delete, or mount.</li>
+<li><strong>-h</strong>, <strong>--help</strong> &mdash; Display program usage.</li>
+<li><strong>-l</strong>, <strong>--log</strong> &mdash; Specify the log level: debug, info, warn, error, none (default: info)</li>
+<li><strong>-m</strong>, <strong>--mount</strong> &mdash; Mirror database changes to the specified directory on the filesystem.</li>
+<li><strong>-p</strong>, <strong>--port</strong> &mdash;Specify server port number (default: 9500).</li>
+<li><strong>-r</strong>, <strong>--readonly</strong> &mdash; Allow only data retrieval operations.</li>
+<li><strong>-s</strong>, <strong>--store</strong> &mdash; Specify a datastore file (default: data.db)</li>
+<li><strong>-v</strong>, <strong>--version</strong> &mdash; Display the program version.</li>
+</ul>
+
+
 <h3 id="Examples">Examples<a href="#document-top" title="Go to top"></a></h3>
 
 <h4 id="Starting.the.HTTP.Server">Starting the HTTP Server<a href="#document-top" title="Go to top"></a></h4>
 
+<ul>
+<li><p>with default settings:</p>
+
+<p><span class="cmd">litestore</span></p></li>
+<li><p>with custom port (<strong>9700</strong>) and address (<strong>0.0.0.0</strong>):</p>
+
+<p><span class="cmd">litestore -p:9700 -a:0.0.0.0</span></p></li>
+<li><p>in read-only mode with logging level set to <strong>debug</strong>:</p>
+
+<p><span class="cmd">litestore -r -l:debug</span></p></li>
+<li><p>mouting a directory called <strong>admin</strong> (changes will be mirrored to filesystem):</p>
+
+<p><span class="cmd">litestore -m:admin</span></p></li>
+</ul>
+
+
 <h4 id="Importing.a.directory">Importing a directory<a href="#document-top" title="Go to top"></a></h4>
+
+<p>Import a directory called <strong>admin</strong>:</p>
+
+<p><span class="cmd">litestore import -d:admin</span></p>
 
 <h4 id="Exporting.a.directory">Exporting a directory<a href="#document-top" title="Go to top"></a></h4>
 
+<p>Export all documents tagged with <strong>$dir:admin</strong> to a local directory called <strong>admin</strong>:</p>
+
+<p><span class="cmd">litestore -e:admin</span></p>
+
 <h4 id="Deleting.documents.within.a.directory">Deleting documents within a directory<a href="#document-top" title="Go to top"></a></h4>
 
+<p>Delete all documents tagged with <strong>$dir:admin</strong>:</p>
+
+<p><span class="cmd">litestore -d:admin</span></p>
+
 <h4 id="Performing.maintenance.operations">Performing maintenance operations<a href="#document-top" title="Go to top"></a></h4>
+
+<ul>
+<li><p>vacuum:</p>
+
+<p><span class="cmd">litestore vacuum</span></p></li>
+<li><p>optimize search index:</p>
+
+<p><span class="cmd">litestore optimize</span></p></li>
+</ul>
+
 
 <h2 id="REST.API.Reference">REST API Reference<a href="#document-top" title="Go to top"></a></h2>
 
