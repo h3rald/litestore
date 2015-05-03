@@ -17,15 +17,17 @@
     var content = m.prop("");
     return m.request({
         method: "GET", 
-        url: "/v1/info"
+        url: "/info"
       }).then(content);
   };
   
-  Doc.getByTag = function(tag) {
+  Doc.getByTag = function(tag, offset, limit) {
+    offset = offset || 0;
+    limit = limit || 10;
     var docs = m.prop("");
     return m.request({
         method: "GET", 
-        url: "/v1/docs?contents=false&tags="+tag
+        url: "/docs?contents=false&tags="+tag+"&limit="+limit+"&offset="+offset
       }).then(docs);
   };
   
@@ -35,7 +37,7 @@
     var docs = m.prop("");
     return m.request({
         method: "GET", 
-        url: "/v1/docs?contents=false&search="+search+"&limit="+limit+"&offset="+offset,
+        url: "/docs?contents=false&search="+search+"&limit="+limit+"&offset="+offset,
       }).then(docs);
   };
 
@@ -43,14 +45,14 @@
     var doc = m.prop("");
     return m.request({
         method: "GET", 
-        url: "/v1/docs/"+id+"?raw=true"
+        url: "/docs/"+id+"?raw=true"
       }).then(doc);
   };
   
   Doc.delete = function(id){
     return m.request({
         method: "DELETE", 
-        url: "/v1/docs/"+id
+        url: "/docs/"+id
       });
   };
   
@@ -59,7 +61,7 @@
     console.log("Doc.put - Saving Document:", doc);
     return m.request({
         method: "PUT", 
-        url: "/v1/docs/"+doc.id,
+        url: "/docs/"+doc.id,
         data: doc.data,
         serialize: function(data){return data;},
         config: xhrcfg
@@ -70,7 +72,7 @@
     console.log("Doc.put - Uploading Document:", doc);
     return m.request({
       method: "PUT",
-      url: "/v1/docs/"+doc.id,
+      url: "/docs/"+doc.id,
       data: doc.data,
       serialize: function(data) {return data}
     });
@@ -102,7 +104,7 @@
       console.log("Doc.patch - Saving Tags:", ops);
       return m.request({
         method: "PATCH",
-        url: "/v1/docs/"+id,
+        url: "/docs/"+id,
         data: ops
       });
     });

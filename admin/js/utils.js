@@ -124,7 +124,7 @@
    * - total
    * - limit
    * - offset
-   * - query
+   * - baseurl
    */
   u.paginator = function(obj) {
     var max_page = Math.min(14, Math.ceil(obj.total/obj.limit)-1);
@@ -142,7 +142,7 @@
       sign = sign || n+1;  
       return m("li", {class: klass},
           [m("a", {
-                    href: "/search/"+obj.query+"/"+(n+1), // assuming 10 elements per page //+"/"+obj.limit,
+                    href: obj.baseurl +(n+1), // assuming 10 elements per page //+"/"+obj.limit,
                     config: m.route
                   }, [m.trust(sign)]
           )]

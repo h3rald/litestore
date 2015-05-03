@@ -15,7 +15,6 @@ import
   lib/utils, 
   lib/core,
   lib/cli,
-  lib/queries,
   lib/server
 
 from asyncdispatch import runForever
@@ -36,14 +35,7 @@ when isMainModule:
 
   # Manage vacuum operation separately
   if LS.operation == opVacuum:
-    let data = db.open(LS.file, "", "", "")
-    try:
-      data.exec(SQL_VACUUM)
-      db.close(data)
-    except:
-      eWarn()
-      quit(203)
-    quit(0)
+    vacuum LS.file
 
   # Open Datastore and execute operation
   try:

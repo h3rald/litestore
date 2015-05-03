@@ -66,7 +66,8 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
     result = result & "AND searchdata MATCH '" & options.search.replace("'", "''") & "' "
   if options.orderby.len > 0 and options.select[0] != "COUNT(docid)":
     result = result & "ORDER BY " & options.orderby & " " 
-  if options.limit > 0:
+  if options.limit > 0 and options.search.len == 0: 
+    # If searching, do not add limit to the outer select, it's already in the nested select (ranktable)
     result = result & "LIMIT " & $options.limit & " "
     if options.offset > 0:
       result = result & "OFFSET " & $options.offset & " "
@@ -97,9 +98,15 @@ proc prepareJsonDocument*(store:Datastore, doc: TRow, cols:seq[string]): JsonNod
   for s in cols:
     var key = s
     if s.contains(" "):
+      # documents.id AS id...
       let chunks = s.split(" ")
       key = chunks[chunks.len-1]
-    res.add((key, %doc[count]))
+    var value:JsonNode
+    if doc[count] == "":
+      value = newJNull()
+    else:
+      value = %doc[count]
+    res.add((key, value))
     count.inc
   res.add(("tags", %tags))
   return %res

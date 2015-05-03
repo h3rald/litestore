@@ -236,7 +236,7 @@ proc patchDocument(LS: LiteStore, id: string, body: string): Response =
   if jbody.kind != JArray:
     return resError(Http400, "Bad request: PATCH request body is not an array.")
   var options = newQueryOptions()
-  options.select = @["documents.id AS id", "content_type", "binary", "searchable", "created", "modified"]
+  options.select = @["documents.id AS id", "created", "modified"]
   let doc = LS.store.retrieveRawDocument(id, options)
   if doc == "":
     return resDocumentNotFound(id)
@@ -297,7 +297,7 @@ proc options(req: Request, LS: LiteStore, resource: string, id = ""): Response =
 
 proc head(req: Request, LS: LiteStore, resource: string, id = ""): Response =
   var options = newQueryOptions()
-  options.select = @["documents.id AS id", "content_type", "binary", "searchable", "created", "modified"]
+  options.select = @["documents.id AS id", "created", "modified"]
   try:
     parseQueryOptions(req.url.query, options);
     if id != "":
@@ -315,7 +315,7 @@ proc get(req: Request, LS: LiteStore, resource: string, id = ""): Response =
     of "docs":
       var options = newQueryOptions()
       if req.url.query.contains("contents=false"):
-        options.select = @["documents.id AS id", "content_type", "binary", "searchable", "created", "modified"]
+        options.select = @["documents.id AS id", "created", "modified"]
       try:
         parseQueryOptions(req.url.query, options);
         if id != "":

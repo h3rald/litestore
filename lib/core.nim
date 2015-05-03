@@ -309,13 +309,15 @@ proc optimize*(store: Datastore) =
   except:
     eWarn()
 
-proc vacuum*(store: Datastore) =
+proc vacuum*(file: string) =
+  let data = db.open(file, "", "", "")
   try:
-    db.close(store.db)
-    let data = db.open(store.path, "", "", "")
     data.exec(SQL_VACUUM)
+    db.close(data)
   except:
     eWarn()
+    quit(203)
+  quit(0)
 
 proc importDir*(store: Datastore, dir: string) =
   # TODO: Only allow directory names (not paths)?
