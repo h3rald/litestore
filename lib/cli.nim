@@ -17,8 +17,7 @@ var
   operation = opRun
   directory:string = nil
   readonly = false
-  logLevelLabel = "INFO"
-  #logLevel = lvlInfo
+  logLevel = "info"
   mount = false
   reset = false
   
@@ -126,6 +125,7 @@ for kind, key, val in getOpt():
               LOG.level = lvNone
             else:
               fail(103, "Invalid log level '$1'" % val)
+          loglevel = val
         of "directory", "d":
           if val == "":
             fail(104, "Directory not specified.")
@@ -162,5 +162,6 @@ LS.appversion = version
 LS.readonly = readonly
 LS.appname = appname
 LS.favicon = favicon
+LS.loglevel = loglevel
 LS.mount = mount
 LS.reset = reset

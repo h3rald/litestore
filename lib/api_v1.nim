@@ -1,5 +1,5 @@
 import asynchttpserver2, asyncdispatch, strutils, cgi, strtabs, pegs, json, os, times
-import types, core, utils
+import types, core, utils, logger
 
 # Helper procs
 
@@ -170,7 +170,7 @@ proc getRawDocuments(LS: LiteStore, options: QueryOptions = newQueryOptions()): 
     if options.orderby != "":
       content["sort"] = %options.orderby
     content["total"] = %total
-    content["execution-time"] = %(cputime()-t0)
+    content["execution_time"] = %(cputime()-t0)
     content["results"] = docs
     result.headers = ctJsonHeader()
     result.content = content.pretty
@@ -185,7 +185,10 @@ proc getInfo(LS: LiteStore): Response =
   content["size"] = %($((LS.file.getFileSize().float/(1024*1024)).formatFloat(ffDecimal, 2)) & " MB")
   content["read_only"] = %LS.readonly
   content["log_level"] = %LS.loglevel
-  content["directory"] = %LS.directory
+  if LS.directory == nil: 
+    content["directory"] = newJNull()
+  else: 
+    content["directory"] = %LS.directory 
   content["mount"] = %LS.mount
   content["total_documents"] = %total_docs
   content["total_tags"] = %total_tags
