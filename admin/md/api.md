@@ -1,4 +1,4 @@
-## REST API Reference
+## HTTP API Reference
 
 ### info - LiteStore Information
 
