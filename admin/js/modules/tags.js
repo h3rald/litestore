@@ -17,7 +17,7 @@
     vm.execTime = 0;
     vm.docs = Doc.getByTag(vm.id, vm.offset, vm.limit).then(function(docs){
       vm.total = docs.total;
-      vm.execTime = (docs["execution-time"]*1000).toFixed(0);
+      vm.execTime = (docs["execution_time"]*1000).toFixed(0);
       return docs;
     }, vm.flashError); 
   };
@@ -32,10 +32,10 @@
     obj.items.forEach(function(item){ 
       item.content = m("ul", [
         m("li", [m("strong", "Created: "), u.date(item.created)]),
-        m("li", [m("strong", "Modified: "), u.date(item.modified) || "n/a"]),
+        m("li", [m("strong", "Modified: "), u.date(item.modified)]),
       ]);
     });
-    return app.doclist.view(obj);
+    return m.component(app.doclist, obj);
   };
 
   u.layout(app.tags);

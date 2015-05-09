@@ -101,23 +101,35 @@
   };
 
   u.panel = function(obj){
-    var title = "";
-    var footer = "";
-    if (obj.title){
-      title = m(".panel-heading", [
-        m("h2.panel-title", [obj.title])  
-      ]);
-    }
-    if (obj.footer){
-      footer = m(".panel-footer", obj.footer);
-    }
-    return m(".panel.panel-default", [
-      title,
-      m(".panel-body", [
-        obj.content
-      ]),
-      footer
-    ]);
+    var panel = {
+      controller: function(args){
+        return {
+          title: args.title,
+          footer: args.footer,
+          content: args.content,
+        };
+      },
+      view: function(ctrl){
+        var title = "";
+        var footer = "";
+        if (ctrl.title){
+          title = m(".panel-heading", [
+            m("h2.panel-title", [ctrl.title])  
+          ]);
+        }
+        if (ctrl.footer){
+          footer = m(".panel-footer", ctrl.footer);
+        }
+        return m(".panel.panel-default", [
+          title,
+          m(".panel-body", [
+            ctrl.content
+          ]),
+          footer
+        ]);
+      }
+    };
+    return m.component(panel, obj);
   };
   
   /**
@@ -207,11 +219,7 @@
   };
 
   u.date = function(date) {
-    if (date === ""){
-      return "";
-    } else {
-      return new Date(Date.parse(date)).toUTCString();
-    }
+    return (date) ? new Date(Date.parse(date)).toUTCString() : "n/a";
   };
 
   u.toolbar = function(obj){

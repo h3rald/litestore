@@ -3,6 +3,7 @@ var m = (function app(window, undefined) {
 	var type = {}.toString;
 	var parser = /(?:(^|#|\.)([^#\.\[\]]+))|(\[.+?\])/g, attrParser = /\[(.+?)(?:=("|'|)(.*?)\2)?\]/;
 	var voidElements = /^(AREA|BASE|BR|COL|COMMAND|EMBED|HR|IMG|INPUT|KEYGEN|LINK|META|PARAM|SOURCE|TRACK|WBR)$/;
+	var noop = function() {}
 
 	// caching commonly used variables
 	var $document, $location, $requestAnimationFrame, $cancelAnimationFrame;
@@ -33,7 +34,7 @@ var m = (function app(window, undefined) {
 	 */
 	function m() {
 		var args = [].slice.call(arguments);
-		var hasAttrs = args[1] != null && type.call(args[1]) === OBJECT && !("tag" in args[1]) && !("subtree" in args[1]);
+		var hasAttrs = args[1] != null && type.call(args[1]) === OBJECT && !("tag" in args[1] || "view" in args[1]) && !("subtree" in args[1]);
 		var attrs = hasAttrs ? args[1] : {};
 		var classAttrName = "class" in attrs ? "class" : "className";
 		var cell = {tag: "div", attrs: {}};
@@ -48,8 +49,6 @@ var m = (function app(window, undefined) {
 				cell.attrs[pair[1]] = pair[3] || (pair[2] ? "" :true)
 			}
 		}
-		if (classes.length > 0) cell.attrs[classAttrName] = classes.join(" ");
-
 
 		var children = hasAttrs ? args.slice(2) : args.slice(1);
 		if (children.length === 1 && type.call(children[0]) === ARRAY) {
@@ -58,14 +57,18 @@ var m = (function app(window, undefined) {
 		else {
 			cell.children = children
 		}
-
+		
 		for (var attrName in attrs) {
-			if (attrName === classAttrName) {
-				var className = cell.attrs[attrName]
-				cell.attrs[attrName] = (className && attrs[attrName] ? className + " " : className || "") + attrs[attrName];
+			if (attrs.hasOwnProperty(attrName)) {
+				if (attrName === classAttrName && attrs[attrName] != null && attrs[attrName] !== "") {
+					classes.push(attrs[attrName])
+					cell.attrs[attrName] = "" //create key in correct iteration order
+				}
+				else cell.attrs[attrName] = attrs[attrName]
 			}
-			else cell.attrs[attrName] = attrs[attrName]
 		}
+		if (classes.length > 0) cell.attrs[classAttrName] = classes.join(" ");
+		
 		return cell
 	}
 	function build(parentElement, parentTag, parentCache, parentIndex, data, cached, shouldReattach, index, editable, namespace, configs) {
@@ -94,7 +97,7 @@ var m = (function app(window, undefined) {
 		//there's logic that relies on the assumption that null and undefined data are equivalent to empty strings
 		//- this prevents lifecycle surprises from procedural helpers that mix implicit and explicit return statements (e.g. function foo() {if (cond) return m("div")}
 		//- it simplifies diffing code
-		//data.toString() is null if data is the return value of Console.log in Firefox
+		//data.toString() might throw or return null if data is the return value of Console.log in Firefox (behavior depends on version)
 		try {if (data == null || data.toString() == null) data = "";} catch (e) {data = ""}
 		if (data.subtree === "retain") return cached;
 		var cachedType = type.call(cached), dataType = type.call(data);
@@ -130,7 +133,7 @@ var m = (function app(window, undefined) {
 			//3) if key exists in new list, change action from deletion to a move
 			//4) for each key, handle its corresponding action as marked in previous steps
 			var DELETION = 1, INSERTION = 2 , MOVE = 3;
-			var existing = {}, unkeyed = [], shouldMaintainIdentities = false;
+			var existing = {}, shouldMaintainIdentities = false;
 			for (var i = 0; i < cached.length; i++) {
 				if (cached[i] && cached[i].attrs && cached[i].attrs.key != null) {
 					shouldMaintainIdentities = true;
@@ -236,15 +239,37 @@ var m = (function app(window, undefined) {
 			}
 		}
 		else if (data != null && dataType === OBJECT) {
+			var views = [], controllers = []
+			while (data.view) {
+				var view = data.view.$original || data.view
+				var controllerIndex = m.redraw.strategy() == "diff" && cached.views ? cached.views.indexOf(view) : -1
+				var controller = controllerIndex > -1 ? cached.controllers[controllerIndex] : new (data.controller || noop)
+				var key = data && data.attrs && data.attrs.key
+				data = pendingRequests == 0 || (cached && cached.controllers && cached.controllers.indexOf(controller) > -1) ? data.view(controller) : {tag: "placeholder"}
+				if (data.subtree === "retain") return cached;
+				if (key) {
+					if (!data.attrs) data.attrs = {}
+					data.attrs.key = key
+				}
+				if (controller.onunload) unloaders.push({controller: controller, handler: controller.onunload})
+				views.push(view)
+				controllers.push(controller)
+			}
+			if (!data.tag && controllers.length) throw new Error("Component template must return a virtual element, not an array, string, etc.")
 			if (!data.attrs) data.attrs = {};
 			if (!cached.attrs) cached.attrs = {};
 
 			var dataAttrKeys = Object.keys(data.attrs)
 			var hasKeys = dataAttrKeys.length > ("key" in data.attrs ? 1 : 0)
 			//if an element is different enough from the one in cache, recreate it
-			if (data.tag != cached.tag || dataAttrKeys.join() != Object.keys(cached.attrs).join() || data.attrs.id != cached.attrs.id || (m.redraw.strategy() == "all" && cached.configContext && cached.configContext.retain !== true) || (m.redraw.strategy() == "diff" && cached.configContext && cached.configContext.retain === false)) {
+			if (data.tag != cached.tag || dataAttrKeys.sort().join() != Object.keys(cached.attrs).sort().join() || data.attrs.id != cached.attrs.id || data.attrs.key != cached.attrs.key || (m.redraw.strategy() == "all" && (!cached.configContext || cached.configContext.retain !== true)) || (m.redraw.strategy() == "diff" && cached.configContext && cached.configContext.retain === false)) {
 				if (cached.nodes.length) clear(cached.nodes);
 				if (cached.configContext && typeof cached.configContext.onunload === FUNCTION) cached.configContext.onunload()
+				if (cached.controllers) {
+					for (var i = 0, controller; controller = cached.controllers[i]; i++) {
+						if (typeof controller.onunload === FUNCTION) controller.onunload({preventDefault: noop})
+					}
+				}
 			}
 			if (type.call(data.tag) != STRING) return;
 
@@ -252,6 +277,7 @@ var m = (function app(window, undefined) {
 			if (data.attrs.xmlns) namespace = data.attrs.xmlns;
 			else if (data.tag === "svg") namespace = "http://www.w3.org/2000/svg";
 			else if (data.tag === "math") namespace = "http://www.w3.org/1998/Math/MathML";
+			
 			if (isNew) {
 				if (data.attrs.is) node = namespace === undefined ? $document.createElement(data.tag, data.attrs.is) : $document.createElementNS(namespace, data.tag, data.attrs.is);
 				else node = namespace === undefined ? $document.createElement(data.tag) : $document.createElementNS(namespace, data.tag);
@@ -264,9 +290,22 @@ var m = (function app(window, undefined) {
 						data.children,
 					nodes: [node]
 				};
+				if (controllers.length) {
+					cached.views = views
+					cached.controllers = controllers
+					for (var i = 0, controller; controller = controllers[i]; i++) {
+						if (controller.onunload && controller.onunload.$old) controller.onunload = controller.onunload.$old
+						if (pendingRequests && controller.onunload) {
+							var onunload = controller.onunload
+							controller.onunload = noop
+							controller.onunload.$old = onunload
+						}
+					}
+				}
+				
 				if (cached.children && !cached.children.nodes) cached.children.nodes = [];
 				//edge case: setting value on <select> doesn't work before children exist, so set it again after children have been created
-				if (data.tag === "select" && data.attrs.value) setAttributes(node, data.tag, {value: data.attrs.value}, {}, namespace);
+				if (data.tag === "select" && "value" in data.attrs) setAttributes(node, data.tag, {value: data.attrs.value}, {}, namespace);
 				parentElement.insertBefore(node, parentElement.childNodes[index] || null)
 			}
 			else {
@@ -274,11 +313,15 @@ var m = (function app(window, undefined) {
 				if (hasKeys) setAttributes(node, data.tag, data.attrs, cached.attrs, namespace);
 				cached.children = build(node, data.tag, undefined, undefined, data.children, cached.children, false, 0, data.attrs.contenteditable ? node : editable, namespace, configs);
 				cached.nodes.intact = true;
+				if (controllers.length) {
+					cached.views = views
+					cached.controllers = controllers
+				}
 				if (shouldReattach === true && node != null) parentElement.insertBefore(node, parentElement.childNodes[index] || null)
 			}
 			//schedule configs to be called. They are called after `build` finishes running
 			if (typeof data.attrs["config"] === FUNCTION) {
-				var context = cached.configContext = cached.configContext || {retain: (m.redraw.strategy() == "diff") || undefined};
+				var context = cached.configContext = cached.configContext || {};
 
 				// bind
 				var callback = function(data, args) {
@@ -399,6 +442,11 @@ var m = (function app(window, undefined) {
 			cached.configContext.onunload();
 			cached.configContext.onunload = null
 		}
+		if (cached.controllers) {
+			for (var i = 0, controller; controller = cached.controllers[i]; i++) {
+				if (typeof controller.onunload === FUNCTION) controller.onunload({preventDefault: noop});
+			}
+		}
 		if (cached.children) {
 			if (type.call(cached.children) === ARRAY) {
 				for (var i = 0, child; child = cached.children[i]; i++) unload(child)
@@ -456,7 +504,7 @@ var m = (function app(window, undefined) {
 	var nodeCache = [], cellCache = {};
 	m.render = function(root, cell, forceRecreation) {
 		var configs = [];
-		if (!root) throw new Error("Please ensure the DOM element exists before rendering a template into it.");
+		if (!root) throw new Error("Ensure the DOM element being passed to m.route/m.mount/m.render is not undefined.");
 		var id = getCellCacheKey(root);
 		var isDocumentRoot = root === $document;
 		var node = isDocumentRoot || root === $document.documentElement ? documentNode : root;
@@ -499,42 +547,75 @@ var m = (function app(window, undefined) {
 		return gettersetter(store)
 	};
 
-	var roots = [], modules = [], controllers = [], lastRedrawId = null, lastRedrawCallTime = 0, computePostRedrawHook = null, prevented = false, topModule;
+	var roots = [], components = [], controllers = [], lastRedrawId = null, lastRedrawCallTime = 0, computePreRedrawHook = null, computePostRedrawHook = null, prevented = false, topComponent, unloaders = [];
 	var FRAME_BUDGET = 16; //60 frames per second = 1 call per 16 ms
-	m.module = function(root, module) {
+	function parameterize(component, args) {
+		var controller = function() {
+			return (component.controller || noop).apply(this, args) || this
+		}
+		var view = function(ctrl) {
+			if (arguments.length > 1) args = args.concat([].slice.call(arguments, 1))
+			return component.view.apply(component, args ? [ctrl].concat(args) : [ctrl])
+		}
+		view.$original = component.view
+		var output = {controller: controller, view: view}
+		if (args[0] && args[0].key != null) output.attrs = {key: args[0].key}
+		return output
+	}
+	m.component = function(component) {
+		return parameterize(component, [].slice.call(arguments, 1))
+	}
+	m.mount = m.module = function(root, component) {
 		if (!root) throw new Error("Please ensure the DOM element exists before rendering a template into it.");
 		var index = roots.indexOf(root);
 		if (index < 0) index = roots.length;
+		
 		var isPrevented = false;
+		var event = {preventDefault: function() {
+			isPrevented = true;
+			computePreRedrawHook = computePostRedrawHook = null;
+		}};
+		for (var i = 0, unloader; unloader = unloaders[i]; i++) {
+			unloader.handler.call(unloader.controller, event)
+			unloader.controller.onunload = null
+		}
+		if (isPrevented) {
+			for (var i = 0, unloader; unloader = unloaders[i]; i++) unloader.controller.onunload = unloader.handler
+		}
+		else unloaders = []
+		
 		if (controllers[index] && typeof controllers[index].onunload === FUNCTION) {
-			var event = {
-				preventDefault: function() {isPrevented = true}
-			};
 			controllers[index].onunload(event)
 		}
+		
 		if (!isPrevented) {
 			m.redraw.strategy("all");
 			m.startComputation();
 			roots[index] = root;
-			var currentModule = topModule = module = module || {};
-			var controller = new (module.controller || function() {});
-			//controllers may call m.module recursively (via m.route redirects, for example)
-			//this conditional ensures only the last recursive m.module call is applied
-			if (currentModule === topModule) {
+			if (arguments.length > 2) component = subcomponent(component, [].slice.call(arguments, 2))
+			var currentComponent = topComponent = component = component || {controller: function() {}};
+			var constructor = component.controller || noop
+			var controller = new constructor;
+			//controllers may call m.mount recursively (via m.route redirects, for example)
+			//this conditional ensures only the last recursive m.mount call is applied
+			if (currentComponent === topComponent) {
 				controllers[index] = controller;
-				modules[index] = module
+				components[index] = component
 			}
 			endFirstComputation();
 			return controllers[index]
 		}
 	};
+	var redrawing = false
 	m.redraw = function(force) {
+		if (redrawing) return
+		redrawing = true
 		//lastRedrawId is a positive number if a second redraw is requested before the next animation frame
 		//lastRedrawID is null if it's the first redraw and not an event handler
 		if (lastRedrawId && force !== true) {
 			//when setTimeout: only reschedule redraw if time between now and previous redraw is bigger than a frame, otherwise keep currently scheduled timeout
 			//when rAF: always reschedule redraw
-			if (new Date - lastRedrawCallTime > FRAME_BUDGET || $requestAnimationFrame === window.requestAnimationFrame) {
+			if ($requestAnimationFrame === window.requestAnimationFrame || new Date - lastRedrawCallTime > FRAME_BUDGET) {
 				if (lastRedrawId > 0) $cancelAnimationFrame(lastRedrawId);
 				lastRedrawId = $requestAnimationFrame(redraw, FRAME_BUDGET)
 			}
@@ -543,13 +624,18 @@ var m = (function app(window, undefined) {
 			redraw();
 			lastRedrawId = $requestAnimationFrame(function() {lastRedrawId = null}, FRAME_BUDGET)
 		}
+		redrawing = false
 	};
 	m.redraw.strategy = m.prop();
-	var blank = function() {return ""}
 	function redraw() {
+		if (computePreRedrawHook) {
+			computePreRedrawHook()
+			computePreRedrawHook = null
+		}
 		for (var i = 0, root; root = roots[i]; i++) {
 			if (controllers[i]) {
-				m.render(root, modules[i].view ? modules[i].view(controllers[i]) : blank())
+				var args = components[i].controller && components[i].controller.$$args ? [controllers[i]].concat(components[i].controller.$$args) : [controllers[i]]
+				m.render(root, components[i].view ? components[i].view(controllers[i], args) : "")
 			}
 		}
 		//after rendering within a routed context, we need to scroll back to the top, and fetch the document title for history.pushState
@@ -586,7 +672,7 @@ var m = (function app(window, undefined) {
 
 	//routing
 	var modes = {pathname: "", hash: "#", search: "?"};
-	var redirect = function() {}, routeParams, currentRoute;
+	var redirect = noop, routeParams, currentRoute, isDefaultRoute = false;
 	m.route = function() {
 		//m.route()
 		if (arguments.length === 0) return currentRoute;
@@ -596,7 +682,10 @@ var m = (function app(window, undefined) {
 			redirect = function(source) {
 				var path = currentRoute = normalizeRoute(source);
 				if (!routeByValue(root, router, path)) {
+					if (isDefaultRoute) throw new Error("Ensure the default route matches one of the routes defined in m.route")
+					isDefaultRoute = true
 					m.route(defaultRoute, true)
+					isDefaultRoute = false
 				}
 			};
 			var listener = m.route.mode === "hash" ? "onhashchange" : "onpopstate";
@@ -607,7 +696,7 @@ var m = (function app(window, undefined) {
 					redirect(path)
 				}
 			};
-			computePostRedrawHook = setScroll;
+			computePreRedrawHook = setScroll;
 			window[listener]()
 		}
 		//config: m.route
@@ -615,7 +704,8 @@ var m = (function app(window, undefined) {
 			var element = arguments[0];
 			var isInitialized = arguments[1];
 			var context = arguments[2];
-			element.href = (m.route.mode !== 'pathname' ? $location.pathname : '') + modes[m.route.mode] + this.attrs.href;
+			var vdom = arguments[3];
+			element.href = (m.route.mode !== 'pathname' ? $location.pathname : '') + modes[m.route.mode] + vdom.attrs.href;
 			if (element.addEventListener) {
 				element.removeEventListener("click", routeUnobtrusive);
 				element.addEventListener("click", routeUnobtrusive)
@@ -625,7 +715,7 @@ var m = (function app(window, undefined) {
 				element.attachEvent("onclick", routeUnobtrusive)
 			}
 		}
-		//m.route(route, params)
+		//m.route(route, params, shouldReplaceHistoryEntry)
 		else if (type.call(arguments[0]) === STRING) {
 			var oldRoute = currentRoute;
 			currentRoute = arguments[0];
@@ -640,9 +730,9 @@ var m = (function app(window, undefined) {
 			var shouldReplaceHistoryEntry = (arguments.length === 3 ? arguments[2] : arguments[1]) === true || oldRoute === arguments[0];
 
 			if (window.history.pushState) {
+				computePreRedrawHook = setScroll
 				computePostRedrawHook = function() {
 					window.history[shouldReplaceHistoryEntry ? "replaceState" : "pushState"](null, $document.title, modes[m.route.mode] + currentRoute);
-					setScroll()
 				};
 				redirect(modes[m.route.mode] + currentRoute)
 			}
@@ -674,13 +764,13 @@ var m = (function app(window, undefined) {
 		var keys = Object.keys(router);
 		var index = keys.indexOf(path);
 		if(index !== -1){
-			m.module(root, router[keys [index]]);
+			m.mount(root, router[keys [index]]);
 			return true;
 		}
 
 		for (var route in router) {
 			if (route === path) {
-				m.module(root, router[route]);
+				m.mount(root, router[route]);
 				return true
 			}
 
@@ -691,7 +781,7 @@ var m = (function app(window, undefined) {
 					var keys = route.match(/:[^\/]+/g) || [];
 					var values = [].slice.call(arguments, 1, -2);
 					for (var i = 0, len = keys.length; i < len; i++) routeParams[keys[i].replace(/:|\./g, "")] = decodeURIComponent(values[i])
-					m.module(root, router[route])
+					m.mount(root, router[route])
 				});
 				return true
 			}
@@ -734,6 +824,8 @@ var m = (function app(window, undefined) {
 		return str.join("&")
 	}
 	function parseQueryString(str) {
+		if (str.charAt(0) === "?") str = str.substring(1);
+		
 		var pairs = str.split("&"), params = {};
 		for (var i = 0, len = pairs.length; i < len; i++) {
 			var pair = pairs[i].split("=");
@@ -1022,9 +1114,10 @@ var m = (function app(window, undefined) {
 		var isJSONP = xhrOptions.dataType && xhrOptions.dataType.toLowerCase() === "jsonp";
 		var serialize = xhrOptions.serialize = isJSONP ? identity : xhrOptions.serialize || JSON.stringify;
 		var deserialize = xhrOptions.deserialize = isJSONP ? identity : xhrOptions.deserialize || JSON.parse;
-		var extract = xhrOptions.extract || function(xhr) {
+		var extract = isJSONP ? function(jsonp) {return jsonp.responseText} : xhrOptions.extract || function(xhr) {
 			return xhr.responseText.length === 0 && deserialize === JSON.parse ? null : xhr.responseText
 		};
+		xhrOptions.method = (xhrOptions.method || 'GET').toUpperCase();
 		xhrOptions.url = parameterizeUrl(xhrOptions.url, xhrOptions.data);
 		xhrOptions = bindData(xhrOptions, xhrOptions.data, serialize);
 		xhrOptions.onload = xhrOptions.onerror = function(e) {

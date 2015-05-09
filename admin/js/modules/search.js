@@ -19,7 +19,7 @@
     Doc.search(vm.query, vm.offset, vm.limit).then(function(result){
       vm.result(result);
       vm.total = result.total;
-      vm.execTime = (result["execution-time"]*1000).toFixed(0);
+      vm.execTime = (result.execution_time*1000).toFixed(0);
     }, vm.flashError); 
   };
   app.search.main = function(){
@@ -31,9 +31,9 @@
     obj.items = result.results;
     obj.items.forEach(function(item){ item.content = m.trust(item.highlight) });
     obj.querydata = vm;
-    return app.doclist.view(obj);
+    return m.component(app.doclist, obj);
   };
 
   u.layout(app.search);
 
-}())
+}());
