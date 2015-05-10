@@ -56,11 +56,7 @@
    *  - content The content of the editor
    */
   app.editor.controller = function(args) {
-    return {
-      content: args.content,
-      id: args.id,
-      readOnly: args.readOnly,
-    };
+    return args;
   };
   app.editor.view = function(ctrl) {
     return m(".editor.panel.panal-default", {config: app.editor.config(ctrl)}, ctrl.content);

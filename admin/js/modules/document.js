@@ -11,11 +11,11 @@
     vm.dir = app.system.directory;
     vm.id = m.prop(m.route.param("id"));
     vm.action = m.route.param("action");
-    vm.readOnly = true;
+    vm.uploader = app.uploader({docid: vm.id() || ""});
+    vm.readOnly = true; 
     vm.contentType = m.prop("");
     vm.updatedTags = m.prop("");
     vm.content = "";
-    vm.uploader = new app.uploader(vm.id() || "");
     vm.binary = false;
     vm.image = false;
     vm.tags = [];
