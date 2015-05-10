@@ -3,7 +3,6 @@
   var app = window.LS || (window.LS = {});
   app.editor = {};
 
-
   app.editor.config = function(obj){
     return function(element, isInitialized, context){
       var e = element;
@@ -56,8 +55,15 @@
    * @param obj
    *  - content The content of the editor
    */
-  app.editor.view = function(obj) {
-    return m(".editor.panel.panal-default", {config: app.editor.config(obj)}, obj.content);
+  app.editor.controller = function(args) {
+    return {
+      content: args.content,
+      id: args.id,
+      readOnly: args.readOnly,
+    };
+  };
+  app.editor.view = function(ctrl) {
+    return m(".editor.panel.panal-default", {config: app.editor.config(ctrl)}, ctrl.content);
   };
   
 }());

@@ -1,7 +1,8 @@
 (function(){
   'use strict';
   var app = window.LS || (window.LS = {});
-  var u = LS.utils;
+  var u = app.utils;
+  var w = app.widgets;
 
   // Document module
   app.document = {vm: {}};
@@ -178,7 +179,7 @@
   app.document.main = function(){
     var vm = app.document.vm;
     var titleLeft = vm.id();
-    var titleRight = m("span.pull-right", vm.tags.map(function(t){return u.taglink(t);}));
+    var titleRight = m("span.pull-right", vm.tags.map(function(t){return w.taglink({name: t, key: u.guid()});}));
     // Delete confirmation dialog
     var deleteDialogCfg = {
       title: "Delete Document",
@@ -231,16 +232,16 @@
     if (vm.image){
       panelContent = m("div.text-center", [m("img", {src: "/docs/"+vm.id(), title: vm.id()})]);
     } else {
-      panelContent = app.editor.view(vm);
+      panelContent = m.component(app.editor, vm);
     }
     var title = m("span",[titleLeft, titleRight]);
     
     return m("div", [
       vm.uploader.view(),
-      u.modal(deleteDialogCfg),
-      u.modal(editTagsDialogCfg),
-      m(".row", [u.toolbar({links: vm.tools()})]),
-      m(".row", [u.panel({title: title, content:panelContent})])
+      w.modal(deleteDialogCfg),
+      w.modal(editTagsDialogCfg),
+      m(".row", [w.toolbar({links: vm.tools()})]),
+      m(".row", [w.panel({title: title, content:panelContent})])
     ]);
   };
   

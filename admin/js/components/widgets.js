@@ -89,7 +89,7 @@
           if (ctrl.c_page === 0){
               prev = page(0, "&laquo;", true);
           }
-          if (c_page === ctrl.max_page){
+          if (ctrl.c_page === ctrl.max_page){
               next = page(ctrl.max_page, "&raquo;", true);
           }
           pages.push(page(i));
@@ -137,13 +137,13 @@
     var taglink = {
       controller: function(args) {
         return {
-          color: /^\$/.test(args.tag) ? "warning" : "primary",
-          tag: args.tag
+          color: /^\$/.test(args.name) ? "warning" : "primary",
+          name: args.name
         };
       },
       view: function(ctrl) {
         return m("span.tag-label.label.label-"+ctrl.color, 
-          [m("i.fa.fa-tag"), " ", m("a", {href: "/tags/"+ctrl.tag, config:m.route}, ctrl.tag)]);
+          [m("i.fa.fa-tag"), " ", m("a", {href: "/tags/"+ctrl.name, config:m.route}, ctrl.name)]);
       }
     };
     return m.component(taglink, obj);
@@ -167,13 +167,13 @@
     var tagbutton = {
       controller: function(args){
         return {
-          tag: args.tag,
+          name: args.tag,
           n: args.n
         };
       },
       view: function(ctrl) {
         return m("a", {href: "/tags/"+ctrl.tag, config:m.route},
-          [m("i.fa.fa-tag"), " "+ctrl.tag+" ", m("span.badge", ctrl.n)]);
+          [m("i.fa.fa-tag"), " "+ctrl.name+" ", m("span.badge", ctrl.n)]);
       }
     };
     return m.component(tagbutton, obj);
@@ -183,7 +183,7 @@
   app.widgets.toolbar = function(obj) {
     var toolbar = {
       controller: function(args){
-        return {link: args.links};
+        return {links: args.links};
       },
       view: function(ctrl){
         return m("nav.toolbar.btn-group[role='group'][aria-label='...'].pull-right", 

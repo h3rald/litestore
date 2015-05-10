@@ -71,9 +71,7 @@
    * @property main the main view to load
    */
   u.layout = function(mod) {
-  
-    mod.controller = mod.controller || function(){
-      this.navbar = new app.navbar.controller();
+    mod.controller = mod.controller || function(args){
       mod.vm.init();
       // Display flash if set on previous route
       mod.vm.flash = m.prop(u.flash());
@@ -87,11 +85,10 @@
         mod.vm.showFlash({type: "warning", content: obj.error});
       };
     };
-  
     mod.view = function(ctrl){
       return m("div", [
         m(".container", [
-            app.navbar.view(ctrl.navbar),
+            m.component(app.navbar),
             m("main", [mod.vm.flash(), mod.main()]),
             m("footer.footer.container.center", [
               m("p")])

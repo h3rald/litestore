@@ -1,7 +1,8 @@
 (function(){
   'use strict';
   var app = window.LS || (window.LS = {});
-  var u = LS.utils;
+  var u = app.utils;
+  var w = app.widgets;
 
   // Info Module
   app.info = {vm: {}};
@@ -28,12 +29,12 @@
     var logo = m(".col-sm-6", [m("img", {src: "images/litestore.png"})]);
     var taglist = m("ul.list-unstyled", info.tags.map(function(tag){
         var key = Object.keys(tag)[0];
-        return m("li", [u.tagbutton(key, tag[key])]);
+        return m("li", [w.tagbutton({tag: key, n: tag[key], key: u.guid()})]);
         })
       );
     var v = m(".row", [
-      m(".col-md-6", [u.panel({title: "Datastore Information", content: m(".row", [logo,infolist])})]),
-      m(".col-md-6", [u.panel({title: "Tags", content: taglist})])
+      m(".col-md-6", [w.panel({title: "Datastore Information", content: m(".row", [logo, infolist])})]),
+      m(".col-md-6", [w.panel({title: "Tags", content: taglist})])
     ]);
     return v;
   };
