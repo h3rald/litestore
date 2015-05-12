@@ -165,15 +165,9 @@
   // TagButton (warning: API change!)
   app.widgets.tagbutton = function(obj) {
     var tagbutton = {
-      controller: function(args){
-        return {
-          name: args.tag,
-          n: args.n
-        };
-      },
-      view: function(ctrl) {
-        return m("a", {href: "/tags/"+ctrl.tag, config:m.route},
-          [m("i.fa.fa-tag"), " "+ctrl.name+" ", m("span.badge", ctrl.n)]);
+      view: function(ctrl, args) {
+        return m("a", {href: "/tags/"+args.name, config:m.route},
+          [m("i.fa.fa-tag"), " "+args.name+" ", m("span.badge", args.n)]);
       }
     };
     return m.component(tagbutton, obj);

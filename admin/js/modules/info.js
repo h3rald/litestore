@@ -29,7 +29,8 @@
     var logo = m(".col-sm-6", [m("img", {src: "images/litestore.png"})]);
     var taglist = m("ul.list-unstyled", info.tags.map(function(tag){
         var key = Object.keys(tag)[0];
-        return m("li", [w.tagbutton({tag: key, n: tag[key], key: u.guid()})]);
+        console.log(key);
+        return m("li", [w.tagbutton({name: key, n: tag[key], key: u.guid()})]);
         })
       );
     var v = m(".row", [
