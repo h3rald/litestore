@@ -15,8 +15,6 @@ created TEXT,
 modified TEXT)
 """
 
-
-
 const
   SQL_CREATE_INDEX_DOCUMENTS_DOCID* = sql"CREATE INDEX IF NOT EXISTS documents_docid ON documents(docid)"
   SQL_CREATE_INDEX_DOCUMENTS_ID* = sql"CREATE INDEX IF NOT EXISTS documents_id ON documents(id)"
@@ -35,10 +33,10 @@ const
   SQL_VACUUM* = sql"VACUUM"
 
 const SQL_CREATE_SEARCHDATA_TABLE* = sql"""
-CREATE VIRTUAL TABLE searchdata USING fts4(
+CREATE VIRTUAL TABLE searchdata USING fts5(
 id TEXT,
 data TEXT, 
-tokenize=porter)
+tokenize = 'porter unicode61')
 """
 
 const SQL_CREATE_TAGS_TABLE* = sql"""
