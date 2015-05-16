@@ -7,7 +7,6 @@
   app.document = {vm: {}};
   app.document.vm.init = function() {
     var vm = this;
-    vm.dir = app.system.directory;
     vm.id = m.prop(m.route.param("id"));
     vm.action = m.route.param("action");
     vm.readOnly = true; 
@@ -56,9 +55,9 @@
     
     // View document in editor
     vm.viewDocument = function(){
-      if (vm.ext === "md" && vm.id().match(new RegExp("^"+vm.dir+"\/md\/"))) {
+      if (vm.ext === "md" && vm.id().match(new RegExp("^admin\/md\/"))) {
         // If editing a documentation page, go back to the guide.
-        m.route("/guide/"+vm.id().replace(/\.md$/, "").replace(new RegExp("^"+vm.dir+"\/md\/"), ""));
+        m.route("/guide/"+vm.id().replace(/\.md$/, "").replace(new RegExp("^admin\/md\/"), ""));
       } else {
         m.route("/document/view/"+vm.id());
       }

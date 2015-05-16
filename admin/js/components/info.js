@@ -18,6 +18,7 @@
     var readonly = info.read_only ? m("span.label.label-success", "Yes") : m("span.label.label-danger", "No"); 
     var infolist = m(".col-sm-6", [m("ul.list-unstyled", [
           li("Version", info.version),
+          li("Datastore Version", info.datastore_version),
           li("Size", info.size),
           li("Mounted Directory", info.directory, info.directory === null),
           li("Log Level", info.log_level),
