@@ -1,6 +1,7 @@
 import asynchttpserver2, asyncdispatch, strutils, cgi, strtabs, pegs, json, os, times
 import types, core, utils, logger
 
+
 # Helper procs
 
 proc orderByClause(clause: string): string =
@@ -137,7 +138,8 @@ proc deleteDocument(LS: LiteStore, id: string): Response =
       if res == 0:
         result = resError(Http500, "Unable to delete document '$1'" % id)
       else:
-        result.headers = {"Content-Length": "0"}.newStringTable
+        result.headers = TAB_HEADERS.newStringTable
+        result.headers["Content-Length"] = "0"
         result.content = ""
         result.code = Http204
     except:
@@ -177,11 +179,14 @@ proc getRawDocuments(LS: LiteStore, options: QueryOptions = newQueryOptions()): 
     result.code = Http200
 
 proc getInfo(LS: LiteStore): Response =
-  let total_docs = LS.store.countDocuments()
+  let info = LS.store.retrieveInfo()
+  let version = info[0]
+  let total_documents = info[1]
   let total_tags = LS.store.countTags()
   let tags = LS.store.retrieveTagsWithTotals()
   var content = newJObject()
   content["version"] = %(LS.appname & " v" & LS.appversion)
+  content["datastore_version"] = %version
   content["size"] = %($((LS.file.getFileSize().float/(1024*1024)).formatFloat(ffDecimal, 2)) & " MB")
   content["read_only"] = %LS.readonly
   content["log_level"] = %LS.loglevel
@@ -190,7 +195,7 @@ proc getInfo(LS: LiteStore): Response =
   else: 
     content["directory"] = %LS.directory 
   content["mount"] = %LS.mount
-  content["total_documents"] = %total_docs
+  content["total_documents"] = %total_documents
   content["total_tags"] = %total_tags
   content["tags"] = tags
   result.headers = ctJsonHeader()
@@ -279,22 +284,33 @@ proc options(req: Request, LS: LiteStore, resource: string, id = ""): Response =
       else:
         result.code = Http200
         result.content = ""
-        result.headers = {"Allow": "GET,OPTIONS"}.newStringTable
+        result.headers = TAB_HEADERS.newStringTable
+        result.headers["Allow"] = "GET,OPTIONS"
+        result.headers["Access-Control-Allow-Methods"] = "GET,OPTIONS"
     of "docs":
       if id != "":
         result.code = Http200
         result.content = ""
         if LS.readonly:
-          result.headers = {"Allow": "HEAD,GET,OPTIONS"}.newStringTable
+          result.headers = TAB_HEADERS.newStringTable
+          result.headers["Allow"] = "HEAD,GET,OPTIONS"
+          result.headers["Access-Control-Allow-Methods"] = "HEAD,GET,OPTIONS"
         else:
-          result.headers = {"Allow": "HEAD,GET,PUT,PATCH,DELETE,OPTIONS"}.newStringTable
+          result.headers = TAB_HEADERS.newStringTable
+          result.headers["Allow"] = "HEAD,GET,OPTIONS,PUT,PATCH,DELETE"
+          result.headers["Allow-Patch"] = "application/json-patch+json"
+          result.headers["Access-Control-Allow-Methods"] = "HEAD,GET,OPTIONS,PUT,PATCH,DELETE"
       else:
         result.code = Http200
         result.content = ""
         if LS.readonly:
-          result.headers = {"Allow": "HEAD,GET,OPTIONS"}.newStringTable
+          result.headers = TAB_HEADERS.newStringTable
+          result.headers["Allow"] = "HEAD,GET,OPTIONS"
+          result.headers["Access-Control-Allow-Methods"] = "HEAD,GET,OPTIONS"
         else:
-          result.headers = {"Allow": "HEAD,GET,POST,OPTIONS"}.newStringTable
+          result.headers = TAB_HEADERS.newStringTable
+          result.headers["Allow"] = "HEAD,GET,OPTIONS,POST"
+          result.headers["Access-Control-Allow-Methods"] = "HEAD,GET,OPTIONS,POST"
     else:
       discard # never happens really.
 

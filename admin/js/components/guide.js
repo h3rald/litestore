@@ -2,7 +2,6 @@
   'use strict';
   var app = window.LS || (window.LS = {});
   var u = app.utils;
-  var w = app.widgets;
 
   // Guide Module
   app.guide = {vm: {}};
@@ -17,7 +16,7 @@
   };
   app.guide.main = function(){
     return m("article.row", [
-      w.toolbar({links: app.guide.vm.links()}), 
+      u.toolbar({links: app.guide.vm.links()}), 
       m.trust(app.guide.vm.content())
     ]);
   };

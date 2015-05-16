@@ -46,6 +46,32 @@ document_id TEXT,
 PRIMARY KEY (tag_id, document_id))
 """
 
+const SQL_CREATE_INFO_TABLE* = sql"""
+CREATE TABLE info (
+version INT,
+total_documents INT)
+"""
+
+const SQL_INSERT_INFO* = sql"""
+INSERT INTO info
+(version, total_documents)
+VALUES (?, ?)
+"""
+
+const SQL_SELECT_INFO* = sql"""
+SELECT * FROM info
+"""
+
+const SQL_INCREMENT_DOCS* = sql"""
+UPDATE info
+SET total_documents = total_documents + 1
+"""
+
+const SQL_DECREMENT_DOCS* = sql"""
+UPDATE info
+SET total_documents = total_documents - 1
+"""
+
 const SQL_INSERT_DOCUMENT* = sql"""
 INSERT INTO documents
 (id, data, content_type, binary, searchable, created)

@@ -2,7 +2,6 @@
   'use strict';
   var app = window.LS || (window.LS = {});
   var u = app.utils;
-  var w = app.widgets;
 
   // HTMLDoc Module
   app.htmldoc = {vm: {}};
@@ -19,7 +18,7 @@
   };
   app.htmldoc.main = function(){
     return m("article.row", [
-      w.toolbar({links: app.htmldoc.vm.links()}), 
+      u.toolbar({links: app.htmldoc.vm.links()}), 
       m.trust(app.htmldoc.vm.content())
     ]);
   };

@@ -11,10 +11,14 @@ Returns the allowed HTTP verbs for this resource.
 ##### Example
 
 ```
-curl -i -X OPTIONS http://127.0.0.1:9500/v1/inf
+$ curl -i -X OPTIONS http://127.0.0.1:9500/v1/info
 HTTP/1.1 200 OK
 Content-Length: 0
+Access-Control-Allow-Methods: GET,OPTIONS
 Allow: GET,OPTIONS
+Access-Control-Allow-Headers: Content-Type
+Access-Control-Allow-Origin: *
+Server: LiteStore/1.0.0
 ```
 
 #### GET info
@@ -23,39 +27,50 @@ Returns the following server statistics:
 
 * Version
 * Size of the database on disk (in MB)
+* Whether the database is read-only or not
+* Log level (debug, info, warning, error, none)
+* Mounted directory (if any)
 * Total documents
 * Total Tags
 * Number of documents per tag
 
-##### Example Response
+##### Example
 
 ```
+$ curl -i http://127.0.0.1:9500/v1/info
+HTTP/1.1 200 OK
+Content-Length: 965
+Content-Type: application/json
+Access-Control-Allow-Headers: Content-Type
+Access-Control-Allow-Origin: *
+Server: LiteStore/1.0.0
+
 {
-    "version": "LiteStore v1.0",
-    "size": "9.71 MB",
-    "total_documents": 103,
-    "total_tags": 10,
-    "tags": [{
-        "$dir:lib": 10
-    }, {
-        "$dir:nimcache": 93
-    }, {
-        "$format:binary": 46
-    }, {
-        "$format:text": 57
-    }, {
-        "$subtype:json": 1
-    }, {
-        "$subtype:octet-stream": 46
-    }, {
-        "$subtype:plain": 11
-    }, {
-        "$subtype:x-c": 45
-    }, {
-        "$type:application": 47
-    }, {
-        "$type:text": 56
-    }]
+  "version": "LiteStore v1.0.0",
+  "size": "5.76 MB",
+  "read_only": false,
+  "log_level": "info",
+  "directory": "admin",
+  "mount": true,
+  "total_documents": 68,
+  "total_tags": 18,
+  "tags": [
+    {
+      "$dir:admin": 68
+    },
+    {
+      "$format:binary": 8
+    },
+    {
+      "$format:text": 60
+    },
+    {
+      "$subtype:css": 3
+    },
+    {
+      "$subtype:html": 2
+    }
+  ]
 }
 ```
 
@@ -63,16 +78,11 @@ Returns the following server statistics:
 
 A document is the main resource type managed by LiteStore. Any LiteStore document can be represented as a JSON object exposing the following properties:
 
-id
-: The unique identifier of the document.
-data
-: The document contents (base64-encoded if binary).
-created
-: The document creation date expressed as combined date and time in UTC ([ISO 8601](http://en.wikipedia.org/wiki/ISO_8601) compliant).
-modified
-: The document modification date (if applicable) expressed as combined date and time in UTC ([ISO 8601](http://en.wikipedia.org/wiki/ISO_8601) compliant).
-tags
-: A list of tags associated to the document.
+* id: The unique identifier of the document.
+* data: The document contents (base64-encoded if binary).
+* created: The document creation date expressed as combined date and time in UTC ([ISO 8601](http://en.wikipedia.org/wiki/ISO_8601) compliant).
+* modified: The document modification date (if applicable) expressed as combined date and time in UTC ([ISO 8601](http://en.wikipedia.org/wiki/ISO_8601) compliant).
+* tags: A list of tags associated to the document.
 
 #### Example Document
 

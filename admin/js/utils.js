@@ -3,7 +3,6 @@
   var app = window.LS || (window.LS = {});
   var u = app.utils = {};
   
-  
   // http://byronsalau.com/blog/how-to-create-a-guid-uuid-in-javascript/
   u.guid = function(){
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -28,6 +27,23 @@
     }
   };
   
+  u.setContentType = function(doc, contentType){
+    var type = "";
+    var subtype = "";
+    if (doc.tags && doc.tags.length > 0) {
+      doc.tags.forEach(function(tag){
+        var t = tag.match(/^\$type:(.+)/);
+        var s = tag.match(/^\$subtype:(.+)/);
+        if (t) type = t[1];
+        if (s) subtype = s[1];
+      });
+      contentType = type+"/"+subtype;
+    }
+    return function(xhr) {
+      xhr.setRequestHeader("Content-Type", contentType);
+    };
+  };
+
   u.markdown = function(s) {
     var hs = new marked.Renderer();
     var md = new marked.Renderer();
@@ -67,8 +83,10 @@
   
   /**
    * mod object:
-   * @property vm a view-model (with init function)
-   * @property main the main view to load
+   * @param {Object} mod
+   * @param {Object} mod.vm
+   * @param {Function} mod.vm.init
+   * @param {Function} mod.main
    */
   u.layout = function(mod) {
     mod.controller = mod.controller || function(args){
@@ -97,135 +115,6 @@
     };
   };
 
-  u.panel = function(obj){
-    var panel = {
-      controller: function(args){
-        return {
-          title: args.title,
-          footer: args.footer,
-          content: args.content,
-        };
-      },
-      view: function(ctrl){
-        var title = "";
-        var footer = "";
-        if (ctrl.title){
-          title = m(".panel-heading", [
-            m("h2.panel-title", [ctrl.title])  
-          ]);
-        }
-        if (ctrl.footer){
-          footer = m(".panel-footer", ctrl.footer);
-        }
-        return m(".panel.panel-default", [
-          title,
-          m(".panel-body", [
-            ctrl.content
-          ]),
-          footer
-        ]);
-      }
-    };
-    return m.component(panel, obj);
-  };
-  
-  /**
-   * - total
-   * - limit
-   * - offset
-   * - baseurl
-   */
-  u.paginator = function(obj) {
-    var max_page = Math.min(14, Math.ceil(obj.total/obj.limit)-1);
-    var c_page = Math.ceil(obj.offset/obj.limit);
-    var page = function(n, sign, disabled){
-      var klass;
-      if (disabled) {
-        klass = "disabled";
-      } else {
-        klass = (n === c_page) ? "active" : "inactive";
-      }
-      var first = (n === 0);
-      var last = (n == max_page);
-      var offset = obj.limit * n;
-      sign = sign || n+1;  
-      return m("li", {class: klass},
-          [m("a", {
-                    href: obj.baseurl +(n+1), // assuming 10 elements per page //+"/"+obj.limit,
-                    config: m.route
-                  }, [m.trust(sign)]
-          )]
-        );
-    };
-    var pages = [];
-    var prev;
-    var next;
-    for (var i=0; i<=max_page; i++){
-      var p;
-      switch(i){
-        case c_page-1:
-          prev = page(i, "&laquo;");
-          break;
-        case c_page+1:
-          next = page(i, "&raquo;");
-          break;
-      }
-      if (c_page === 0){
-          prev = page(0, "&laquo;", true);
-      }
-      if (c_page === max_page){
-          next = page(max_page, "&raquo;", true);
-      }
-      pages.push(page(i));
-    }
-    pages.unshift(prev);
-    pages.push(next);
-    return m("nav", [m("ul.pagination", pages)]);
-  };
-  
-  u.dropdown = function(obj) {
-    var el = "li.dropdown";
-    var icon = (obj.icon) ? m("i.fa."+obj.icon) : "";
-    if (obj.active.length > 0) {
-      el += "."+obj.active;
-    }
-    return m(el, [
-      m("a.dropdown-toggle[href='#'][data-toggle='dropdown'][role='button'][aria-expanded='false']",
-      [icon, m("span", " "+obj.title+" "), m("span.caret")]),
-      m("ul.dropdown-menu[role='menu']", 
-      obj.links.map(function(e){
-        return m("li", 
-      [m("a", {href: e.path, config: m.route}, m.trust(e.title))]);}))
-    ]);
-  };
-
-  u.taglink = function(tag) {
-    var color = /^\$/.test(tag) ? "warning" : "primary";
-    return m("span.tag-label.label.label-"+color, 
-      [m("i.fa.fa-tag"), " ", m("a", {href: "/tags/"+tag, config:m.route}, tag)]);
-  };
-  
-  u.tagbutton = function(tag, n) {
-    return m("a", 
-      {href: "/tags/"+tag, config:m.route},
-      [m("i.fa.fa-tag"), " "+tag+" ", m("span.badge", n)]);
-  };
-
-  u.doclink = function(id) {
-    return m("a", {href: "/document/view/"+id, config: m.route}, id);
-  };
-
-  u.date = function(date) {
-    return (date) ? new Date(Date.parse(date)).toUTCString() : "n/a";
-  };
-
-  u.toolbar = function(obj){
-    return m("nav.toolbar.btn-group[role='group'][aria-label='...'].pull-right", obj.links.map(function(l){
-      return m("a.btn.btn-default", {onclick:l.action, config: l.config}, [m("i.fa.fa-"+l.icon), " "+l.title]);
-      })  
-    );
-  };
-  
   u.flash = function(){
     if (LS.flash()){
       return m(".row.alert.alert-dismissible.alert-"+LS.flash().type, [
@@ -235,56 +124,132 @@
       return "";
     }
   };
+
+  u.date = function(date) {
+    return (date) ? new Date(Date.parse(date)).toUTCString() : "n/a";
+  };
+
   
   u.showModal = function(sel){
     return function(){
       $(sel).modal();
     };
   };
-  
+
+
+  /* Component Factories */
+
   /**
-   * obj:
-   * - id
-   * - content
-   * - title
-   * - action
-   * - actionText
+   * @param {Object} obj
+   * @param {string} obj.docid
+   * @param {string} obj.id
+   * @param {Function} obj.onSuccess
+   * @param {Function} obj.onFailure
    */
-  u.modal = function(obj) {
-    return m(".modal.fade", 
-      {id: obj.id, tabindex: "-1", role: "dialog"},
-      [
-        m(".modal-dialog", [
-          m(".modal-content", [
-            m(".modal-header", [
-              m("button", {type: "button", class: "close", "data-dismiss": "modal"}, 
-              [m.trust("&times;")]),
-              m("h4.modal-title", obj.title)
-            ]),
-            m(".modal-body", [obj.content]),
-            m(".modal-footer", [
-              m("button.btn.btn-default[data-dismiss='modal']", "Close"),
-              m("button.btn.btn-primary[data-dismiss='modal']", {onclick: obj.action}, obj.actionText)
-            ])
-          ])
-        ])
-      ]);
+  u.uploader = function(obj){
+    var modalId = "#upload-"+obj.id+"-modal";
+    var instance = m.component(app.uploader, obj);
+    instance.show = function() {
+      return u.showModal(modalId);
+    };
+    return instance;
   };
 
-  u.setContentType = function(doc, contentType){
-    var type = "";
-    var subtype = "";
-    if (doc.tags && doc.tags.length > 0) {
-      doc.tags.forEach(function(tag){
-        var t = tag.match(/^\$type:(.+)/);
-        var s = tag.match(/^\$subtype:(.+)/);
-        if (t) type = t[1];
-        if (s) subtype = s[1];
-      });
-      contentType = type+"/"+subtype;
-    }
-    return function(xhr) {
-      xhr.setRequestHeader("Content-Type", contentType);
-    };
+  /**
+   * Creates a Panel component.
+   * @param {Object} obj
+   * @param {string} obj.title
+   * @param {string} obj.footer
+   * @param {string} obj.content
+   */
+  u.panel = function(obj){
+    return m.component(app.widgets.panel, obj);
   };
+    
+  /**
+   * @typedef {Object} PaginatorConfig
+   * @prop {string} baseurl
+   * @prop {int} total
+   * @prop {int} limit
+   * @prop {int} offset
+   *
+   * Creates a Paginator component.
+   * @param {PaginatorConfig} obj
+   */
+  u.paginator = function(obj) {
+    return m.component(app.widgets.paginator, obj);
+  };
+
+  /**
+   * @typedef {Object} DropdownLink
+   * @prop {string} path
+   * @prop {string} title
+   *
+   * Creates a Dropdown component.
+   * @param {Object} obj
+   * @param {string} obj.icon
+   * @param {string} obj.title
+   * @param {string} obj.active
+   * @param {array.DropdownLink} obj.links
+   */
+  u.dropdown = function(obj) {
+    return m.component(app.widgets.dropdown, obj);
+  };
+
+  /**
+   * Creates a TagLink component.
+   * @param {Object} obj
+   * @param {string} obj.name
+   */
+  u.taglink = function(obj){
+    return m.component(app.widgets.taglink, obj);
+  };
+  
+  /**
+   * Creates a DocLink component.
+   * @param {Object} obj
+   * @param {string} obj.id
+   */
+  u.doclink = function(obj) {
+    return m.component(app.widgets.doclink, obj);
+  };
+
+  /**
+   * Creates a TagButton component.
+   * @param {Object} obj
+   * @param {string} obj.name
+   * @param {int} obj.n
+   */
+  u.tagbutton = function(obj) {
+    return m.component(app.widgets.tagbutton, obj);
+  };
+
+  /**
+   * @typedef {Object} ToolbarLink
+   * @prop {Function} action
+   * @prop {Function} config
+   * @prop {string} title
+   * @prop {string} icon
+   *
+   * Creates a ToolBar component.
+   * @param {Object} obj
+   * @param {array.<ToolbarLink>} obj.links
+   */
+  u.toolbar = function(obj) {
+    return m.component(app.widgets.toolbar, obj);
+  };
+
+  /**
+   * Creates a Modal component.
+   * @param {Object} obj
+   * @param {string} obj.id
+   * @param {string} obj.content
+   * @param {string} obj.title
+   * @param {Function} obj.action
+   * @param {string} obj.actionText
+   */
+  u.modal = function(obj) {
+    return m.component(app.widgets.modal, obj);
+  };
+
 }());

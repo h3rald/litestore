@@ -52,14 +52,12 @@
   };
 
   /**
-   * @param obj
-   *  - content The content of the editor
+   * @param {Function} ctrl
+   * @param {Object} args
+   * @param {string} args.content
    */
-  app.editor.controller = function(args) {
-    return args;
-  };
-  app.editor.view = function(ctrl) {
-    return m(".editor.panel.panal-default", {config: app.editor.config(ctrl)}, ctrl.content);
+  app.editor.view = function(ctrl, args) {
+    return m(".editor.panel.panal-default", {config: app.editor.config(args)}, args.content);
   };
   
 }());

@@ -6,7 +6,8 @@ import
   asyncdispatch, 
   asynchttpserver2, 
   math, 
-  sqlite3 
+  sqlite3,
+  strtabs
 
 import 
   types, 
@@ -135,12 +136,20 @@ proc addDocumentSystemTags*(store: Datastore, docid, contenttype: string) =
   for tag in tags:
     store.db.exec(SQL_INSERT_TAG, tag, docid)
 
-proc destroyDocumentSystemTags*(store: Datastore, docid) = 
-  store.db.exec(SQL_DELETE_DOCUMENT_SYSTEM_TAGS, docid)
+proc destroyDocumentSystemTags*(store: Datastore, docid: string) = 
+  let n = store.db.execAffectedRows(SQL_DELETE_DOCUMENT_SYSTEM_TAGS, docid)
 
-proc fail*(code, msg) =
+proc fail*(code: int, msg: string) =
   LOG.error(msg)
   quit(code)
+
+proc ctHeader*(ct: string): StringTableRef =
+  var h = TAB_HEADERS.newStringTable
+  h["Content-Type"] = ct
+  return h
+
+proc ctJsonHeader*(): StringTableRef =
+  return ctHeader("application/json")
 
 proc resError*(code: HttpCode, message: string, trace = ""): Response =
   LOG.warn(message.replace("$", "$$"))

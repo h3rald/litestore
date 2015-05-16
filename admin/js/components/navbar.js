@@ -2,7 +2,6 @@
   'use strict';
   var app = window.LS || (window.LS = {});
   var u = app.utils;
-  var w = app.widgets;
 
   app.navlinks = {
     controller: function(args){
@@ -32,8 +31,8 @@
       var links = [
         m("li", {class: ctrl.activelink("info")}, [m("a", {href: "/info", config: m.route}, 
             [m("i.fa.fa-info-circle"), " Info"])]),
-        w.dropdown({title: "Guide", icon:"fa-book", links: ctrl.guidelinks, active: ctrl.activelink("guide")}),
-        w.dropdown({title: "Tags", icon:"fa-tags", links: ctrl.taglinks(app.system), active: ctrl.activelink("tags")})];
+        u.dropdown({title: "Guide", icon:"fa-book", links: ctrl.guidelinks, active: ctrl.activelink("guide")}),
+        u.dropdown({title: "Tags", icon:"fa-tags", links: ctrl.taglinks(app.system), active: ctrl.activelink("tags")})];
       if (!app.system.read_only) {
         links.push(m("li", 
           {class: ctrl.activelink("new")}, [m("a", {href: "/document/create/", config: m.route}, 
@@ -44,8 +43,7 @@
   };
   
   app.navheader = {
-    controller: function(args) {},
-    view: function(ctrl) {
+    view: function(ctrl, args) {
       return m(".navbar-header", [
         m("button.navbar-toggle.collapsed[data-toggle='collapse'][data-target='#nav-collapse'][type='button']", [
           m("span.sr-only", "Toggle navigation"),
@@ -66,7 +64,6 @@
         if (isInitialized) return;
         $(el).keypress(function(event){
           if (isInitialized) return;
-          m.redraw.strategy("none");
           vm.query($(el).val());
           if (event.which == 13){
             vm.search();
@@ -79,7 +76,7 @@
       };
       return vm;
     },
-    view: function(ctrl) {
+    view: function(ctrl, args) {
       return m("form.navbar-form.navbar-right[role='search']", [
           m(".input-group", [
             m("input.form-control", {
@@ -103,7 +100,7 @@
   };
   
   app.navbar = {
-    view: function(ctrl) {
+    view: function(ctrl, args) {
       return m("nav.navbar.navbar-inverse.navbar-fixed-top", [
         m(".container-fluid", [
           m.component(app.navheader),

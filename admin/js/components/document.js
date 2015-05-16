@@ -2,16 +2,13 @@
   'use strict';
   var app = window.LS || (window.LS = {});
   var u = app.utils;
-  var w = app.widgets;
 
   // Document module
   app.document = {vm: {}};
   app.document.vm.init = function() {
     var vm = this;
-    vm.dir = app.system.directory;
     vm.id = m.prop(m.route.param("id"));
     vm.action = m.route.param("action");
-    vm.uploader = app.uploader({docid: vm.id() || ""});
     vm.readOnly = true; 
     vm.contentType = m.prop("");
     vm.updatedTags = m.prop("");
@@ -58,9 +55,9 @@
     
     // View document in editor
     vm.viewDocument = function(){
-      if (vm.ext === "md" && vm.id().match(new RegExp("^"+vm.dir+"\/md\/"))) {
+      if (vm.ext === "md" && vm.id().match(new RegExp("^admin\/md\/"))) {
         // If editing a documentation page, go back to the guide.
-        m.route("/guide/"+vm.id().replace(/\.md$/, "").replace(new RegExp("^"+vm.dir+"\/md\/"), ""));
+        m.route("/guide/"+vm.id().replace(/\.md$/, "").replace(new RegExp("^admin\/md\/"), ""));
       } else {
         m.route("/document/view/"+vm.id());
       }
@@ -134,7 +131,7 @@
     };
     
     // File uploader callbacks.
-    vm.uploader.onSuccess = function(data){
+    var onSuccess = function(data){
       vm.id(data.id);
       LS.flash({type: "success", content: "Document '"+vm.id()+"' uploader successfully."});
       Info.get().then(function(info){
@@ -143,9 +140,13 @@
       });
     };
     
-    vm.uploader.onFailure = function(data){
+    var onFailure = function(data){
       vm.flashError;
     };
+
+    var modalId = u.guid();
+
+    vm.uploader = u.uploader({docid: vm.id() || "", onSuccess: onSuccess, onFailure: onFailure, id: modalId});
     
     // Populate tools based on current action
     vm.tools = function(){
@@ -157,9 +158,10 @@
       cfg.title = "Edit Tags";
       cfg.contentId = "#edit-tags-popover";
       var tools = [];
+      var show = function(){ u.showModal()}
       switch (vm.action){
         case "view":
-          tools.push({title: "Upload", icon: "upload", action: vm.uploader.showModal()});
+          tools.push({title: "Upload", icon: "upload", action: vm.uploader.show()});
           if (!vm.binary) {
             tools.push({title: "Edit Content", icon: "edit", action: vm.edit});
           }
@@ -167,7 +169,7 @@
           tools.push({title: "Delete", icon: "trash", action: u.showModal("#delete-document-modal")});
           break;
         default:
-          tools.push({title: "Upload", icon: "upload", action: vm.uploader.showModal()});
+          tools.push({title: "Upload", icon: "upload", action: vm.uploader.show()});
           tools.push({title: "Save", icon: "save", action: vm.save});
           tools.push({title: "Cancel", icon: "times-circle", action: vm.cancel});
       }
@@ -179,7 +181,7 @@
   app.document.main = function(){
     var vm = app.document.vm;
     var titleLeft = vm.id();
-    var titleRight = m("span.pull-right", vm.tags.map(function(t){return w.taglink({name: t, key: u.guid()});}));
+    var titleRight = m("span.pull-right", vm.tags.map(function(t){return u.taglink({name: t, key: u.guid()});}));
     // Delete confirmation dialog
     var deleteDialogCfg = {
       title: "Delete Document",
@@ -230,18 +232,18 @@
     }
     var panelContent;
     if (vm.image){
-      panelContent = m("div.text-center", [m("img", {src: "/docs/"+vm.id(), title: vm.id()})]);
+      panelContent = m("div.text-center", [m("img", {src: app.host+"/docs/"+vm.id(), title: vm.id()})]);
     } else {
       panelContent = m.component(app.editor, vm);
     }
     var title = m("span",[titleLeft, titleRight]);
     
     return m("div", [
-      vm.uploader.view(),
-      w.modal(deleteDialogCfg),
-      w.modal(editTagsDialogCfg),
-      m(".row", [w.toolbar({links: vm.tools()})]),
-      m(".row", [w.panel({title: title, content:panelContent})])
+      vm.uploader,
+      u.modal(deleteDialogCfg),
+      u.modal(editTagsDialogCfg),
+      m(".row", [u.toolbar({links: vm.tools()})]),
+      m(".row", [u.panel({title: title, content:panelContent})])
     ]);
   };
   
