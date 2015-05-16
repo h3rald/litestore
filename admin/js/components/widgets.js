@@ -37,12 +37,14 @@
   };
     
   /**
+   * @typedef {Object} PaginatorConfig
+   * @prop {string} baseurl
+   * @prop {int} total
+   * @prop {int} limit
+   * @prop {int} offset
+   *
    * Creates a Paginator component.
-   * @param {Object} obj
-   * @param {string} obj.baseurl
-   * @param {int} obj.total
-   * @param {int} obj.limit
-   * @param {int} obj.offset
+   * @param {PaginatorConfig} obj
    */
   app.widgets.paginator = function(obj) {
     var paginator = {

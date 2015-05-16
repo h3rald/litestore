@@ -66,7 +66,6 @@
         if (isInitialized) return;
         $(el).keypress(function(event){
           if (isInitialized) return;
-          m.redraw.strategy("none");
           vm.query($(el).val());
           if (event.which == 13){
             vm.search();

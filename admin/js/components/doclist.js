@@ -9,21 +9,22 @@
   // Subcomponent
   app.doclist.panel = {
   
-    controller: function(args){
-      return {
-        id: args.id,
-        tags: args.tags,
-        content: args.content
-      };
-    },
-    
-    view: function(ctrl){
+    /**
+     * @typedef {Object} DoclistPanelConfig
+     * @prop {string} id
+     * @prop {string[]} tags
+     * @prop {string} content
+     *
+     * @param {Function} ctrl
+     * @param {DoclistPanelConfig} args
+     */
+    view: function(ctrl, args){
       var obj = {};
-      var path = (ctrl.id.match(/\.html?$/)) ? "/html/" : "/document/view/";
-      obj.title = m("a", {href: path+ctrl.id, config: m.route}, [ctrl.id]);
+      var path = (args.id.match(/\.html?$/)) ? "/html/" : "/document/view/";
+      obj.title = m("a", {href: path+args.id, config: m.route}, [args.id]);
       obj.content = m("div", [
-        m("p", [ctrl.content]),
-        m("p", ctrl.tags.map(function(tag){
+        m("p", [args.content]),
+        m("p", args.tags.map(function(tag){
           return w.taglink({name: tag, key: u.guid()});
         }))
       ]);
@@ -31,27 +32,26 @@
     }
   };
   
-  app.doclist.controller = function(args){
-    return {
-      items: args.items,
-      title: args.title,
-      subtitle: args.subtitle,
-      querydata: args.querydata
-    };
-  };
-  
-  app.doclist.view = function(ctrl){
-    var results = m(".row", [m(".col-md-12", ctrl.items.map(function(item){
+  /**
+   * @param {Function} ctrl
+   * @param {Object} args
+   * @param {string} args.title
+   * @param {string} args.subtitle
+   * @param {array.} args.items
+   * @param {PaginatorConfig} args.querydata
+   */
+  app.doclist.view = function(ctrl, args){
+    var results = m(".row", [m(".col-md-12", args.items.map(function(item){
       item.key = u.guid();
       return m.component(app.doclist.panel, item);
     }))]);
    
     return m("section", [
-      m(".row", [ctrl.title]),
-      m(".row", [ctrl.subtitle]),
-      m(".row.text-center", [w.paginator(ctrl.querydata)]),
+      m(".row", [args.title]),
+      m(".row", [args.subtitle]),
+      m(".row.text-center", [w.paginator(args.querydata)]),
       results,
-      m(".row.text-center", [w.paginator(ctrl.querydata)])
+      m(".row.text-center", [w.paginator(args.querydata)])
     ]);
   };
   
