@@ -44,8 +44,7 @@
   };
   
   app.navheader = {
-    controller: function(args) {},
-    view: function(ctrl) {
+    view: function(ctrl, args) {
       return m(".navbar-header", [
         m("button.navbar-toggle.collapsed[data-toggle='collapse'][data-target='#nav-collapse'][type='button']", [
           m("span.sr-only", "Toggle navigation"),
@@ -78,7 +77,7 @@
       };
       return vm;
     },
-    view: function(ctrl) {
+    view: function(ctrl, args) {
       return m("form.navbar-form.navbar-right[role='search']", [
           m(".input-group", [
             m("input.form-control", {
@@ -102,7 +101,7 @@
   };
   
   app.navbar = {
-    view: function(ctrl) {
+    view: function(ctrl, args) {
       return m("nav.navbar.navbar-inverse.navbar-fixed-top", [
         m(".container-fluid", [
           m.component(app.navheader),

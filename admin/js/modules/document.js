@@ -11,7 +11,6 @@
     vm.dir = app.system.directory;
     vm.id = m.prop(m.route.param("id"));
     vm.action = m.route.param("action");
-    vm.uploader = app.uploader({docid: vm.id() || ""});
     vm.readOnly = true; 
     vm.contentType = m.prop("");
     vm.updatedTags = m.prop("");
@@ -134,7 +133,7 @@
     };
     
     // File uploader callbacks.
-    vm.uploader.onSuccess = function(data){
+    var onSuccess = function(data){
       vm.id(data.id);
       LS.flash({type: "success", content: "Document '"+vm.id()+"' uploader successfully."});
       Info.get().then(function(info){
@@ -143,9 +142,13 @@
       });
     };
     
-    vm.uploader.onFailure = function(data){
+    var onFailure = function(data){
       vm.flashError;
     };
+
+    var modalId = u.guid();
+
+    vm.uploader = app.uploader({docid: vm.id() || "", onSuccess: onSuccess, onFailure: onFailure, id: modalId});
     
     // Populate tools based on current action
     vm.tools = function(){
@@ -157,9 +160,10 @@
       cfg.title = "Edit Tags";
       cfg.contentId = "#edit-tags-popover";
       var tools = [];
+      var show = function(){ u.showModal()}
       switch (vm.action){
         case "view":
-          tools.push({title: "Upload", icon: "upload", action: vm.uploader.showModal()});
+          tools.push({title: "Upload", icon: "upload", action: vm.uploader.show()});
           if (!vm.binary) {
             tools.push({title: "Edit Content", icon: "edit", action: vm.edit});
           }
@@ -167,7 +171,7 @@
           tools.push({title: "Delete", icon: "trash", action: u.showModal("#delete-document-modal")});
           break;
         default:
-          tools.push({title: "Upload", icon: "upload", action: vm.uploader.showModal()});
+          tools.push({title: "Upload", icon: "upload", action: vm.uploader.show()});
           tools.push({title: "Save", icon: "save", action: vm.save});
           tools.push({title: "Cancel", icon: "times-circle", action: vm.cancel});
       }
@@ -230,14 +234,14 @@
     }
     var panelContent;
     if (vm.image){
-      panelContent = m("div.text-center", [m("img", {src: "/docs/"+vm.id(), title: vm.id()})]);
+      panelContent = m("div.text-center", [m("img", {src: app.host+"/docs/"+vm.id(), title: vm.id()})]);
     } else {
       panelContent = m.component(app.editor, vm);
     }
     var title = m("span",[titleLeft, titleRight]);
     
     return m("div", [
-      vm.uploader.view(),
+      vm.uploader,
       w.modal(deleteDialogCfg),
       w.modal(editTagsDialogCfg),
       m(".row", [w.toolbar({links: vm.tools()})]),

@@ -6,96 +6,102 @@
 (function(){
   'use strict';  
   var app = window.LS || (window.LS = {});
-  var u = LS.utils;
+  var u = app.utils;
+  var w = app.widgets;
   
-  app.uploader = function(docid){
-    
-    var uploader = {vm: {}};
-    var vm = uploader.vm;
-    
-    vm.docid = m.prop(docid);
-    vm.file = m.prop();
-    vm.id = u.guid();
-    vm.modalId = "#upload-"+vm.id+"-modal";
-    vm.btnId = "#upload-"+vm.id+"-btn";
-    vm.reader = new FileReader();
-    vm.contents = m.prop();
-    vm.isText = m.prop(false);
-    
-    vm.reader.onloadstart = function() {
-      vm.contents("");
-      $(uploader.vm.modalId).find(".btn-primary").attr("disabled", true);
-    };
-    
-    vm.reader.onloadend = function() {
-      vm.contents(vm.reader.result);
-      $(uploader.vm.modalId).find(".btn-primary").removeAttr("disabled");
-    };
+  /**
+   * @param {Object} obj
+   * @param {string} obj.docid
+   * @param {string} obj.id
+   * @param {Function} obj.onSuccess
+   * @param {Function} obj.onFailure
+   */
+  app.uploader = function(obj){
 
-    vm.save = function() {
-      var doc = {id: vm.docid()};
-      doc.data = vm.contents().split(',')[1];
-      if (vm.isText()) {
-        doc.data = window.atob(doc.data);
-      }
-      return Doc.put(doc, vm.file().type).then(uploader.onSuccess, uploader.onFailure);
-    };
+    var modalId = "#upload-"+obj.id+"-modal";
+    var uploader = {};
     
     uploader.config = function(obj){
       return function(element, isInitialized, context){
         $(element).change(function(event){
-          vm.file(element.files[0]);
-          if (vm.reader.readyState != 1) {
-            vm.reader.readAsDataURL(vm.file()); 
+          obj.file(element.files[0]);
+          if (obj.reader.readyState != 1) {
+            obj.reader.readAsDataURL(obj.file()); 
           }
         });
       };
     };
     
-    uploader.showModal = function() {
-      return u.showModal(uploader.vm.modalId);
-    };
+    uploader.controller = function(args) {
+      var vm = this;
+
+      vm.docid = m.prop(args.docid);
+      vm.file = m.prop();
+      vm.id = args.id; 
+      vm.btnId = "#upload-"+vm.id+"-btn";
+      vm.reader = new FileReader();
+      vm.contents = m.prop();
+      vm.isText = m.prop(false);
+
+      vm.reader.onloadstart = function() {
+        vm.contents("");
+        $(modalId).find(".btn-primary").attr("disabled", true);
+      };
+
+      vm.reader.onloadend = function() {
+        vm.contents(vm.reader.result);
+        $(modalId).find(".btn-primary").removeAttr("disabled");
+      };
+
+      vm.save = function() {
+        var doc = {id: vm.docid()};
+        doc.data = vm.contents().split(',')[1];
+        if (vm.isText()) {
+          doc.data = window.atob(doc.data);
+        }
+        return Doc.put(doc, vm.file().type).then(args.onSuccess, args.onFailure);
+      };
+      return vm;
+    }
     
-    uploader.onSuccess = function(data){
-      // Callback
-    };
-    uploader.onFailure = function(data){
-      // Callback
-    };
-    
-    uploader.view = function(){
+    uploader.view = function(ctrl, args){
       var config = {
         title: "Upload Document",
-        id: "upload-"+vm.id+"-modal",
-        action: vm.save,
+        id: "upload-"+ctrl.id+"-modal",
+        action: ctrl.save,
         actionText: "Upload",
         content: m("div", [
           m(".form-group", [
           m("label", "Document ID"),
             m("input.form-control", {
               placeholder: "Enter document ID",
-              onchange: m.withAttr("value", vm.docid),
+              onchange: m.withAttr("value", ctrl.docid),
               size: 35,
-              disabled: (docid === "") ? false : true,
-              value: vm.docid()
+              disabled: (ctrl.docid() === "") ? false : true,
+              value: ctrl.docid()
             })
           ]),
           m(".form-group", [
             m("label", "File"),
-            m("input.form-control#upload-"+vm.id+"-btn", {type:"file", config: uploader.config(vm)}),
+            m("input.form-control#upload-"+ctrl.id+"-btn", {type:"file", config: uploader.config(ctrl)}),
             m("p.help-block", "Select a file to upload as document.")
           ]),
           m(".checkbox", [
             m("label", [
-              m("input", {type: "checkbox", value: vm.isText(), onchange: m.withAttr("value", vm.isText)}), 
+              m("input", {type: "checkbox", value: ctrl.isText(), onchange: m.withAttr("value", ctrl.isText)}), 
               "Text File"
             ]),
             m("p.help-block", "Select if the file to upload contains textual content.")
           ])
         ])
       };
-      return u.modal(config);
+      return w.modal(config);
     };
-    return uploader;
+
+    var instance = m.component(uploader, obj);
+    instance.show = function() {
+      return u.showModal(modalId);
+    };
+    return instance;
   };
 }());

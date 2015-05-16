@@ -2,10 +2,11 @@
   window.Page = {};
   window.Info = {};
   window.Doc = {};
-  var u = window.LS.utils;
-  var ls_host = 'http://localhost:9500'
+  var app = window.LS || (window.LS = {});
+  var u = app.utils;
+  app.host = 'http://localhost:9500'
 
-  var host = location.origin === ls_host ? "" : ls_host
+  var host = location.origin === app.host ? "" : app.host
   
   Page.get = function(id) {
     var content = m.prop("");
