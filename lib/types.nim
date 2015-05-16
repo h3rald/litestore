@@ -1,4 +1,11 @@
-import db_sqlite, pegs, asynchttpserver2, strtabs 
+import 
+  db_sqlite, 
+  pegs, 
+  asynchttpserver2, 
+  strtabs,
+  parsecfg,
+  strutils,
+  streams
 
 type 
   EDatastoreExists* = object of Exception
@@ -77,13 +84,61 @@ PEG_USER_TAG = peg"""^[a-zA-Z0-9_\-?~:.@#^!+]+$"""
 PEG_DEFAULT_URL = peg"""^\/{(docs / info)} (\/ {(.+)} / \/?)$"""
 PEG_URL = peg"""^\/({(v\d+)} \/) {([^\/]+)} (\/ {(.+)} / \/?)$"""
 
-const CT_JSON* = {"Content-Type": "application/json"}
+const cfgfile = "litestore.nimble".slurp
 
-proc ctHeader*(ct: string): StringTableRef =
-  return {"Content-Type": ct}.newStringTable
+var
+  file*, address*, version*, appname*: string
+  port*: int
+  f = newStringStream(cfgfile)
 
-proc ctJsonHeader*(): StringTableRef =
-  return CT_JSON.newStringTable
+if f != nil:
+  var p: CfgParser
+  open(p, f, "litestore.nimble")
+  while true:
+    var e = next(p)
+    case e.kind
+    of cfgEof:
+      break
+    of cfgKeyValuePair:
+      case e.key:
+        of "version":
+          version = e.value
+        of "appame":
+          appname = e.value
+        of "port":
+          port = e.value.parseInt
+        of "address":
+          address = e.value
+        of "file":
+          file = e.value
+        else:
+          discard
+    of cfgError:
+      stderr.writeln("Configuration error.")
+      quit(1)
+    else: 
+      discard
+  close(p)
+else:
+  stderr.writeln("Cannot process configuration file.")
+  quit(2)
+
+# Initialize LiteStore
+var LS* {.threadvar.}: LiteStore
+var TAB_HEADERS* {.threadvar.}: array[0..2, (string, string)]
+
+
+LS.port = port
+LS.address = address
+LS.file = file
+LS.appversion = version
+LS.appname = appname
+
+TAB_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Server": LS.appname & "/" & LS.appversion
+}
 
 proc newQueryOptions*(): QueryOptions =
   return QueryOptions(select: @["id", "data", "content_type", "binary", "searchable", "created", "modified"], single: false, limit: 0, offset: 0, orderby: "", tags: "", search: "")

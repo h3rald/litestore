@@ -1,19 +1,15 @@
 import
   parseopt2,
-  parsecfg,
-  streams,
-  strutils
+  strutils,
+  strtabs
 import
   logger,
   types,
   utils
 
-const cfgfile = "litestore.nimble".slurp
 const favicon = "admin/favicon.ico".slurp
 
 var 
-  file*, address*, version*, appname*: string
-  port*: int
   operation = opRun
   directory:string = nil
   readonly = false
@@ -21,37 +17,6 @@ var
   mount = false
   reset = false
   
-var f = newStringStream(cfgfile)
-if f != nil:
-  var p: CfgParser
-  open(p, f, "litestore.nimble")
-  while true:
-    var e = next(p)
-    case e.kind
-    of cfgEof:
-      break
-    of cfgKeyValuePair:
-      case e.key:
-        of "version":
-          version = e.value
-        of "appame":
-          appname = e.value
-        of "port":
-          port = e.value.parseInt
-        of "address":
-          address = e.value
-        of "file":
-          file = e.value
-        else:
-          discard
-    of cfgError:
-      fail(1, "Configuration error.")
-    else: 
-      discard
-  close(p)
-else:
-  fail(2, "Cannot process configuration file.")
-
 let
   usage* = appname & " v" & version & " - Lightweight REST Document Store" & """
   (c) 2015 Fabio Cevasco
@@ -150,17 +115,9 @@ for kind, key, val in getOpt():
 if directory == nil and (operation in [opDelete, opImport, opExport] or mount):
   fail(105, "Directory option not specified.")
 
-# Initialize LiteStore
-var LS* {.threadvar.}: LiteStore
-
-LS.port = port
-LS.address = address
 LS.operation = operation
-LS.file = file
 LS.directory = directory
-LS.appversion = version
 LS.readonly = readonly
-LS.appname = appname
 LS.favicon = favicon
 LS.loglevel = loglevel
 LS.mount = mount

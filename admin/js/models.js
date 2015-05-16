@@ -3,6 +3,9 @@
   window.Info = {};
   window.Doc = {};
   var u = window.LS.utils;
+  var ls_host = 'http://localhost:9500'
+
+  var host = location.origin === ls_host ? "" : ls_host
   
   Page.get = function(id) {
     var content = m.prop("");
@@ -17,7 +20,7 @@
     var content = m.prop("");
     return m.request({
         method: "GET", 
-        url: "/info"
+        url: host+"/info"
       }).then(content);
   };
   
@@ -27,7 +30,7 @@
     var docs = m.prop("");
     return m.request({
         method: "GET", 
-        url: "/docs?contents=false&tags="+tag+"&limit="+limit+"&offset="+offset
+        url: host+"/docs?contents=false&tags="+tag+"&limit="+limit+"&offset="+offset
       }).then(docs);
   };
   
@@ -37,7 +40,7 @@
     var docs = m.prop("");
     return m.request({
         method: "GET", 
-        url: "/docs?contents=false&search="+search+"&limit="+limit+"&offset="+offset,
+        url: host+"/docs?contents=false&search="+search+"&limit="+limit+"&offset="+offset,
       }).then(docs);
   };
 
@@ -45,14 +48,14 @@
     var doc = m.prop("");
     return m.request({
         method: "GET", 
-        url: "/docs/"+id+"?raw=true"
+        url: host+"/docs/"+id+"?raw=true"
       }).then(doc);
   };
   
   Doc.delete = function(id){
     return m.request({
         method: "DELETE", 
-        url: "/docs/"+id
+        url: host+"/docs/"+id
       });
   };
   
@@ -61,7 +64,7 @@
     console.log("Doc.put - Saving Document:", doc);
     return m.request({
         method: "PUT", 
-        url: "/docs/"+doc.id,
+        url: host+"/docs/"+doc.id,
         data: doc.data,
         serialize: function(data){return data;},
         config: xhrcfg
@@ -72,7 +75,7 @@
     console.log("Doc.put - Uploading Document:", doc);
     return m.request({
       method: "PUT",
-      url: "/docs/"+doc.id,
+      url: host+"/docs/"+doc.id,
       data: doc.data,
       serialize: function(data) {return data}
     });
@@ -104,7 +107,7 @@
       console.log("Doc.patch - Saving Tags:", ops);
       return m.request({
         method: "PATCH",
-        url: "/docs/"+id,
+        url: host+"/docs/"+id,
         data: ops
       });
     });

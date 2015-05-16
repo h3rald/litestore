@@ -1,6 +1,7 @@
 import asynchttpserver2, asyncdispatch, strutils, cgi, strtabs, pegs, json, os, times
 import types, core, utils, logger
 
+
 # Helper procs
 
 proc orderByClause(clause: string): string =
@@ -137,7 +138,8 @@ proc deleteDocument(LS: LiteStore, id: string): Response =
       if res == 0:
         result = resError(Http500, "Unable to delete document '$1'" % id)
       else:
-        result.headers = {"Content-Length": "0"}.newStringTable
+        result.headers = TAB_HEADERS.newStringTable
+        result.headers["Content-Length"] = "0"
         result.content = ""
         result.code = Http204
     except:
@@ -279,22 +281,33 @@ proc options(req: Request, LS: LiteStore, resource: string, id = ""): Response =
       else:
         result.code = Http200
         result.content = ""
-        result.headers = {"Allow": "GET,OPTIONS"}.newStringTable
+        result.headers = TAB_HEADERS.newStringTable
+        result.headers["Allow"] = "GET,OPTIONS"
+        result.headers["Access-Control-Allow-Methods"] = "GET,OPTIONS"
     of "docs":
       if id != "":
         result.code = Http200
         result.content = ""
         if LS.readonly:
-          result.headers = {"Allow": "HEAD,GET,OPTIONS"}.newStringTable
+          result.headers = TAB_HEADERS.newStringTable
+          result.headers["Allow"] = "HEAD,GET,OPTIONS"
+          result.headers["Access-Control-Allow-Methods"] = "HEAD,GET,OPTIONS"
         else:
-          result.headers = {"Allow": "HEAD,GET,PUT,PATCH,DELETE,OPTIONS"}.newStringTable
+          result.headers = TAB_HEADERS.newStringTable
+          result.headers["Allow"] = "HEAD,GET,OPTIONS,PUT,PATCH,DELETE"
+          result.headers["Allow-Patch"] = "application/json-patch+json"
+          result.headers["Access-Control-Allow-Methods"] = "HEAD,GET,OPTIONS,PUT,PATCH,DELETE"
       else:
         result.code = Http200
         result.content = ""
         if LS.readonly:
-          result.headers = {"Allow": "HEAD,GET,OPTIONS"}.newStringTable
+          result.headers = TAB_HEADERS.newStringTable
+          result.headers["Allow"] = "HEAD,GET,OPTIONS"
+          result.headers["Access-Control-Allow-Methods"] = "HEAD,GET,OPTIONS"
         else:
-          result.headers = {"Allow": "HEAD,GET,POST,OPTIONS"}.newStringTable
+          result.headers = TAB_HEADERS.newStringTable
+          result.headers["Allow"] = "HEAD,GET,OPTIONS,POST"
+          result.headers["Access-Control-Allow-Methods"] = "HEAD,GET,OPTIONS,POST"
     else:
       discard # never happens really.
 
