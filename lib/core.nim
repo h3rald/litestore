@@ -42,11 +42,13 @@ proc createDatastore*(file:string) =
   data.exec(SQL_CREATE_DOCUMENTS_TABLE)
   data.exec(SQL_CREATE_SEARCHDATA_TABLE)
   data.exec(SQL_CREATE_TAGS_TABLE)
+  data.exec(SQL_CREATE_INFO_TABLE)
+  data.exec(SQL_INSERT_INFO, 1, 0, 0)
   LOG.debug("Creating indexes")
   data.createIndexes()
   LOG.debug("Database created")
 
-proc closeDatastore*(store:Datastore) = 
+proc closeDatastore*(store: Datastore) = 
   try:
     db.close(store.db)
   except:
@@ -78,6 +80,10 @@ proc openDatastore*(file:string): Datastore =
   except:
     raise newException(EDatastoreUnavailable, "Datastore '$1' cannot be opened." % file)
 
+proc retrieveInfo*(store: Datastore): array[0..1, int] =
+  var data = store.db.getRow(SQL_SELECT_INFO)
+  return [data[0].parseInt, data[1].parseInt]
+
 proc hasMirror(store: Datastore): bool =
   return store.mount.len > 0
 
@@ -103,14 +109,20 @@ proc rollback(store: Datastore) =
 
 proc createTag*(store: Datastore, tagid, documentid: string, system=false) =
   if tagid.match(PEG_USER_TAG) or system and tagid.match(PEG_TAG):
+    store.begin()
     store.db.exec(SQL_INSERT_TAG, tagid, documentid)
+    store.commit()
   else:
+    store.rollback()
     raise newException(EInvalidTag, "Invalid Tag: $1" % tagid)
 
 proc destroyTag*(store: Datastore, tagid, documentid: string, system=false): int64 =
   if tagid.match(PEG_USER_TAG) or system and tagid.match(PEG_TAG):
-    return store.db.execAffectedRows(SQL_DELETE_TAG, tagid, documentid)
+    store.begin()
+    result = store.db.execAffectedRows(SQL_DELETE_TAG, tagid, documentid)
+    store.commit()
   else:
+    store.rollback()
     raise newException(EInvalidTag, "Invalid Tag: $1" % tagid)
 
 proc retrieveTag*(store: Datastore, id: string, options: QueryOptions = newQueryOptions()): string =
@@ -168,6 +180,7 @@ proc createDocument*(store: Datastore,  id="", rawdata = "", contenttype = "text
     store.begin()
     var res = store.db.insertID(SQL_INSERT_DOCUMENT, id, data, contenttype, binary, searchable, currentTime())
     if res > 0:
+      store.db.exec(SQL_INCREMENT_DOCS)
       if binary <= 0 and searchable >= 0:
         # Add to search index
         store.db.exec(SQL_INSERT_SEARCHCONTENT, res, id, data.toPlainText)
@@ -228,6 +241,7 @@ proc destroyDocument*(store: Datastore, id: string): int64 =
     store.begin()
     result = store.db.execAffectedRows(SQL_DELETE_DOCUMENT, id)
     if result > 0:
+      store.db.exec(SQL_DECREMENT_DOCS)
       store.db.exec(SQL_DELETE_SEARCHCONTENT, id)
       store.db.exec(SQL_DELETE_DOCUMENT_TAGS, id)
       if store.hasMirror and id.startsWith(store.mount):
@@ -319,7 +333,6 @@ proc vacuum*(file: string) =
   quit(0)
 
 proc importDir*(store: Datastore, dir: string) =
-  # TODO: Only allow directory names (not paths)?
   var files = newSeq[string]()
   if not dir.dirExists:
     raise newException(EDirectoryNotFound, "Directory '$1' not found." % dir)
@@ -374,12 +387,9 @@ proc  deleteDir*(store: Datastore, dir: string) =
     store.db.exec(SQL_DELETE_SEARCHDATA_BY_TAG, "$dir:"&dir)
     store.db.exec(SQL_DELETE_TAGS_BY_TAG, "$dir:"&dir)
 
-proc mountDir*(store: var Datastore, dir:string, reset=false) =
+proc mountDir*(store: var Datastore, dir:string) =
   if not dir.dirExists:
     raise newException(EDirectoryNotFound, "Directory '$1' not found." % dir)
-  if reset:
-    store.deleteDir(dir)
-    store.importDir(dir)
   store.mount = dir
 
 proc destroyDocumentsByTag*(store: Datastore, tag: string): int64 =

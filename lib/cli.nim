@@ -15,7 +15,6 @@ var
   readonly = false
   logLevel = "info"
   mount = false
-  reset = false
   
 let
   usage* = appname & " v" & version & " - Lightweight REST Document Store" & """
@@ -121,4 +120,3 @@ LS.readonly = readonly
 LS.favicon = favicon
 LS.loglevel = loglevel
 LS.mount = mount
-LS.reset = reset

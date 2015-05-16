@@ -42,7 +42,7 @@ when isMainModule:
     LS.store = LS.file.openDatastore()
     if LS.mount:
       try:
-        LS.store.mountDir(LS.directory, LS.reset)
+        LS.store.mountDir(LS.directory)
       except:
         eWarn()
         fail(202, "Unable to mount directory '$1'" % [LS.directory])

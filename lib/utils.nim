@@ -137,7 +137,7 @@ proc addDocumentSystemTags*(store: Datastore, docid, contenttype: string) =
     store.db.exec(SQL_INSERT_TAG, tag, docid)
 
 proc destroyDocumentSystemTags*(store: Datastore, docid: string) = 
-  store.db.exec(SQL_DELETE_DOCUMENT_SYSTEM_TAGS, docid)
+  let n = store.db.execAffectedRows(SQL_DELETE_DOCUMENT_SYSTEM_TAGS, docid)
 
 proc fail*(code: int, msg: string) =
   LOG.error(msg)
@@ -145,7 +145,7 @@ proc fail*(code: int, msg: string) =
 
 proc ctHeader*(ct: string): StringTableRef =
   var h = TAB_HEADERS.newStringTable
-  h["Content-Tyoe"] = ct
+  h["Content-Type"] = ct
   return h
 
 proc ctJsonHeader*(): StringTableRef =

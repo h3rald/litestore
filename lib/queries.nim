@@ -14,9 +14,6 @@ searchable INTEGER,
 created TEXT,
 modified TEXT)
 """
-
-
-
 const
   SQL_CREATE_INDEX_DOCUMENTS_DOCID* = sql"CREATE INDEX IF NOT EXISTS documents_docid ON documents(docid)"
   SQL_CREATE_INDEX_DOCUMENTS_ID* = sql"CREATE INDEX IF NOT EXISTS documents_id ON documents(id)"
@@ -46,6 +43,32 @@ CREATE TABLE tags (
 tag_id TEXT,
 document_id TEXT,
 PRIMARY KEY (tag_id, document_id))
+"""
+
+const SQL_CREATE_INFO_TABLE* = sql"""
+CREATE TABLE info (
+version INT,
+total_documents INT)
+"""
+
+const SQL_INSERT_INFO* = sql"""
+INSERT INTO info
+(version, total_documents)
+VALUES (?, ?)
+"""
+
+const SQL_SELECT_INFO* = sql"""
+SELECT * FROM info
+"""
+
+const SQL_INCREMENT_DOCS* = sql"""
+UPDATE info
+SET total_documents = total_documents + 1
+"""
+
+const SQL_DECREMENT_DOCS* = sql"""
+UPDATE info
+SET total_documents = total_documents - 1
 """
 
 const SQL_INSERT_DOCUMENT* = sql"""

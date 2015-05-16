@@ -179,11 +179,14 @@ proc getRawDocuments(LS: LiteStore, options: QueryOptions = newQueryOptions()): 
     result.code = Http200
 
 proc getInfo(LS: LiteStore): Response =
-  let total_docs = LS.store.countDocuments()
+  let info = LS.store.retrieveInfo()
+  let version = info[0]
+  let total_documents = info[1]
   let total_tags = LS.store.countTags()
   let tags = LS.store.retrieveTagsWithTotals()
   var content = newJObject()
   content["version"] = %(LS.appname & " v" & LS.appversion)
+  content["datastore_version"] = %version
   content["size"] = %($((LS.file.getFileSize().float/(1024*1024)).formatFloat(ffDecimal, 2)) & " MB")
   content["read_only"] = %LS.readonly
   content["log_level"] = %LS.loglevel
@@ -192,7 +195,7 @@ proc getInfo(LS: LiteStore): Response =
   else: 
     content["directory"] = %LS.directory 
   content["mount"] = %LS.mount
-  content["total_documents"] = %total_docs
+  content["total_documents"] = %total_documents
   content["total_tags"] = %total_tags
   content["tags"] = tags
   result.headers = ctJsonHeader()
