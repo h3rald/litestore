@@ -2,7 +2,6 @@
   'use strict';
   var app = window.LS || (window.LS = {});
   var u = app.utils;
-  var w = app.widgets;
 
   // Document module
   app.document = {vm: {}};
@@ -148,7 +147,7 @@
 
     var modalId = u.guid();
 
-    vm.uploader = app.uploader({docid: vm.id() || "", onSuccess: onSuccess, onFailure: onFailure, id: modalId});
+    vm.uploader = u.uploader({docid: vm.id() || "", onSuccess: onSuccess, onFailure: onFailure, id: modalId});
     
     // Populate tools based on current action
     vm.tools = function(){
@@ -183,7 +182,7 @@
   app.document.main = function(){
     var vm = app.document.vm;
     var titleLeft = vm.id();
-    var titleRight = m("span.pull-right", vm.tags.map(function(t){return w.taglink({name: t, key: u.guid()});}));
+    var titleRight = m("span.pull-right", vm.tags.map(function(t){return u.taglink({name: t, key: u.guid()});}));
     // Delete confirmation dialog
     var deleteDialogCfg = {
       title: "Delete Document",
@@ -242,10 +241,10 @@
     
     return m("div", [
       vm.uploader,
-      w.modal(deleteDialogCfg),
-      w.modal(editTagsDialogCfg),
-      m(".row", [w.toolbar({links: vm.tools()})]),
-      m(".row", [w.panel({title: title, content:panelContent})])
+      u.modal(deleteDialogCfg),
+      u.modal(editTagsDialogCfg),
+      m(".row", [u.toolbar({links: vm.tools()})]),
+      m(".row", [u.panel({title: title, content:panelContent})])
     ]);
   };
   

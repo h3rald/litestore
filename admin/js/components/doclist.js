@@ -2,7 +2,6 @@
   'use strict';
   var app = window.LS || (window.LS = {});
   var u = app.utils;
-  var w = app.widgets;
   
   app.doclist = {};
   
@@ -25,10 +24,10 @@
       obj.content = m("div", [
         m("p", [args.content]),
         m("p", args.tags.map(function(tag){
-          return w.taglink({name: tag, key: u.guid()});
+          return u.taglink({name: tag, key: u.guid()});
         }))
       ]);
-      return m(".row.search-result", m(".col-md-12", [w.panel(obj)])); 
+      return m(".row.search-result", m(".col-md-12", [u.panel(obj)])); 
     }
   };
   
@@ -49,9 +48,9 @@
     return m("section", [
       m(".row", [args.title]),
       m(".row", [args.subtitle]),
-      m(".row.text-center", [w.paginator(args.querydata)]),
+      m(".row.text-center", [u.paginator(args.querydata)]),
       results,
-      m(".row.text-center", [w.paginator(args.querydata)])
+      m(".row.text-center", [u.paginator(args.querydata)])
     ]);
   };
   

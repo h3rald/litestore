@@ -1,7 +1,7 @@
 (function(){
   'use strict';
   var app = window.LS || (window.LS = {});
-  var u = LS.utils;
+  var u = app.utils;
 
   // Tags Module
   app.tags = {vm: {}};
