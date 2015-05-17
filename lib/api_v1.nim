@@ -1,4 +1,4 @@
-import asynchttpserver2, asyncdispatch, strutils, cgi, strtabs, pegs, json, os, times
+import x_asynchttpserver, asyncdispatch, strutils, cgi, strtabs, pegs, json, os, times
 import types, core, utils, logger
 
 
@@ -153,7 +153,7 @@ proc getRawDocuments(LS: LiteStore, options: QueryOptions = newQueryOptions()): 
   let orig_offset = options.offset
   options.limit = 0
   options.offset = 0
-  options.select = @["COUNT(docid)"]
+  options.select = @["COUNT(rowid)"]
   let total = LS.store.retrieveRawDocuments(options)[0].num
   if docs.len == 0:
     result = resError(Http404, "No documents found.")

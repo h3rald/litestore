@@ -1,15 +1,15 @@
 import 
   json,
-  db_sqlite, 
   strutils, 
   pegs, 
   asyncdispatch, 
-  asynchttpserver2, 
   math, 
-  sqlite3,
   strtabs
 
 import 
+  x_db_sqlite, 
+  x_sqlite3, 
+  x_asynchttpserver, 
   types, 
   queries, 
   contenttypes, 
@@ -33,23 +33,13 @@ proc selectDocumentsByTags(tags: string): string =
 proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
   result = "SELECT "
   if options.search.len > 0:
-    if options.select[0] != "COUNT(docid)":
-      let rank = "rank(matchinfo(searchdata, 'pcxnal'), 1.20, 0.75, 5.0, 0.5) AS rank"
-      let snippet = "snippet(searchdata, \"<strong>\", \"</strong>\", \"<strong>&hellip;</strong>\", -1, 30) as highlight" 
+    if options.select[0] != "COUNT(rowid)":
+      let snippet = "snippet(searchdata, -1, \"<strong>\", \"</strong>\", \" <strong>&hellip;</strong> \", 32) AS highlight" 
       options.select.add(snippet)
-      options.select.add("ranktable.rank AS rank")
+      options.select.add("abs(bm25(searchdata, 10.0, 1.0)) AS rank")
       options.orderby = "rank DESC"
-      # Create inner select 
-      var innerSelect = "SELECT docid, " & rank & " FROM searchdata WHERE searchdata MATCH '" & options.search.replace("'", "''") & "' "
-      if options.tags.len > 0:
-        innerSelect = innerSelect & options.tags.selectDocumentsByTags()
-      innerSelect = innerSelect & " ORDER BY rank DESC "
-      if options.limit > 0:
-        innerSelect = innerSelect & "LIMIT " & $options.limit
-        if options.offset > 0:
-          innerSelect = innerSelect & " OFFSET " & $options.offset
       result = result & options.select.join(", ")
-      result = result & " FROM documents JOIN (" & innerSelect & ") as ranktable USING(docid) JOIN searchdata USING(docid) "
+      result = result & " FROM searchdata JOIN documents USING(id)"
       result = result & "WHERE 1=1 "
     else:
       result = result & options.select.join(", ")
@@ -65,7 +55,7 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
     result = result & options.tags.selectDocumentsByTags()
   if options.search.len > 0:
     result = result & "AND searchdata MATCH '" & options.search.replace("'", "''") & "' "
-  if options.orderby.len > 0 and options.select[0] != "COUNT(docid)":
+  if options.orderby.len > 0 and options.select[0] != "COUNT(rowid)":
     result = result & "ORDER BY " & options.orderby & " " 
   if options.limit > 0 and options.search.len == 0: 
     # If searching, do not add limit to the outer select, it's already in the nested select (ranktable)
@@ -123,7 +113,7 @@ proc checkIfBinary*(binary:int, contenttype:string): int =
   else:
     return binary
 
-proc addDocumentSystemTags*(store: Datastore, docid, contenttype: string) =
+proc addDocumentSystemTags*(store: Datastore, rowid, contenttype: string) =
   var splittype = contenttype.split("/")
   var tags = newSeq[string](0)
   tags.add "$type:"&splittype[0]
@@ -134,10 +124,10 @@ proc addDocumentSystemTags*(store: Datastore, docid, contenttype: string) =
   else:
     tags.add "$format:text"
   for tag in tags:
-    store.db.exec(SQL_INSERT_TAG, tag, docid)
+    store.db.exec(SQL_INSERT_TAG, tag, rowid)
 
-proc destroyDocumentSystemTags*(store: Datastore, docid: string) = 
-  let n = store.db.execAffectedRows(SQL_DELETE_DOCUMENT_SYSTEM_TAGS, docid)
+proc destroyDocumentSystemTags*(store: Datastore, rowid: string) = 
+  let n = store.db.execAffectedRows(SQL_DELETE_DOCUMENT_SYSTEM_TAGS, rowid)
 
 proc fail*(code: int, msg: string) =
   LOG.error(msg)

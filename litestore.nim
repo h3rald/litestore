@@ -1,6 +1,4 @@
 import 
-  sqlite3, 
-  db_sqlite as db, 
   strutils, 
   os,
   oids,
@@ -10,6 +8,8 @@ import
   strtabs,
   base64
 import
+  lib/x_db_sqlite as db, 
+  lib/x_sqlite3, 
   lib/types,
   lib/logger,
   lib/utils, 

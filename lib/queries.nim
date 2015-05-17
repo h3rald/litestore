@@ -1,11 +1,11 @@
-import db_sqlite
+import x_db_sqlite
 
 
 # SQL QUERIES
 
 const SQL_CREATE_DOCUMENTS_TABLE* = sql"""
 CREATE TABLE documents (
-docid INTEGER PRIMARY KEY,
+rowid INTEGER PRIMARY KEY,
 id TEST,
 data TEXT,
 content_type TEXT,
@@ -16,12 +16,12 @@ modified TEXT)
 """
 
 const
-  SQL_CREATE_INDEX_DOCUMENTS_DOCID* = sql"CREATE INDEX IF NOT EXISTS documents_docid ON documents(docid)"
+  SQL_CREATE_INDEX_DOCUMENTS_DOCID* = sql"CREATE INDEX IF NOT EXISTS documents_rowid ON documents(rowid)"
   SQL_CREATE_INDEX_DOCUMENTS_ID* = sql"CREATE INDEX IF NOT EXISTS documents_id ON documents(id)"
   SQL_CREATE_INDEX_TAGS_DOCUMENT_ID* = sql"CREATE INDEX IF NOT EXISTS tags_document_id ON tags(document_id)"
   SQL_CREATE_INDEX_TAGS_TAG_ID* = sql"CREATE INDEX IF NOT EXISTS tags_tag_id ON tags(tag_id)"
 
-  SQL_DROP_INDEX_DOCUMENTS_DOCID* = sql"DROP INDEX IF EXISTS documents_docid" 
+  SQL_DROP_INDEX_DOCUMENTS_DOCID* = sql"DROP INDEX IF EXISTS documents_rowid" 
   SQL_DROP_INDEX_DOCUMENTS_ID* = sql"DROP INDEX IF EXISTS documents_id"
   SQL_DROP_INDEX_TAGS_DOCUMENT_ID* = sql"DROP INDEX IF EXISTS tags_document_id"
   SQL_DROP_INDEX_TAGS_TAG_ID* = sql"DROP INDEX IF EXISTS tags_tag_id"
@@ -34,9 +34,9 @@ const
 
 const SQL_CREATE_SEARCHDATA_TABLE* = sql"""
 CREATE VIRTUAL TABLE searchdata USING fts5(
-id TEXT,
-data TEXT, 
-tokenize = 'porter unicode61')
+id,
+data, 
+tokenize = "porter unicode61 separators '-_'")
 """
 
 const SQL_CREATE_TAGS_TABLE* = sql"""
@@ -127,7 +127,7 @@ document_id = ? AND tag_id LIKE "$%"
 
 const SQL_INSERT_SEARCHCONTENT* = sql"""
 INSERT INTO searchdata
-(docid, id, data)
+(rowid, id, data)
 VALUES (?, ?, ?)
 """
 
@@ -164,7 +164,7 @@ SELECT COUNT(DISTINCT tag_id) FROM tags
 """
 
 const SQL_COUNT_DOCUMENTS* = sql"""
-SELECT COUNT(docid) FROM documents 
+SELECT COUNT(rowid) FROM documents 
 """
 
 const SQL_DELETE_DOCUMENTS_BY_TAG* = sql"""
