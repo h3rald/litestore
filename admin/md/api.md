@@ -47,6 +47,7 @@ Server: LiteStore/1.0.0
 
 {
   "version": "LiteStore v1.0.0",
+  "datastore_version": 1,
   "size": "5.76 MB",
   "read_only": false,
   "log_level": "info",
