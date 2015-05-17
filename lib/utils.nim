@@ -57,8 +57,7 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
     result = result & "AND searchdata MATCH '" & options.search.replace("'", "''") & "' "
   if options.orderby.len > 0 and options.select[0] != "COUNT(rowid)":
     result = result & "ORDER BY " & options.orderby & " " 
-  if options.limit > 0 and options.search.len == 0: 
-    # If searching, do not add limit to the outer select, it's already in the nested select (ranktable)
+  if options.limit > 0:
     result = result & "LIMIT " & $options.limit & " "
     if options.offset > 0:
       result = result & "OFFSET " & $options.offset & " "
