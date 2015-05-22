@@ -98,17 +98,19 @@ proc prepareJsonDocument*(store:Datastore, doc: TRow, cols:seq[string]): JsonNod
   var count = 0
   for s in cols:
     var key = s
+    count.inc
+    if key == "searchable" or key == "binary" or key == "content_type":
+      continue
     if s.contains(" "):
       # documents.id AS id...
       let chunks = s.split(" ")
       key = chunks[chunks.len-1]
     var value:JsonNode
-    if doc[count] == "":
+    if doc[count-1] == "":
       value = newJNull()
     else:
-      value = %doc[count]
+      value = %doc[count-1]
     res.add((key, value))
-    count.inc
   res.add(("tags", %tags))
   return %res
 
