@@ -140,4 +140,4 @@ TAB_HEADERS = {
 }
 
 proc newQueryOptions*(): QueryOptions =
-  return QueryOptions(select: @["id", "data", "content_type", "binary", "searchable", "created", "modified"], single: false, limit: 0, offset: 0, orderby: "", tags: "", search: "")
+  return QueryOptions(select: @["documents.id AS id", "documents.data AS data", "content_type", "binary", "searchable", "created", "modified"], single: false, limit: 0, offset: 0, orderby: "", tags: "", search: "")
