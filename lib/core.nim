@@ -344,7 +344,7 @@ proc importDir*(store: Datastore, dir: string) =
       continue
     files.add(f)
   # Import single files in batch
-  let batchSize = 50
+  let batchSize = 100
   let nBatches = ceil(files.len/batchSize).toInt
   var cFiles = 0
   var cBatches = 0

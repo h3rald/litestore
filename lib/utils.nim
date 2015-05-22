@@ -113,9 +113,8 @@ proc prepareJsonDocument*(store:Datastore, doc: TRow, cols:seq[string]): JsonNod
   return %res
 
 proc toPlainText*(s: string): string =
-  var tags = peg"""'<' [^<>]+ '>'"""
-  var markup = peg"""{[_*/+!=?%$^~]+} {(!$1 .)+} $1"""
-  return s.replace(tags).replacef(markup, "$2")
+  var tags = peg"""'<' [^>]+ '>'"""
+  return s.replace(tags)
 
 proc checkIfBinary*(binary:int, contenttype:string): int =
   if binary == -1 and contenttype.isBinary:
