@@ -1,6 +1,6 @@
 import 
-  sqlite3, 
-  db_sqlite as db,
+  x_sqlite3, 
+  x_db_sqlite as db,
   strutils, 
   os,
   oids,
