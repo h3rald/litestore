@@ -34,12 +34,22 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
   result = "SELECT "
   if options.search.len > 0:
     if options.select[0] != "COUNT(rowid)":
+      let rank = "abs(bm25(searchdata, 10.0, 1.0)) AS rank"
       let snippet = "snippet(searchdata, -1, \"<strong>\", \"</strong>\", \" <strong>&hellip;</strong> \", 32) AS highlight" 
       options.select.add(snippet)
-      options.select.add("abs(bm25(searchdata, 10.0, 1.0)) AS rank")
-      options.orderby = "rank DESC"
+      options.select.add(rank)
+      options.orderby = "rank"
+      # Create inner select 
+      var innerSelect = "SELECT rowid, " & rank & " FROM searchdata WHERE searchdata MATCH '" & options.search.replace("'", "''") & "' "
+      if options.tags.len > 0:
+        innerSelect = innerSelect & options.tags.selectDocumentsByTags()
+      innerSelect = innerSelect & " ORDER BY rank DESC "
+      if options.limit > 0:
+        innerSelect = innerSelect & "LIMIT " & $options.limit
+        if options.offset > 0:
+          innerSelect = innerSelect & " OFFSET " & $options.offset
       result = result & options.select.join(", ")
-      result = result & " FROM searchdata JOIN documents USING(id)"
+      result = result & " FROM documents JOIN (" & innerSelect & ") as ranktable USING(rowid) JOIN searchdata ON(ranktable.rowid=searchdata.rowid) "
       result = result & "WHERE 1=1 "
     else:
       result = result & options.select.join(", ")
@@ -57,7 +67,7 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
     result = result & "AND searchdata MATCH '" & options.search.replace("'", "''") & "' "
   if options.orderby.len > 0 and options.select[0] != "COUNT(rowid)":
     result = result & "ORDER BY " & options.orderby & " " 
-  if options.limit > 0:
+  if options.limit > 0 and options.search.len == 0: 
     result = result & "LIMIT " & $options.limit & " "
     if options.offset > 0:
       result = result & "OFFSET " & $options.offset & " "
