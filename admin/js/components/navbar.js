@@ -14,9 +14,12 @@
         {path: "/guide/overview", title: "Overview"},
         {path: "/guide/use-cases", title: caret+"Use Cases"},
         {path: "/guide/architecture", title: caret+"Architecture"},
+        {path: "/guide/data_model", title: caret+"Data Model"},
         {path: "/guide/getting-started", title: "Getting Started"},
         {path: "/guide/usage", title: "Usage"},
         {path: "/guide/api", title: "API"},
+        {path: "/guide/api_info", title: caret+"info (LiteStore Information)"},
+        {path: "/guide/api_docs", title: caret+"docs (LiteStore Documents)"},
         {path: "/guide/credits", title: "Credits"}
       ];
       vm.taglinks = function(info){ 
