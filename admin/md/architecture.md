@@ -17,6 +17,6 @@ The Core module is then used by the two main interfaces exposed to users:
 * the Command-Line Interface, which can be used to run the server, import/export/delete data in bulk, and perform maintenance operations on the underlying datastore file (vacuum, optimize).
 * the RESTful HTTP API, which can be used as the primary way to perform CRUD operation on documents, and manage document tags.
 
-#### Document Format
+#### Database Schema
 
-#### Document Tagging
+![LiteStore Database](images/litestore_db.png)

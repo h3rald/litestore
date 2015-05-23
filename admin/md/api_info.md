@@ -1,4 +1,4 @@
-### info - LiteStore Information
+### info (LiteStore Information)
 
 This resource can be queried to obtain basic information and statistics on the LiteStore server.
 
