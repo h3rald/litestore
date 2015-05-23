@@ -74,6 +74,7 @@ proc openDatastore*(file:string): Datastore =
     discard result.db.tryExec("PRAGMA locking_mode = exclusive".sql)
     discard result.db.tryExec("PRAGMA page_size = 4096".sql)
     discard result.db.tryExec("PRAGMA cache_size = 10000".sql)
+    discard result.db.tryExec("PRAGMA foreign_keys = ON".sql)
     LOG.debug("Done.")
     result.path = file
     result.mount = ""
@@ -243,7 +244,6 @@ proc destroyDocument*(store: Datastore, id: string): int64 =
     if result > 0:
       store.db.exec(SQL_DECREMENT_DOCS)
       store.db.exec(SQL_DELETE_SEARCHCONTENT, id)
-      store.db.exec(SQL_DELETE_DOCUMENT_TAGS, id)
       if store.hasMirror and id.startsWith(store.mount):
         var filename = id.unixToNativePath
         if fileExists(filename):

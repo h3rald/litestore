@@ -6,7 +6,7 @@ import x_db_sqlite
 const SQL_CREATE_DOCUMENTS_TABLE* = sql"""
 CREATE TABLE documents (
 docid INTEGER PRIMARY KEY,
-id TEST,
+id TEXT UNIQUE NOT NULL,
 data TEXT,
 content_type TEXT,
 binary INTEGER,
@@ -33,15 +33,16 @@ const
 
 const SQL_CREATE_SEARCHDATA_TABLE* = sql"""
 CREATE VIRTUAL TABLE searchdata USING fts4(
-id TEXT,
+id TEXT UNIQUE NOT NULL,
 data TEXT, 
 tokenize=porter)
 """
 
 const SQL_CREATE_TAGS_TABLE* = sql"""
 CREATE TABLE tags (
-tag_id TEXT,
-document_id TEXT,
+tag_id TEXT NOT NULL,
+document_id TEXT NOT NULL,
+FOREIGN KEY(document_id) REFERENCES documents(id) ON DELETE CASCADE,
 PRIMARY KEY (tag_id, document_id))
 """
 
