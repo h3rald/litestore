@@ -21,7 +21,7 @@ let
   (c) 2015 Fabio Cevasco
 
   Usage:
-    LS [command] [option1 option2 ...]
+    litestore [command] [option1 option2 ...]
 
   Commands:
     run                 Start LiteStore server (default if no command specified).
