@@ -15,105 +15,6 @@ import
   contenttypes, 
   logger
 
-proc dbQuote*(s: string): string =
-  result = "'"
-  for c in items(s):
-    if c == '\'': add(result, "''")
-    else: add(result, c)
-  add(result, '\'')
-
-proc selectDocumentsByTags(tags: string): string =
-  var select_tagged = "SELECT document_id FROM tags WHERE tag_id = '"
-  result = ""
-  for tag in tags.split(','):
-    if not tag.match(PEG_TAG):
-      raise newException(EInvalidTag, "Invalid tag '$1'" % tag)
-    result = result & "AND id IN (" & select_tagged & tag & "') "
-   
-proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
-  result = "SELECT "
-  if options.search.len > 0:
-    if options.select[0] != "COUNT(docid)":
-      let rank = "rank(matchinfo(searchdata, 'pcxnal'), 1.20, 0.75, 5.0, 0.5) AS rank"
-      let snippet = "snippet(searchdata, \"<strong>\", \"</strong>\", \"<strong>&hellip;</strong>\", -1, 30) as highlight" 
-      options.select.add(snippet)
-      options.select.add("ranktable.rank AS rank")
-      options.orderby = "rank DESC"
-      # Create inner select 
-      var innerSelect = "SELECT docid, " & rank & " FROM searchdata WHERE searchdata MATCH '" & options.search.replace("'", "''") & "' "
-      if options.tags.len > 0:
-        innerSelect = innerSelect & options.tags.selectDocumentsByTags()
-      innerSelect = innerSelect & " ORDER BY rank DESC "
-      if options.limit > 0:
-        innerSelect = innerSelect & "LIMIT " & $options.limit
-        if options.offset > 0:
-          innerSelect = innerSelect & " OFFSET " & $options.offset
-      result = result & options.select.join(", ")
-      result = result & " FROM documents JOIN (" & innerSelect & ") as ranktable USING(docid) JOIN searchdata USING(docid) "
-      result = result & "WHERE 1=1 "
-    else:
-      result = result & options.select.join(", ")
-      result = result & " FROM searchdata "
-      result = result & "WHERE 1=1 "
-      options.orderby = ""
-  else:
-    result = result & options.select.join(", ")
-    result = result & " FROM documents WHERE 1=1 "
-  if options.single:
-    result = result & "AND id = ?"
-  if options.tags.len > 0:
-    result = result & options.tags.selectDocumentsByTags()
-  if options.search.len > 0:
-    result = result & "AND searchdata MATCH '" & options.search.replace("'", "''") & "' "
-  if options.orderby.len > 0 and options.select[0] != "COUNT(docid)":
-    result = result & "ORDER BY " & options.orderby & " " 
-  if options.limit > 0 and options.search.len == 0: 
-    # If searching, do not add limit to the outer select, it's already in the nested select (ranktable)
-    result = result & "LIMIT " & $options.limit & " "
-    if options.offset > 0:
-      result = result & "OFFSET " & $options.offset & " "
-  LOG.debug(result.replace("$", "$$"))
- 
-proc prepareSelectTagsQuery*(options: QueryOptions): string =
-  result = "SELECT tag_id, COUNT(document_id) "
-  result = result & "FROM tags "
-  if options.single:
-    result = result & "WHERE tag_id = ?"
-  result = result & "GROUP BY tag_id"
-  if options.orderby.len > 0:
-    result = result & "ORDER BY " & options.orderby&" " 
-  if options.limit > 0:
-    result = result & "LIMIT " & $options.limit & " "
-  LOG.debug(result.replace("$", "$$"))
-
-proc prepareJsonDocument*(store:Datastore, doc: TRow, cols:seq[string]): JsonNode =
-  var raw_tags = store.db.getAllRows(SQL_SELECT_DOCUMENT_TAGS, doc[0])
-  var tags = newSeq[JsonNode](0)
-  for tag in raw_tags:
-    tags.add(%($(tag[0])))
-  if doc.len == 1:
-    # COUNT(id)
-    return %(doc[0].parseInt)
-  var res = newSeq[tuple[key: string, val: JsonNode]](0)
-  var count = 0
-  for s in cols:
-    var key = s
-    count.inc
-    if key == "searchable" or key == "binary" or key == "content_type":
-      continue
-    if s.contains(" "):
-      # documents.id AS id...
-      let chunks = s.split(" ")
-      key = chunks[chunks.len-1]
-    var value:JsonNode
-    if doc[count-1] == "":
-      value = newJNull()
-    else:
-      value = %doc[count-1]
-    res.add((key, value))
-  res.add(("tags", %tags))
-  return %res
-
 proc toPlainText*(s: string): string =
   var tags = peg"""'<' [^>]+ '>'"""
   return s.replace(tags)
@@ -123,22 +24,6 @@ proc checkIfBinary*(binary:int, contenttype:string): int =
     return 1
   else:
     return binary
-
-proc addDocumentSystemTags*(store: Datastore, docid, contenttype: string) =
-  var splittype = contenttype.split("/")
-  var tags = newSeq[string](0)
-  tags.add "$type:"&splittype[0]
-  tags.add "$subtype:"&splittype[1]
-  var binary = checkIfBinary(-1, contenttype)
-  if binary == 1:
-    tags.add "$format:binary"
-  else:
-    tags.add "$format:text"
-  for tag in tags:
-    store.db.exec(SQL_INSERT_TAG, tag, docid)
-
-proc destroyDocumentSystemTags*(store: Datastore, docid: string) = 
-  let n = store.db.execAffectedRows(SQL_DELETE_DOCUMENT_SYSTEM_TAGS, docid)
 
 proc fail*(code: int, msg: string) =
   LOG.error(msg)

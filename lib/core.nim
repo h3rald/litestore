@@ -15,6 +15,7 @@ import
   contenttypes,
   queries,
   logger,
+  dbutils,
   utils
 
 # Manage Datastores
@@ -24,13 +25,17 @@ var LS_TRANSACTION = false
 proc createIndexes(db: TDbConn) =
   db.exec SQL_CREATE_INDEX_DOCUMENTS_DOCID
   db.exec SQL_CREATE_INDEX_DOCUMENTS_ID
-  db.exec SQL_CREATE_INDEX_TAGS_TAG_ID
+  db.exec SQL_CREATE_INDEX_TAGS_NAMESPACE
+  db.exec SQL_CREATE_INDEX_TAGS_PREDICATE
+  db.exec SQL_CREATE_INDEX_TAGS_VALUE
   db.exec SQL_CREATE_INDEX_TAGS_DOCUMENT_ID
 
 proc dropIndexes(db: TDbConn) = 
   db.exec SQL_DROP_INDEX_DOCUMENTS_DOCID
   db.exec SQL_DROP_INDEX_DOCUMENTS_ID
-  db.exec SQL_DROP_INDEX_TAGS_TAG_ID
+  db.exec SQL_DROP_INDEX_TAGS_NAMESPACE
+  db.exec SQL_DROP_INDEX_TAGS_PREDICATE
+  db.exec SQL_DROP_INDEX_TAGS_VALUE
   db.exec SQL_DROP_INDEX_TAGS_DOCUMENT_ID
 
 proc createDatastore*(file:string) = 
@@ -108,42 +113,40 @@ proc rollback(store: Datastore) =
 
 # Manage Tags
 
-proc createTag*(store: Datastore, tagid, documentid: string, system=false) =
-  if tagid.match(PEG_USER_TAG) or system and tagid.match(PEG_TAG):
-    store.begin()
-    store.db.exec(SQL_INSERT_TAG, tagid, documentid)
-    store.commit()
+#proc createTag*(store: Datastore, tagid, documentid: string, system=false) =
+proc createTag*(store: Datastore, documentid, value, predicate, namespace: string, system = false) =
+  if namespace.match(PEG_NAMESPACE):
+    if namespace != SYS_NAMESPACE or system:
+      if predicate.match(PEG_PREDICATE):
+        store.begin()
+        store.db.exec(SQL_INSERT_TAG, documentid, value, predicate, namespace)
+        store.commit()
+      else:
+        raise newException(EInvalidTag, "Invalid tag predicate: $1" % predicate)
+    else:
+      raise newException(EInvalidTag, "Cannot create system tags." % namespace)
   else:
-    store.rollback()
-    raise newException(EInvalidTag, "Invalid Tag: $1" % tagid)
+    raise newException(EInvalidTag, "Invalid tag namespace: $1" % namespace)
 
-proc destroyTag*(store: Datastore, tagid, documentid: string, system=false): int64 =
-  if tagid.match(PEG_USER_TAG) or system and tagid.match(PEG_TAG):
-    store.begin()
-    result = store.db.execAffectedRows(SQL_DELETE_TAG, tagid, documentid)
-    store.commit()
+# Note: does not allow deleting tags without specifying a namespace
+proc destroyTags*(store: Datastore, documentid, value = "*", predicate = "*", namespace: string, system=false): int64 =
+  if namespace.match(PEG_NAMESPACE):
+    if namespace != SYS_NAMESPACE or system:
+      if predicate == "*" or predicate.match(PEG_PREDICATE):
+        store.begin()
+        result = store.deleteTagsByTag(value, predicate, namespace)
+        store.commit()
+      else:
+        raise newException(EInvalidTag, "Invalid tag predicate: $1" % predicate)
+    else:
+      raise newException(EInvalidTag, "'Cannot delete system tags." % namespace)
   else:
-    store.rollback()
-    raise newException(EInvalidTag, "Invalid Tag: $1" % tagid)
-
-proc retrieveTag*(store: Datastore, id: string, options: QueryOptions = newQueryOptions()): string =
-  var options = options
-  options.single = true
-  var query = prepareSelectTagsQuery(options)
-  var raw_tag = store.db.getRow(query.sql, id)
-  return $(%[("id", %raw_tag[0]), ("documents", %(raw_tag[1].parseInt))])
-
-proc retrieveTags*(store: Datastore, options: QueryOptions = newQueryOptions()): string =
-  var query = prepareSelectTagsQuery(options)
-  var raw_tags = store.db.getAllRows(query.sql)
-  var tags = newSeq[JsonNode](0)
-  for tag in raw_tags:
-    tags.add(%[("id", %tag[0]), ("documents", %(tag[1].parseInt))])
-  return $(%tags)
+    raise newException(EInvalidTag, "Invalid tag namespace: $1" % namespace)
 
 proc countTags*(store: Datastore): int64 =
   return store.db.getRow(SQL_COUNT_TAGS)[0].parseInt
 
+# TODO REWRITE
 proc retrieveTagsWithTotals*(store: Datastore): JsonNode =
   var data = store.db.getAllRows(SQL_SELECT_TAGS_WITH_TOTALS)
   var tag_array = newSeq[JsonNode](0)
@@ -188,7 +191,7 @@ proc createDocument*(store: Datastore,  id="", rawdata = "", contenttype = "text
       store.addDocumentSystemTags(id, contenttype)
       if store.hasMirror and id.startsWith(store.mount):
         # Add dir tag
-        store.createTag("$dir:"&store.mount, id, true)
+        store.createTag(id, store.mount, SYS_COLLECTION_PREDICATE, SYS_NAMESPACE, true)
         var filename = id.unixToNativePath
         if not fileExists(filename):
           filename.parentDir.createDir
@@ -300,7 +303,7 @@ proc importFile*(store: Datastore, f: string, dir = "") =
   try:
     discard store.createDocument(d_id, d_contents, d_ct, d_binary, d_searchable)
     if dir != "":
-      store.db.exec(SQL_INSERT_TAG, "$dir:"&dir, d_id)
+      store.db.exec(SQL_INSERT_TAG, d_id, dir, SYS_COLLECTION_PREDICATE, SYS_NAMESPACE)
   except:
     store.rollback()
     eWarn()
@@ -371,7 +374,7 @@ proc importDir*(store: Datastore, dir: string) =
   LOG.info("Imported $1/$2 files", cFiles, files.len)
 
 proc  exportDir*(store: Datastore, dir: string) =
-  let docs = store.db.getAllRows(SQL_SELECT_DOCUMENTS_BY_TAG, "$dir:"&dir)
+  let docs = store.getDocsByTag("*", dir, SYS_COLLECTION_PREDICATE, SYS_NAMESPACE)
   for doc in docs:
     let file = doc[0].unixToNativePath
     var data: string
@@ -383,17 +386,17 @@ proc  exportDir*(store: Datastore, dir: string) =
     file.writeFile(data)
 
 proc  deleteDir*(store: Datastore, dir: string) =
-    store.db.exec(SQL_DELETE_DOCUMENTS_BY_TAG, "$dir:"&dir)
-    store.db.exec(SQL_DELETE_SEARCHDATA_BY_TAG, "$dir:"&dir)
-    store.db.exec(SQL_DELETE_TAGS_BY_TAG, "$dir:"&dir)
+    discard store.deleteDocsByTag(dir, SYS_COLLECTION_PREDICATE, SYS_NAMESPACE)
+    discard store.deleteSearchdataByTag(dir, SYS_COLLECTION_PREDICATE, SYS_NAMESPACE)
+    discard store.deleteTagsByTag(dir, SYS_COLLECTION_PREDICATE, SYS_NAMESPACE)
 
 proc mountDir*(store: var Datastore, dir:string) =
   if not dir.dirExists:
     raise newException(EDirectoryNotFound, "Directory '$1' not found." % dir)
   store.mount = dir
 
-proc destroyDocumentsByTag*(store: Datastore, tag: string): int64 =
+proc destroyDocumentsByTag*(store: Datastore, value, predicate, namespace: string): int64 =
   result = 0
-  var ids = store.db.getAllRows(SQL_SELECT_DOCUMENT_IDS_BY_TAG, tag)
+  var ids = store.getDocsByTag("id", value, predicate, namespace)
   for id in ids:
     result.inc(store.destroyDocument(id[0]).int)

@@ -21,13 +21,18 @@ type
     db*: TDbConn
     path*: string
     mount*: string
+  MachineTag* = tuple[
+    namespace: string,
+    predicate: string,
+    value: string
+  ]
   QueryOptions* = object
     select*: seq[string]
     single*:bool         
     limit*: int           
     offset*: int           
     orderby*: string      
-    tags*: string
+    tags*: seq[MachineTag]
     search*: string
   TagExpression* = object
     tag*: string
@@ -72,16 +77,23 @@ type
     version: string
   ]
 
+const
+  SYS_NAMESPACE* = "sys"
+  SYS_COLLECTION_PREDICATE* = "dir"
+  SYS_FORMAT_PREDICATE* = "format"
+  SYS_TYPE_PREDICATE* = "type"
+  SYS_SUBTYPE_PREDICATE* = "subtype"
+
 var 
-  PEG_TAG* {.threadvar.}: Peg
-  PEG_USER_TAG* {.threadvar.}: Peg
+  PEG_NAMESPACE* {.threadvar.}: Peg
+  PEG_PREDICATE* {.threadvar.}: Peg
   PEG_DEFAULT_URL* {.threadvar.}: Peg
   PEG_URL* {.threadvar.}: Peg
 
-PEG_TAG = peg"""^\$? [a-zA-Z0-9_\-?~:.@#^!+]+$"""
-PEG_USER_TAG = peg"""^[a-zA-Z0-9_\-?~:.@#^!+]+$"""
 PEG_DEFAULT_URL = peg"""^\/{(docs / info)} (\/ {(.+)} / \/?)$"""
 PEG_URL = peg"""^\/({(v\d+)} \/) {([^\/]+)} (\/ {(.+)} / \/?)$"""
+PEG_NAMESPACE = peg"""^[a-z][a-z0-9_]+$"""
+PEG_PREDICATE = peg"""^[a-z][a-z0-9_]+$"""
 
 const cfgfile = "litestore.nimble".slurp
 
@@ -140,4 +152,4 @@ TAB_HEADERS = {
 }
 
 proc newQueryOptions*(): QueryOptions =
-  return QueryOptions(select: @["documents.id AS id", "documents.data AS data", "content_type", "binary", "searchable", "created", "modified"], single: false, limit: 0, offset: 0, orderby: "", tags: "", search: "")
+  return QueryOptions(select: @["documents.id AS id", "documents.data AS data", "content_type", "binary", "searchable", "created", "modified"], single: false, limit: 0, offset: 0, orderby: "", tags: newSeq[MachineTag](0), search: "")

@@ -27,6 +27,7 @@ proc orderByClause(clause: string): string =
   else:
     return ""
 
+# TODO REWRITE
 proc parseQueryOption(fragment: string, options: var QueryOptions) =
   var pair = fragment.split('=')
   if pair.len < 2 or pair[1] == "":
@@ -39,7 +40,7 @@ proc parseQueryOption(fragment: string, options: var QueryOptions) =
     of "search":
       options.search = pair[1]
     of "tags":
-      options.tags = pair[1]
+      options.tags = newSeq[MachineTag](0) #TODO pair[1]
     of "limit":
       try:
         options.limit = pair[1].parseInt
@@ -83,42 +84,43 @@ proc validate(req: Request, LS: LiteStore, resource: string, id: string, cb: pro
           discard
   return cb(req, LS, resource, id)
 
+# TODO REWRITE
 proc applyPatchOperation(tags: var seq[string], op: string, path: string, value: string): bool =
-  var matches = @[""]
-  if path.find(peg"^\/tags\/{\d+}$", matches) == -1:
-    raise newException(EInvalidRequest, "cannot patch path '$1'" % path)
-  let index = matches[0].parseInt
-  case op:
-    of "remove":
-      let tag = tags[index]
-      if not tag.startsWith("$"):
-        system.delete(tags, index)
-      else:
-        raise newException(EInvalidRequest, "Cannot remove system tag: $1" % tag)
-    of "add":
-      if value.match(PEG_USER_TAG):
-        tags.insert(value, index)
-      else:
-        if value.strip == "":
-          raise newException(EInvalidRequest, "tag not specified." % value)
-        else:
-          raise newException(EInvalidRequest, "invalid tag: $1" % value)
-    of "replace":
-      if value.match(PEG_USER_TAG):
-        if tags[index].startsWith("$"):
-          raise newException(EInvalidRequest, "Cannot replace system tag: $1" % tags[index])
-        else:
-          tags[index] = value
-      else:
-        if value.strip == "":
-          raise newException(EInvalidRequest, "tag not specified." % value)
-        else:
-          raise newException(EInvalidRequest, "invalid tag: $1" % value)
-    of "test":
-      if tags[index] != value:
-        return false
-    else:
-      raise newException(EInvalidRequest, "invalid operation: $1" % op)
+  #var matches = @[""]
+  #if path.find(peg"^\/tags\/{\d+}$", matches) == -1:
+  #  raise newException(EInvalidRequest, "cannot patch path '$1'" % path)
+  #let index = matches[0].parseInt
+  #case op:
+  #  of "remove":
+  #    let tag = tags[index]
+  #    if not tag.startsWith("$"):
+  #      system.delete(tags, index)
+  #    else:
+  #      raise newException(EInvalidRequest, "Cannot remove system tag: $1" % tag)
+  #  of "add":
+  #    if value.match(PEG_USER_TAG):
+  #      tags.insert(value, index)
+  #    else:
+  #      if value.strip == "":
+  #        raise newException(EInvalidRequest, "tag not specified." % value)
+  #      else:
+  #        raise newException(EInvalidRequest, "invalid tag: $1" % value)
+  #  of "replace":
+  #    if value.match(PEG_USER_TAG):
+  #      if tags[index].startsWith("$"):
+  #        raise newException(EInvalidRequest, "Cannot replace system tag: $1" % tags[index])
+  #      else:
+  #        tags[index] = value
+  #    else:
+  #      if value.strip == "":
+  #        raise newException(EInvalidRequest, "tag not specified." % value)
+  #      else:
+  #        raise newException(EInvalidRequest, "invalid tag: $1" % value)
+  #  of "test":
+  #    if tags[index] != value:
+  #      return false
+  #  else:
+  #    raise newException(EInvalidRequest, "invalid operation: $1" % op)
   return true
 
 # Low level procs
@@ -174,10 +176,11 @@ proc getRawDocuments(LS: LiteStore, options: QueryOptions = newQueryOptions()): 
     var content = newJObject()
     if options.search != "":
       content["search"] = %(options.search.decodeURL)
-    if options.tags != "":
+    if options.tags.len != 0:
       content["tags"] = newJArray()
-      for tag in options.tags.replace("+", "%2B").decodeURL.split(","):
-        content["tags"].add(%tag)
+      # TODO REWRITE
+      #for tag in options.tags.replace("+", "%2B").decodeURL.split(","):
+      #  content["tags"].add(%tag)
     if orig_limit > 0:
       content["limit"] = %orig_limit
       if orig_offset > 0:
@@ -251,40 +254,41 @@ proc putDocument(LS: LiteStore, id: string, body: string, ct: string): Response 
     except:
       result = resError(Http500, "Unable to update document '$1'." % id)
 
+# TODO REWRITE
 proc patchDocument(LS: LiteStore, id: string, body: string): Response =
-  var apply = true
-  let jbody = body.parseJson
-  if jbody.kind != JArray:
-    return resError(Http400, "Bad request: PATCH request body is not an array.")
-  var options = newQueryOptions()
-  options.select = @["documents.id AS id", "created", "modified"]
-  let doc = LS.store.retrieveRawDocument(id, options)
-  if doc == "":
-    return resDocumentNotFound(id)
-  let jdoc = doc.parseJson
-  var tags = newSeq[string](0)
-  for tag in jdoc["tags"].items:
-    tags.add(tag.str)
-  var c = 1
-  for item in jbody.items:
-    if item.hasKey("op") and item.hasKey("path"):
-      if not item.hasKey("value"):
-        item["value"] = %""
-      try:
-        apply = applyPatchOperation(tags, item["op"].str, item["path"].str, item["value"].str)
-      except:
-        return resError(Http400, "Bad request - $1" % getCurrentExceptionMsg())
-    else:
-        return resError(Http400, "Bad request: patch operation #$1 is malformed." % $c)
-    c.inc
-  if apply:
-    try:
-      for t1 in jdoc["tags"].items:
-        discard LS.store.destroyTag(t1.str, id, true)
-      for t2 in tags:
-        LS.store.createTag(t2, id, true)
-    except:
-      return resError(Http500, "Unable to patch document '$1' - $2" % [id, getCurrentExceptionMsg()])
+  #var apply = true
+  #let jbody = body.parseJson
+  #if jbody.kind != JArray:
+  #  return resError(Http400, "Bad request: PATCH request body is not an array.")
+  #var options = newQueryOptions()
+  #options.select = @["documents.id AS id", "created", "modified"]
+  #let doc = LS.store.retrieveRawDocument(id, options)
+  #if doc == "":
+  #  return resDocumentNotFound(id)
+  #let jdoc = doc.parseJson
+  #var tags = newSeq[string](0)
+  #for tag in jdoc["tags"].items:
+  #  tags.add(tag.str)
+  #var c = 1
+  #for item in jbody.items:
+  #  if item.hasKey("op") and item.hasKey("path"):
+  #    if not item.hasKey("value"):
+  #      item["value"] = %""
+  #    try:
+  #      apply = applyPatchOperation(tags, item["op"].str, item["path"].str, item["value"].str)
+  #    except:
+  #      return resError(Http400, "Bad request - $1" % getCurrentExceptionMsg())
+  #  else:
+  #      return resError(Http400, "Bad request: patch operation #$1 is malformed." % $c)
+  #  c.inc
+  #if apply:
+  #  try:
+  #    for t1 in jdoc["tags"].items:
+  #      discard LS.store.destroyTag(t1.str, id, true)
+  #    for t2 in tags:
+  #      LS.store.createTag(t2, id, true)
+  #  except:
+  #    return resError(Http500, "Unable to patch document '$1' - $2" % [id, getCurrentExceptionMsg()])
   return LS.getRawDocument(id)
 
 # Main routing
