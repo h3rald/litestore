@@ -83,17 +83,24 @@ const
   SYS_FORMAT_PREDICATE* = "format"
   SYS_TYPE_PREDICATE* = "type"
   SYS_SUBTYPE_PREDICATE* = "subtype"
+  SYS_NAMESPACE_FORMAT = """({[a-z][a-z0-9_]*})"""
+  SYS_PREDICATE_FORMAT = """({[a-z][a-z0-9_]*})""" 
+  SYS_NAMESPACE_SEP_FORMAT ="""[.:]"""
 
 var 
   PEG_NAMESPACE* {.threadvar.}: Peg
   PEG_PREDICATE* {.threadvar.}: Peg
+  PEG_NAMESPACE_PREDICATE* {.threadvar.}: Peg
+  PEG_NAMESPACE_SEP* {.threadvar.}: Peg
   PEG_DEFAULT_URL* {.threadvar.}: Peg
   PEG_URL* {.threadvar.}: Peg
 
 PEG_DEFAULT_URL = peg"""^\/{(docs / info)} (\/ {(.+)} / \/?)$"""
 PEG_URL = peg"""^\/({(v\d+)} \/) {([^\/]+)} (\/ {(.+)} / \/?)$"""
-PEG_NAMESPACE = peg"""^[a-z][a-z0-9_]+$"""
-PEG_PREDICATE = peg"""^[a-z][a-z0-9_]+$"""
+PEG_NAMESPACE = peg(SYS_NAMESPACE_FORMAT)
+PEG_PREDICATE = peg(SYS_PREDICATE_FORMAT)
+PEG_NAMESPACE_PREDICATE = ("^" & SYS_NAMESPACE_FORMAT & SYS_NAMESPACE_SEP_FORMAT & SYS_PREDICATE_FORMAT & "$").peg
+PEG_NAMESPACE_SEP = peg(SYS_NAMESPACE_SEP_FORMAT)
 
 const cfgfile = "litestore.nimble".slurp
 

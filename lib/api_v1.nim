@@ -27,20 +27,17 @@ proc orderByClause(clause: string): string =
   else:
     return ""
 
-# TODO REWRITE
 proc parseQueryOption(fragment: string, options: var QueryOptions) =
   var pair = fragment.split('=')
   if pair.len < 2 or pair[1] == "":
     raise newException(EInvalidRequest, "Invalid query string fragment '$1'" % fragment)
   try:
-    pair[1] = pair[1].replace("+", "%2B").decodeURL
+    pair[1] = pair[1].decodeURL
   except:
     raise newException(EInvalidRequest, "Unable to decode query string fragment '$1'" % fragment)
   case pair[0]:
     of "search":
       options.search = pair[1]
-    of "tags":
-      options.tags = newSeq[MachineTag](0) #TODO pair[1]
     of "limit":
       try:
         options.limit = pair[1].parseInt
@@ -57,11 +54,22 @@ proc parseQueryOption(fragment: string, options: var QueryOptions) =
         options.orderby = orderby
       else:
         raise newException(EInvalidRequest, "Invalid sort value: $1" % pair[1])
+    of "contents", "raw":
+      discard
     else:
-      return
+      # Process tags
+      var tag: MachineTag
+      var matches: array[0..1, string]
+      if pair[0].match(PEG_NAMESPACE_PREDICATE, matches):
+        tag.value = pair[1]
+        tag.namespace = matches[0]
+        tag.predicate = matches[1]
+        options.tags.add(tag)
+      else:
+        raise newException(EInvalidRequest, "Invalid option or tag: $1" % pair[0])
 
 proc parseQueryOptions(querystring: string, options: var QueryOptions) =
-  var fragments = querystring.split('&')
+  var fragments = querystring.split(peg"[&;]")
   for f in fragments:
     f.parseQueryOption(options)
 
@@ -177,10 +185,7 @@ proc getRawDocuments(LS: LiteStore, options: QueryOptions = newQueryOptions()): 
     if options.search != "":
       content["search"] = %(options.search.decodeURL)
     if options.tags.len != 0:
-      content["tags"] = newJArray()
-      # TODO REWRITE
-      #for tag in options.tags.replace("+", "%2B").decodeURL.split(","):
-      #  content["tags"].add(%tag)
+      content["tags"] = %options.tags
     if orig_limit > 0:
       content["limit"] = %orig_limit
       if orig_offset > 0:
@@ -361,6 +366,8 @@ proc get(req: Request, LS: LiteStore, resource: string, id = ""): Response =
             return LS.getDocument(id, options)
         else:
           return LS.getRawDocuments(options)
+      except EInvalidRequest:
+        return resError(Http400, "Bad request - $1" % getCurrentExceptionMsg())
       except:
         return resError(Http500, "Internal Server Error - $1" % getCurrentExceptionMsg())
     of "info":

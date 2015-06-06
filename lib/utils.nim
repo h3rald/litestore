@@ -53,6 +53,16 @@ proc eWarn*() =
   LOG.warn(e.msg)
   LOG.debug(getStackTrace(e))
 
+proc  `%` *(tags: openarray[MachineTag]): JsonNode =
+  result = newJObject()
+  var namespace = ""
+  for tag in tags:
+    if tag.namespace != namespace:
+      # Create new object for namespace
+      namespace = tag.namespace
+      result.add(namespace, newJObject())
+    result[namespace].add(tag.predicate, %tag.value)
+
 #  Created by Joshua Wilson on 27/05/14.
 #  Copyright (c) 2014 Joshua Wilson. All rights reserved.
 #  https://github.com/neozenith/sqlite-okapi-bm25

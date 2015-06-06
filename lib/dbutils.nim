@@ -32,21 +32,21 @@ proc tagConditions(value = "*", predicate = "*", namespace = "*"): string =
 proc prepareMultipleTagConditions(tags: seq[MachineTag]): string =
   var clauses = newSeq[string](0)
   for tag in tags:
-    clauses.add("(" & tagConditions(tag.value, tag.predicate, tag.namespace) & ")")
-  return clauses.join(" OR ")
+    clauses.add("SELECT document_id FROM tags WHERE " & tagConditions(tag.value, tag.predicate, tag.namespace))
+  return clauses.join(" INTERSECT ") 
 
-# TODO: REWRITE
-proc prepareSelectTagsQuery*(options: QueryOptions): string =
-  result = "SELECT tag_id, COUNT(document_id) "
-  result = result & "FROM tags "
-  if options.single:
-    result = result & "WHERE tag_id = ?"
-  result = result & "GROUP BY tag_id"
-  if options.orderby.len > 0:
-    result = result & "ORDER BY " & options.orderby&" " 
-  if options.limit > 0:
-    result = result & "LIMIT " & $options.limit & " "
-  LOG.debug(result.replace("$", "$$"))
+# TODO: REMOVE?
+#proc prepareSelectTagsQuery*(options: QueryOptions): string =
+#  result = "SELECT tag_id, COUNT(document_id) "
+#  result = result & "FROM tags "
+#  if options.single:
+#    result = result & "WHERE tag_id = ?"
+#  result = result & "GROUP BY tag_id"
+#  if options.orderby.len > 0:
+#    result = result & "ORDER BY " & options.orderby&" " 
+#  if options.limit > 0:
+#    result = result & "LIMIT " & $options.limit & " "
+#  LOG.debug(result.replace("$", "$$"))
 
 proc prepareSelectDocumentIdByTag(value: string, predicate = "*", namespace = "*"): string =
   return """
@@ -55,6 +55,9 @@ proc prepareSelectDocumentIdByTag(value: string, predicate = "*", namespace = "*
 
 proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
   result = "SELECT "
+  var id_col = "id"
+  if options.select[0] != "COUNT(docid)":
+    id_col = "documents.id"
   if options.search.len > 0:
     if options.select[0] != "COUNT(docid)":
       let rank = "rank(matchinfo(searchdata, 'pcxnal'), 1.20, 0.75, 5.0, 0.5) AS rank"
@@ -65,7 +68,7 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
       # Create inner select 
       var innerSelect = "SELECT docid, " & rank & " FROM searchdata WHERE searchdata MATCH '" & options.search.replace("'", "''") & "' "
       if options.tags.len > 0:
-        innerSelect = innerSelect & " AND " & options.tags.prepareMultipleTagConditions()
+        innerSelect = innerSelect & " AND searchdata.id IN (" & options.tags.prepareMultipleTagConditions() & ") "
       innerSelect = innerSelect & " ORDER BY rank DESC "
       if options.limit > 0:
         innerSelect = innerSelect & "LIMIT " & $options.limit
@@ -85,7 +88,7 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
   if options.single:
     result = result & "AND id = ?"
   if options.tags.len > 0:
-    result = result & " AND " & options.tags.prepareMultipleTagConditions()
+    result = result & " AND " & id_col & " IN (" & options.tags.prepareMultipleTagConditions() & ") "
   if options.search.len > 0:
     result = result & "AND searchdata MATCH '" & options.search.replace("'", "''") & "' "
   if options.orderby.len > 0 and options.select[0] != "COUNT(docid)":
