@@ -146,15 +146,10 @@ proc destroyTags*(store: Datastore, documentid, value = "*", predicate = "*", na
 proc countTags*(store: Datastore): int64 =
   return store.db.getRow(SQL_COUNT_TAGS)[0].parseInt
 
-# TODO REWRITE
 proc retrieveTagsWithTotals*(store: Datastore): JsonNode =
-  var data = store.db.getAllRows(SQL_SELECT_TAGS_WITH_TOTALS)
-  var tag_array = newSeq[JsonNode](0)
-  for row in data:
-    var obj = newJObject()
-    obj[row[0]] = %row[1].parseInt
-    tag_array.add(obj)
-  return %tag_array
+  var tags = store.db.getAllRows(SQL_SELECT_TAGS_WITH_TOTALS)
+  return tags.prepareJsonTagCounts(@["namespace", "predicate", "value", "count"])
+
 
 # Manage Documents
 

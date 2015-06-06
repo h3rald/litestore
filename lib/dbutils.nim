@@ -97,35 +97,6 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
       result = result & "OFFSET " & $options.offset & " "
   LOG.debug(result.replace("$", "$$"))
 
-# TODO: REWRITE
-proc prepareJsonDocument*(store:Datastore, doc: TRow, cols:seq[string]): JsonNode =
-  var raw_tags = store.db.getAllRows(SQL_SELECT_DOCUMENT_TAGS, doc[0])
-  var tags = newSeq[JsonNode](0)
-  for tag in raw_tags:
-    tags.add(%($(tag[0])))
-  if doc.len == 1:
-    # COUNT(id)
-    return %(doc[0].parseInt)
-  var res = newSeq[tuple[key: string, val: JsonNode]](0)
-  var count = 0
-  for s in cols:
-    var key = s
-    count.inc
-    if key == "searchable" or key == "binary" or key == "content_type":
-      continue
-    if s.contains(" "):
-      # documents.id AS id...
-      let chunks = s.split(" ")
-      key = chunks[chunks.len-1]
-    var value:JsonNode
-    if doc[count-1] == "":
-      value = newJNull()
-    else:
-      value = %doc[count-1]
-    res.add((key, value))
-  res.add(("tags", %tags))
-  return %res
-
 ###
 
 # Is it really needed?
@@ -175,6 +146,89 @@ proc addDocumentSystemTags*(store: Datastore, docid, contenttype: string) =
   store.db.exec(SQL_INSERT_TAG, docid, splittype[1], SYS_SUBTYPE_PREDICATE, SYS_NAMESPACE)
   store.db.exec(SQL_INSERT_TAG, docid, format, SYS_FORMAT_PREDICATE, SYS_NAMESPACE)
 
-proc destroyDocumentSystemTags*(store: Datastore, docid: string) = 
-  let n = store.db.execAffectedRows(SQL_DELETE_DOCUMENT_SYSTEM_TAGS, docid)
+proc destroyDocumentSystemTags*(store: Datastore, docid: string): int64 = 
+  return store.db.execAffectedRows(SQL_DELETE_DOCUMENT_SYSTEM_TAGS, docid)
+
+proc rowToTag(TRow, cols: seq[string]): MachineTag = 
+  var i = -1
+  for col in cols:
+    i.inc
+    case col:
+      of "namespace":
+        result.namespace = TRow[i]
+      of "predicate":
+        result.predicate = TRow[i]
+      of "value":
+        result.value = TRow[i]
+      else: 
+        discard
+
+proc rowToTagCount(row: TRow, cols: seq[string] = @["namespace", "predicate", "value"]): tuple[tag:MachineTag, count:int] = 
+  var i = -1
+  for col in cols:
+    i.inc
+    case col:
+      of "namespace":
+        result.tag.namespace = row[i]
+      of "predicate":
+        result.tag.predicate = row[i]
+      of "value":
+        result.tag.value = row[i]
+      of "count":
+        result.count = row[i].parseInt
+      else: 
+        discard
+
+proc prepareJsonDocumentTags*(tags: seq[TRow], cols: seq[string] = @["namespace", "predicate", "value"]): JsonNode =
+  result = newJObject()
+  var namespace = ""
+  for row in tags:
+    let tag = row.rowToTag(cols)
+    if tag.namespace != namespace:
+      # Create new object for namespace
+      namespace = tag.namespace
+      result.add(namespace, newJObject())
+    result[namespace].add(tag.predicate, %tag.value)
+
+proc prepareJsonTagCounts*(tags: seq[TRow], cols: seq[string] = @["namespace", "predicate", "value"]): JsonNode =
+  result = newJObject()
+  var namespace = ""
+  var predicate = ""
+  for row in tags:
+    let tc = row.rowToTagCount(cols)
+    if tc.tag.namespace != namespace:
+      # Create new object for namespace
+      namespace = tc.tag.namespace
+      result.add(namespace, newJObject())
+    if tc.tag.predicate != predicate:
+      # Create new object for predicate
+      predicate = tc.tag.predicate
+      result[namespace].add(predicate, newJObject())
+    result[namespace][predicate].add(tc.tag.value, %tc.count)
+
+proc prepareJsonDocument*(store:Datastore, doc: TRow, cols:seq[string]): JsonNode =
+  let raw_tags = store.db.getAllRows(SQL_SELECT_DOCUMENT_TAGS, doc[0])
+  let tags = raw_tags.prepareJsonDocumentTags()
+  if doc.len == 1:
+    # COUNT(id)
+    return %(doc[0].parseInt)
+  var res = newSeq[tuple[key: string, val: JsonNode]](0)
+  var count = 0
+  for s in cols:
+    var key = s
+    count.inc
+    if key == "searchable" or key == "binary" or key == "content_type":
+      continue
+    if s.contains(" "):
+      # documents.id AS id...
+      let chunks = s.split(" ")
+      key = chunks[chunks.len-1]
+    var value:JsonNode
+    if doc[count-1] == "":
+      value = newJNull()
+    else:
+      value = %doc[count-1]
+    res.add((key, value))
+  res.add(("tags", tags))
+  return %res
 

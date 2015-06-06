@@ -21,7 +21,7 @@ predicate TEXT NOT NULL,
 value TEXT NOT NULL,
 document_id TEXT NOT NULL,
 FOREIGN KEY(document_id) REFERENCES documents(id) ON DELETE CASCADE,
-PRIMARY KEY (namespace, predicate, value, document_id))
+PRIMARY KEY (namespace, predicate, document_id))
 """
 
 const SQL_CREATE_INFO_TABLE* = sql"""
@@ -117,8 +117,9 @@ WHERE document_id = ?
 """
 
 const SQL_SELECT_DOCUMENT_TAGS* = sql"""
-SELECT * FROM tags
+SELECT namespace, predicate, value FROM tags
 WHERE document_id = ?
+GROUP BY namespace, predicate, value
 """
 
 const SQL_DELETE_DOCUMENT_SYSTEM_TAGS* = sql"""
@@ -149,7 +150,7 @@ FROM tags GROUP BY namespace, predicate, value ORDER BY namespace, predicate, va
 """
 
 const SQL_COUNT_TAGS* = sql"""
-SELECT COUNT(DISTINCT namespace, predicate, value) FROM tags 
+SELECT COUNT(*) FROM (SELECT DISTINCT namespace, predicate, value FROM tags)
 """
 
 const SQL_COUNT_DOCUMENTS* = sql"""
