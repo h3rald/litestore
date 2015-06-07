@@ -42,12 +42,12 @@ proc parseQueryOption(fragment: string, options: var QueryOptions) =
       try:
         options.limit = pair[1].parseInt
       except:
-        raise newException(EInvalidRequest, "Invalid limit value: $1" % getCurrentExceptionMsg())
+        raise newException(EInvalidRequest, "Invalid limit value: $1" % pair[1]) 
     of "offset":
       try:
         options.offset = pair[1].parseInt
       except:
-        raise newException(EInvalidRequest, "Invalid offset value: $1" % getCurrentExceptionMsg())
+        raise newException(EInvalidRequest, "Invalid offset value: $1" % pair[1])
     of "sort":
       let orderby = pair[1].orderByClause()
       if orderby != "":
@@ -87,48 +87,82 @@ proc validate(req: Request, LS: LiteStore, resource: string, id: string, cb: pro
           try:
             discard body.parseJson()
           except:
-            return resError(Http400, "Invalid JSON content - $1" % getCurrentExceptionMsg())
+            return resExError(Http400, "Invalid JSON content - $1")
         else:
           discard
   return cb(req, LS, resource, id)
 
-# TODO REWRITE
-proc applyPatchOperation(tags: var seq[string], op: string, path: string, value: string): bool =
-  #var matches = @[""]
-  #if path.find(peg"^\/tags\/{\d+}$", matches) == -1:
-  #  raise newException(EInvalidRequest, "cannot patch path '$1'" % path)
-  #let index = matches[0].parseInt
-  #case op:
-  #  of "remove":
-  #    let tag = tags[index]
-  #    if not tag.startsWith("$"):
-  #      system.delete(tags, index)
-  #    else:
-  #      raise newException(EInvalidRequest, "Cannot remove system tag: $1" % tag)
-  #  of "add":
-  #    if value.match(PEG_USER_TAG):
-  #      tags.insert(value, index)
-  #    else:
-  #      if value.strip == "":
-  #        raise newException(EInvalidRequest, "tag not specified." % value)
-  #      else:
-  #        raise newException(EInvalidRequest, "invalid tag: $1" % value)
-  #  of "replace":
-  #    if value.match(PEG_USER_TAG):
-  #      if tags[index].startsWith("$"):
-  #        raise newException(EInvalidRequest, "Cannot replace system tag: $1" % tags[index])
-  #      else:
-  #        tags[index] = value
-  #    else:
-  #      if value.strip == "":
-  #        raise newException(EInvalidRequest, "tag not specified." % value)
-  #      else:
-  #        raise newException(EInvalidRequest, "invalid tag: $1" % value)
-  #  of "test":
-  #    if tags[index] != value:
-  #      return false
-  #  else:
-  #    raise newException(EInvalidRequest, "invalid operation: $1" % op)
+proc applyPatchOperation(tags: var JsonNode, op: string, path: string, value: string): bool =
+  var matches: array[0..1, string]
+  if not path.match(PEG_TAG_PATH, matches):
+    raise newException(EInvalidRequest, "Cannot patch path '$1' " % path)
+  var tag: MachineTag
+  tag.namespace = matches[0]
+  tag.predicate = matches[1]
+  if tag.namespace != nil and not tag.namespace.match(PEG_NAMESPACE):
+    raise newException(EInvalidRequest, "Invalid tag namespace: $1" % tag.namespace)
+  if tag.predicate != nil and not tag.predicate.match(PEG_PREDICATE):
+    raise newException(EInvalidRequest, "Invalid tag predicate: $1" % tag.predicate)
+  case op:
+    of "remove":
+      if tag.namespace != nil:
+        if tag.namespace != SYS_NAMESPACE:
+          if tag.predicate != nil:
+            tags[tag.namespace].delete(tag.predicate)
+          else:
+            tags.delete(tag.namespace)
+        else:
+          raise newException(EInvalidRequest, "Cannot remove system tag: $1" % path)
+      else:
+        raise newException(EInvalidRequest, "No tag path specified.")
+    of "add":
+      if tag.namespace != nil:
+        if tag.namespace != SYS_NAMESPACE:
+          if tag.predicate != nil:
+            if tags[tag.namespace] == nil:
+              tags.add(tag.namespace, newJObject())
+            tags[tag.namespace].add(tag.predicate, %value)
+          else:
+            let jvalue = value.parseJson()
+            for pd, val in jvalue.pairs:
+              if not pd.match(PEG_PREDICATE):
+                raise newException(EInvalidRequest, "Invalid tag predicate: $1" % pd)
+              tags[tag.namespace].add(pd, val)
+        else:
+          raise newException(EInvalidRequest, "Cannot add system tag: $1" % path)
+      else:
+        let jvalue = value.parseJson()
+        for ns, val in jvalue.pairs:
+          if not ns.match(PEG_NAMESPACE):
+            raise newException(EInvalidRequest, "Invalid tag namespace: $1" % ns)
+          tags.add(ns, val)
+    of "replace":
+      if tag.namespace != nil:
+        if tag.namespace != SYS_NAMESPACE:
+          if tag.predicate != nil:
+            tags[tag.namespace][tag.predicate] = %value
+          else:
+            tags[tag.namespace] = %value
+        else:
+          raise newException(EInvalidRequest, "Cannot replace system tag: $1" % path)
+      else:
+        raise newException(EInvalidRequest, "No tag path specified.")
+    of "test":
+      if tag.namespace != nil:
+        if tag.predicate != nil:
+          if tags[tag.namespace][tag.predicate] == %value:
+            return true
+          else:
+            return false
+        else:
+          if tags[tag.namespace] == %value:
+            return true
+          else:
+            return false
+      else:
+        raise newException(EInvalidRequest, "No tag path specified.")
+    else:
+      raise newException(EInvalidRequest, "invalid operation: $1" % op)
   return true
 
 # Low level procs
@@ -166,7 +200,7 @@ proc deleteDocument(LS: LiteStore, id: string): Response =
         result.content = ""
         result.code = Http204
     except:
-      result = resError(Http500, "Unable to delete document '$1'" % id)
+      result = resExError(Http500, "Unable to delete document '$1'" % id)
 
 proc getRawDocuments(LS: LiteStore, options: QueryOptions = newQueryOptions()): Response =
   var options = options
@@ -233,7 +267,7 @@ proc postDocument(LS: LiteStore, body: string, ct: string): Response =
     else:
       result = resError(Http500, "Unable to create document.")
   except:
-    result = resError(Http500, "Unable to create document.")
+    result = resExError(Http500, "Unable to create document.")
 
 proc putDocument(LS: LiteStore, id: string, body: string, ct: string): Response =
   let doc = LS.store.retrieveDocument(id)
@@ -257,43 +291,50 @@ proc putDocument(LS: LiteStore, id: string, body: string, ct: string): Response 
       else:
         result = resError(Http500, "Unable to update document '$1'." % id)
     except:
-      result = resError(Http500, "Unable to update document '$1'." % id)
+      result = resExError(Http500, "Unable to update document '$1'." % id)
 
-# TODO REWRITE
+# TODO: Testing (especially when modifying entire objects)
 proc patchDocument(LS: LiteStore, id: string, body: string): Response =
-  #var apply = true
-  #let jbody = body.parseJson
-  #if jbody.kind != JArray:
-  #  return resError(Http400, "Bad request: PATCH request body is not an array.")
-  #var options = newQueryOptions()
-  #options.select = @["documents.id AS id", "created", "modified"]
-  #let doc = LS.store.retrieveRawDocument(id, options)
-  #if doc == "":
-  #  return resDocumentNotFound(id)
-  #let jdoc = doc.parseJson
-  #var tags = newSeq[string](0)
-  #for tag in jdoc["tags"].items:
-  #  tags.add(tag.str)
-  #var c = 1
-  #for item in jbody.items:
-  #  if item.hasKey("op") and item.hasKey("path"):
-  #    if not item.hasKey("value"):
-  #      item["value"] = %""
-  #    try:
-  #      apply = applyPatchOperation(tags, item["op"].str, item["path"].str, item["value"].str)
-  #    except:
-  #      return resError(Http400, "Bad request - $1" % getCurrentExceptionMsg())
-  #  else:
-  #      return resError(Http400, "Bad request: patch operation #$1 is malformed." % $c)
-  #  c.inc
-  #if apply:
-  #  try:
-  #    for t1 in jdoc["tags"].items:
-  #      discard LS.store.destroyTag(t1.str, id, true)
-  #    for t2 in tags:
-  #      LS.store.createTag(t2, id, true)
-  #  except:
-  #    return resError(Http500, "Unable to patch document '$1' - $2" % [id, getCurrentExceptionMsg()])
+  var apply = true
+  let jbody = body.parseJson
+  if jbody.kind != JArray:
+    return resError(Http400, "Bad request: PATCH request body is not an array.")
+  var options = newQueryOptions()
+  options.select = @["documents.id AS id", "created", "modified"]
+  let doc = LS.store.retrieveRawDocument(id, options)
+  if doc == "":
+    return resDocumentNotFound(id)
+  let jdoc = doc.parseJson
+  var tags = jdoc["tags"]
+  var c = 1
+  for item in jbody.items:
+    if item.hasKey("op") and item.hasKey("path"):
+      if not item.hasKey("value"):
+        item["value"] = %""
+      try:
+        apply = applyPatchOperation(tags, item["op"].str, item["path"].str, item["value"].str)
+      except:
+        return resExError(Http400, "Bad request - ")
+    else:
+        return resError(Http400, "Bad request: patch operation #$1 is malformed." % $c)
+    c.inc
+  if apply:
+    try:
+      LS.store.begin()
+      # Destroy all namespaces
+      for ns, nsval in jdoc["tags"].pairs:
+        discard LS.store.destroyTags(documentid = id, namespace = ns, system = true)
+      # Recreate all tags
+      for ns, nsval in jdoc["tags"].pairs:
+        for pd, val in nsval.pairs:
+          if val.kind == JString:
+            LS.store.createTag(namespace = ns, predicate = pd, value = val.getStr, documentid = id, system = true)
+          else:
+            raise newException(EInvalidRequest, "Invalid value for tag $1:$2 - $3" % [ns, pd, val.getStr])
+      LS.store.commit()
+    except:
+      LS.store.rollback()
+      return resExError(Http500, "Unable to patch document '$1' - " % id) 
   return LS.getRawDocument(id)
 
 # Main routing
@@ -348,7 +389,7 @@ proc head(req: Request, LS: LiteStore, resource: string, id = ""): Response =
       result = LS.getRawDocuments(options)
       result.content = ""
   except:
-    return resError(Http400, "Bad request - $1" % getCurrentExceptionMsg())
+    return resExError(Http400, "Bad request - ")
 
 proc get(req: Request, LS: LiteStore, resource: string, id = ""): Response =
   let  id = id.decodeURL
@@ -367,9 +408,9 @@ proc get(req: Request, LS: LiteStore, resource: string, id = ""): Response =
         else:
           return LS.getRawDocuments(options)
       except EInvalidRequest:
-        return resError(Http400, "Bad request - $1" % getCurrentExceptionMsg())
+        return resExError(Http400, "Bad request - ")
       except:
-        return resError(Http500, "Internal Server Error - $1" % getCurrentExceptionMsg())
+        return resExError(Http500, "Internal Server Error - $1")
     of "info":
       if id != "":
         return resError(Http404, "Info '$1' not found." % id)

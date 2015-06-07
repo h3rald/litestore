@@ -45,12 +45,21 @@ proc resError*(code: HttpCode, message: string, trace = ""): Response =
   result.content = """{"error":"$1"}""" % message
   result.headers = ctJsonHeader()
 
+proc resExError*(code: HttpCode, prefix = ""): Response =
+  let e = getCurrentException()
+  let msg = prefix & e.msg.replace("$", "$$")
+  LOG.warn(msg)
+  LOG.debug(getStackTrace(e))
+  result.code = code
+  result.content = """{"error":"$1"}""" % msg
+  result.headers = ctJsonHeader()
+
 proc resDocumentNotFound*(id): Response =
   resError(Http404, "Document '$1' not found." % id)
 
 proc eWarn*() =
-  var e = getCurrentException()
-  LOG.warn(e.msg)
+  let e = getCurrentException()
+  LOG.warn(e.msg.replace("$", "$$"))
   LOG.debug(getStackTrace(e))
 
 proc  `%` *(tags: openarray[MachineTag]): JsonNode =

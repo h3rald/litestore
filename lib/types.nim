@@ -94,6 +94,7 @@ var
   PEG_NAMESPACE_SEP* {.threadvar.}: Peg
   PEG_DEFAULT_URL* {.threadvar.}: Peg
   PEG_URL* {.threadvar.}: Peg
+  PEG_TAG_PATH* {.threadvar.}: Peg
 
 PEG_DEFAULT_URL = peg"""^\/{(docs / info)} (\/ {(.+)} / \/?)$"""
 PEG_URL = peg"""^\/({(v\d+)} \/) {([^\/]+)} (\/ {(.+)} / \/?)$"""
@@ -101,6 +102,7 @@ PEG_NAMESPACE = peg(SYS_NAMESPACE_FORMAT)
 PEG_PREDICATE = peg(SYS_PREDICATE_FORMAT)
 PEG_NAMESPACE_PREDICATE = ("^" & SYS_NAMESPACE_FORMAT & SYS_NAMESPACE_SEP_FORMAT & SYS_PREDICATE_FORMAT & "$").peg
 PEG_NAMESPACE_SEP = peg(SYS_NAMESPACE_SEP_FORMAT)
+PEG_TAG_PATH = ("^\\/tags\\/(" & SYS_NAMESPACE_FORMAT & "\\/" & SYS_PREDICATE_FORMAT & "?)?$").peg
 
 const cfgfile = "litestore.nimble".slurp
 

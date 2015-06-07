@@ -50,8 +50,7 @@ proc prepareMultipleTagConditions(tags: seq[MachineTag]): string =
 
 proc prepareSelectDocumentIdByTag(value: string, predicate = "*", namespace = "*"): string =
   return """
-  SELECT document_id FROM tags WHERE value = ?
-  AND """ & tagConditions(value, predicate, namespace)
+  SELECT document_id FROM tags WHERE """ & tagConditions(value, predicate, namespace)
 
 proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
   result = "SELECT "
@@ -108,6 +107,7 @@ proc getDocsByTag*(store: Datastore, selection = "*", value = "*", predicate = "
   SELECT  """ & selection & """ FROM documents, tags
   WHERE documents.id = tags.document_id 
   AND """ & tagConditions(value, predicate, namespace)
+  LOG.debug(query)
   return store.db.getAllRows(query.sql)
 
 proc deleteDocsByTag*(store: Datastore, value: string, predicate = "*", namespace = "*"): int64 =
@@ -117,6 +117,7 @@ proc deleteDocsByTag*(store: Datastore, value: string, predicate = "*", namespac
   """
   var subquery = prepareSelectDocumentIdByTag(value, predicate, namespace)
   query &= "(" & subquery & ")"
+  LOG.debug(query)
   return store.db.execAffectedRows(query.sql)
 
 proc deleteSearchdataByTag*(store: Datastore, value: string, predicate = "*", namespace = "*"): int64 =
@@ -126,6 +127,7 @@ proc deleteSearchdataByTag*(store: Datastore, value: string, predicate = "*", na
   """
   var subquery = prepareSelectDocumentIdByTag(value, predicate, namespace)
   query &= "(" & subquery & ")"
+  LOG.debug(query)
   return store.db.execAffectedRows(query.sql)
 
 proc deleteTagsByTag*(store: Datastore, value: string, predicate = "*", namespace = "*"): int64 =
@@ -135,6 +137,7 @@ proc deleteTagsByTag*(store: Datastore, value: string, predicate = "*", namespac
   """
   var subquery = prepareSelectDocumentIdByTag(value, predicate, namespace)
   query &= "(" & subquery & ")"
+  LOG.debug(query)
   return store.db.execAffectedRows(query.sql)
 
 proc addDocumentSystemTags*(store: Datastore, docid, contenttype: string) =
@@ -210,12 +213,12 @@ proc prepareJsonTagCounts*(tags: seq[TRow], cols: seq[string] = @["namespace", "
     result[namespace][predicate].add(tc.tag.value, %tc.count)
 
 proc prepareJsonDocument*(store:Datastore, doc: TRow, cols:seq[string]): JsonNode =
+  result = newJObject()
   let raw_tags = store.db.getAllRows(SQL_SELECT_DOCUMENT_TAGS, doc[0])
   let tags = raw_tags.prepareJsonDocumentTags()
   if doc.len == 1:
     # COUNT(id)
     return %(doc[0].parseInt)
-  var res = newSeq[tuple[key: string, val: JsonNode]](0)
   var count = 0
   for s in cols:
     var key = s
@@ -231,7 +234,5 @@ proc prepareJsonDocument*(store:Datastore, doc: TRow, cols:seq[string]): JsonNod
       value = newJNull()
     else:
       value = %doc[count-1]
-    res.add((key, value))
-  res.add(("tags", tags))
-  return %res
-
+    result.add(key, value)
+  result.add("tags", tags)

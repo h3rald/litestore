@@ -93,19 +93,19 @@ proc retrieveInfo*(store: Datastore): array[0..1, int] =
 proc hasMirror(store: Datastore): bool =
   return store.mount.len > 0
 
-proc begin(store: Datastore) =
+proc begin*(store: Datastore) =
   if not LS_TRANSACTION:
     LOG.debug("Beginning transaction")
     LS_TRANSACTION = true
     store.db.exec("BEGIN".sql)
 
-proc commit(store: Datastore) =
+proc commit*(store: Datastore) =
   if LS_TRANSACTION:
     LOG.debug("Committing transaction")
     LS_TRANSACTION = false
     store.db.exec("COMMIT".sql)
 
-proc rollback(store: Datastore) =
+proc rollback*(store: Datastore) =
   if LS_TRANSACTION:
     LOG.debug("Rolling back transaction")
     LS_TRANSACTION = false
@@ -129,7 +129,7 @@ proc createTag*(store: Datastore, documentid, value, predicate, namespace: strin
     raise newException(EInvalidTag, "Invalid tag namespace: $1" % namespace)
 
 # Note: does not allow deleting tags without specifying a namespace
-proc destroyTags*(store: Datastore, documentid, value = "*", predicate = "*", namespace: string, system=false): int64 =
+proc destroyTags*(store: Datastore, documentid: string, value = "*", predicate = "*", namespace: string, system=false): int64 =
   if namespace.match(PEG_NAMESPACE):
     if namespace != SYS_NAMESPACE or system:
       if predicate == "*" or predicate.match(PEG_PREDICATE):
