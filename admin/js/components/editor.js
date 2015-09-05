@@ -15,7 +15,7 @@
           var self = this;
           var ext = "";
           try {
-            ext = filename.match(/\.(.+)$/)[1];
+            ext = filename.match(/\.([a-z0-9]+)$/)[1];
           } catch(e) {
             ext = "";
           }

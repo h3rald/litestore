@@ -372,15 +372,18 @@ proc importDir*(store: Datastore, dir: string) =
 
 proc  exportDir*(store: Datastore, dir: string) =
   let docs = store.db.getAllRows(SQL_SELECT_DOCUMENTS_BY_TAG, "$dir:"&dir)
+  LOG.info("Exporting $1 files...", docs.len)
   for doc in docs:
-    let file = doc[0].unixToNativePath
+    LOG.debug("Exporting: $1", doc[1])
+    let file = doc[1].unixToNativePath
     var data: string
-    if doc[3].parseInt == 1:
-      data = doc[1].decode
+    if doc[4].parseInt == 1:
+      data = doc[2].decode
     else:
-      data = doc[1]
+      data = doc[2]
     file.parentDir.createDir
     file.writeFile(data)
+  LOG.info("Done.");
 
 proc  deleteDir*(store: Datastore, dir: string) =
     store.db.exec(SQL_DELETE_DOCUMENTS_BY_TAG, "$dir:"&dir)
