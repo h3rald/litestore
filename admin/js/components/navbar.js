@@ -17,6 +17,7 @@
         {path: "/guide/data_model", title: caret+"Data Model"},
         {path: "/guide/getting-started", title: "Getting Started"},
         {path: "/guide/usage", title: "Usage"},
+        {path: "/guide/admin_app", title: "Administration App"},
         {path: "/guide/api", title: "API"},
         {path: "/guide/api_info", title: caret+"info (LiteStore Information)"},
         {path: "/guide/api_docs", title: caret+"docs (LiteStore Documents)"},

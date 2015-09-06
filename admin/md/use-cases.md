@@ -4,7 +4,7 @@ While LiteStore may not be the best choice for large data-intensive applications
 
 #### Lightweight Document Store
 
-LiteStore is, first and foremost a _document store_. Although it uses a relational database ([SQlite](http://www.sqlite.org)) as a storage medium, it is NoSQL document store accessible via a rest API.
+LiteStore is, first and foremost a _document store_. Although it uses a relational database ([SQlite](http://www.sqlite.org)) as a storage medium, it is a NoSQL document store accessible via a RESTful API.
 
 As a document store, LiteStore provides the following features
 

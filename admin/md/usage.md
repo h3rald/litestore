@@ -42,7 +42,7 @@
   
 * mouting a directory called **admin** (changes will be mirrored to filesystem):
 
-  [litestore -m:admin](class:cmd)
+  [litestore -d:admin -m](class:cmd)
 
 #### Importing a directory
 
@@ -54,17 +54,17 @@ Import a directory called **admin**:
 
 Export all documents tagged with **$dir:admin** to a local directory called **admin**:
 
-[litestore -e:admin](class:cmd)
+[litestore export -d:admin](class:cmd)
 
 #### Deleting documents within a directory
 
 Delete all documents tagged with **$dir:admin**:
 
-[litestore -d:admin](class:cmd)
+[litestore delete -d:admin](class:cmd)
 
 #### Performing maintenance operations
 
-* vacuum:
+* vacuum SQlite database:
 
   [litestore vacuum](class:cmd)
 

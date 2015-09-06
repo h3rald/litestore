@@ -12,9 +12,13 @@
     var content = m.prop("");
     return m.request({
         method: "GET", 
-        url: "md/"+id+".md",
-        deserialize: function(value) {return value;}
-      }).then(function(content){ return u.markdown(content);});
+        url: host+"/docs/admin/md/"+id+".md",
+        deserialize: function(value) {
+          return value;
+        }
+      }).then(function(content){ 
+        return u.markdown(content);
+      });
   };
   
   Info.get = function(){
