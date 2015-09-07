@@ -94,25 +94,34 @@ proc prepareJsonDocument*(store:Datastore, doc: TRow, cols:seq[string]): JsonNod
   if doc.len == 1:
     # COUNT(id)
     return %(doc[0].parseInt)
-  var res = newSeq[tuple[key: string, val: JsonNode]](0)
+  result = newJObject()
   var count = 0
+  var jsondoc = false
   for s in cols:
     var key = s
     count.inc
-    if key == "searchable" or key == "binary" or key == "content_type":
-      continue
+    var rawvalue = doc[count-1]
+    var value:JsonNode
     if s.contains(" "):
       # documents.id AS id...
       let chunks = s.split(" ")
       key = chunks[chunks.len-1]
-    var value:JsonNode
-    if doc[count-1] == "":
+    case key:
+      of "searchable", "binary":
+        continue
+      of "content_type":
+        if rawvalue == "application/json":
+          jsondoc = true
+      else:
+        discard
+    if rawvalue == "":
       value = newJNull()
     else:
       value = %doc[count-1]
-    res.add((key, value))
-  res.add(("tags", %tags))
-  return %res
+    result[key] = value
+  if jsondoc:
+    result["data"] = result["data"].getStr().parseJson()
+  result["tags"] = %tags
 
 proc toPlainText*(s: string): string =
   var tags = peg"""'<' [^>]+ '>'"""
