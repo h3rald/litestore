@@ -23,18 +23,19 @@
     vm.file = m.prop();
     vm.id = args.id; 
     vm.btnId = "#upload-"+vm.id+"-btn";
+    vm.modalId = "#upload-"+vm.id+"-modal";
     vm.reader = new FileReader();
     vm.contents = m.prop();
     vm.isText = m.prop(false);
 
     vm.reader.onloadstart = function() {
       vm.contents("");
-      $(modalId).find(".btn-primary").attr("disabled", true);
+      $(vm.modalId).find(".btn-primary").attr("disabled", true);
     };
 
     vm.reader.onloadend = function() {
       vm.contents(vm.reader.result);
-      $(modalId).find(".btn-primary").removeAttr("disabled");
+      $(vm.modalId).find(".btn-primary").removeAttr("disabled");
     };
 
     vm.save = function() {

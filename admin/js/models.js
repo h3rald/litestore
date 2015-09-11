@@ -4,9 +4,9 @@
   window.Doc = {};
   var app = window.LS || (window.LS = {});
   var u = app.utils;
-  app.host = 'http://localhost:9500'
+  app.host = 'http://localhost:9500';
 
-  var host = location.origin === app.host ? "" : app.host
+  var host = location.origin === app.host ? "" : app.host;
   
   Page.get = function(id) {
     var content = m.prop("");
