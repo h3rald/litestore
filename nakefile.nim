@@ -2,13 +2,13 @@ import nake
 import lib/config
 
 const
-  compile = "nim c -d:release -threads:on"
+  parallel = "" #"--parallelBuild:1 --verbosity:3"
+  compile = "nim c -d:release --threads:on" & " " & parallel
   linux_x86 = "--cpu:i386 --os:linux"
   linux_arm = "--cpu:arm --os:linux"
   windows_x86 = "--cpu:i386 --os:windows"
   windows_x64 = "--cpu:amd64 --os:windows"
   macosx_x64 = ""
-  #parallel = "--parallelBuild:1 --verbosity:3"
   ls = "litestore"
   ls_file = "litestore.nim"
   zip = "zip -X"
