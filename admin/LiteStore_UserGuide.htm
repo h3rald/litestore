@@ -117,6 +117,7 @@
    <li><a href="#Downloading.Pre-built.Binaries">Downloading Pre-built Binaries</a></li>
    <li><a href="#Installing.using.Nimble">Installing using Nimble</a></li>
    <li><a href="#Building.from.Source">Building from Source</a></li>
+   <li><a href="#Running.the.Administration.App">Running the Administration App</a></li>
   </ul>
   </li>
   <li><a href="#Usage">Usage</a>
@@ -417,6 +418,20 @@
 <li>Download and install <a href="http://nim-lang.org/">Nim</a>.</li>
 <li>Clone the LiteStore <a href="https://github.com/h3rald/litestore">repository</a>.</li>
 <li>Run <span class="cmd">nim c litestore.nim</span> within the respository folder.</li>
+</ol>
+
+
+<h3 id="Running.the.Administration.App">Running the Administration App<a href="#document-top" title="Go to top"></a></h3>
+
+<p>A simple but functional Administration App is available to manage LiteStore, create documents interactively, view and search content, etc.</p>
+
+<p>To get the app up and running (assuming that you have the <span class="cmd">litestore</span> executable in your path):</p>
+
+<ol>
+<li>Download the default <a href="https://github.com/h3rald/litestore/releases/download/v1.0.0/data.db">data.db</a> file. This file is a LiteStore data store file containing the sample app.</li>
+<li>Go to the local directory in which you downloaded the <span class="cmd">data.db</span> file.</li>
+<li>Run <span class="cmd">litestore -s:data.db</span></li>
+<li>Go to <a href="http://localhost:9500/docs/admin/index.html">http://localhost:9500/docs/admin/index.html</a>.</li>
 </ol>
 
 
