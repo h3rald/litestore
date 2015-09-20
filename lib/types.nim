@@ -2,10 +2,9 @@ import
   x_db_sqlite, 
   x_asynchttpserver, 
   pegs, 
-  strtabs,
-  parsecfg,
-  strutils,
-  streams
+  strtabs
+import
+  config
 
 type 
   EDatastoreExists* = object of Exception
@@ -83,49 +82,9 @@ PEG_USER_TAG = peg"""^[a-zA-Z0-9_\-?~:.@#^!+]+$"""
 PEG_DEFAULT_URL = peg"""^\/{(docs / info)} (\/ {(.+)} / \/?)$"""
 PEG_URL = peg"""^\/({(v\d+)} \/) {([^\/]+)} (\/ {(.+)} / \/?)$"""
 
-const cfgfile = "litestore.nimble".slurp
-
-var
-  file*, address*, version*, appname*: string
-  port*: int
-  f = newStringStream(cfgfile)
-
-if f != nil:
-  var p: CfgParser
-  open(p, f, "litestore.nimble")
-  while true:
-    var e = next(p)
-    case e.kind
-    of cfgEof:
-      break
-    of cfgKeyValuePair:
-      case e.key:
-        of "version":
-          version = e.value
-        of "appame":
-          appname = e.value
-        of "port":
-          port = e.value.parseInt
-        of "address":
-          address = e.value
-        of "file":
-          file = e.value
-        else:
-          discard
-    of cfgError:
-      stderr.writeln("Configuration error.")
-      quit(1)
-    else: 
-      discard
-  close(p)
-else:
-  stderr.writeln("Cannot process configuration file.")
-  quit(2)
-
 # Initialize LiteStore
 var LS* {.threadvar.}: LiteStore
 var TAB_HEADERS* {.threadvar.}: array[0..2, (string, string)]
-
 
 LS.port = port
 LS.address = address

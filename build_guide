@@ -8,6 +8,8 @@ pages=(
   md/usage.md
   md/admin_app.md
   md/api.md
+    md/api_info.md
+    md/api_docs.md
   md/credits.md
 )
 cd admin

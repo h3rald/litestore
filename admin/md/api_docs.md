@@ -116,53 +116,66 @@ The following query string options are supported:
 * **sort** &ndash; Sort by **created**, **modified**, or **id**. Example: `http://127.0.0.1:9500/docs/?sort=id`
 * **contents** &ndash; If set to **false**, do not retrieve document data. Example: `http://127.0.0.1:9500/docs/?contents=false`
 
+> %tip%
+> Tip
+> 
+> If **search** is specified, each result will contain a **highlight** property with a highlighted search snippet, and a **rank** property identified the rank of the result within the search. Results will also be automatically ordered by descending rank.
+
 ##### Example
 
 ```
-$ curl -i 'http://localhost:9500/docs?contents=false&tags=$subtype:css'
+$ curl -i 'http://localhost:9500/docs?search=Use%20Cases&limit=10&offset=0&tags=$subtype:x-markdown'
 HTTP/1.1 200 OK
-Content-Length: 855
+Content-Length: 1960
 Content-Type: application/json
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
 Server: LiteStore/1.0.0
 
 {
+  "search": "Use Cases",
   "tags": [
-    "$subtype:css"
+    "$subtype:x-markdown"
   ],
+  "limit": 10,
   "total": 3,
-  "execution_time": 0.001190000000000024,
+  "execution_time": 0.01843700000000001,
   "results": [
     {
-      "id": "admin/styles/bootstrap-theme.min.css",
+      "id": "admin/md/use-cases.md",
       "created": "2015-09-19T01:37:59Z",
       "modified": null,
+      "highlight": "### <strong>Use</strong> <strong>Cases</strong>\u000A\u000AWhile LiteStore may not be the best choice for large data-intensive applications, it definitely shines when <strong>used</strong> for rapid prototyping and as a backend for small/lightweight<strong>&hellip;</strong>",
+      "rank": "99.5820018475243",
       "tags": [
         "$type:text",
-        "$subtype:css",
+        "$subtype:x-markdown",
         "$format:text",
         "$dir:admin"
       ]
     },
     {
-      "id": "admin/styles/bootstrap.min.css",
+      "id": "admin/md/architecture.md",
       "created": "2015-09-19T01:37:59Z",
       "modified": null,
+      "highlight": "<strong>&hellip;</strong>public unique document identifier, <strong>used</strong> to access the document via the HTTP API.\u000A* **data** &ndash; The contents of the document (or their base64-encoded representation in <strong>case</strong> of binary documents<strong>&hellip;</strong>",
+      "rank": "39.492608737092",
       "tags": [
         "$type:text",
-        "$subtype:css",
+        "$subtype:x-markdown",
         "$format:text",
         "$dir:admin"
       ]
     },
     {
-      "id": "admin/styles/litestore.css",
+      "id": "admin/md/overview.md",
       "created": "2015-09-19T01:37:59Z",
       "modified": null,
+      "highlight": "<strong>&hellip;</strong>contained, LiteStore comes with many <strong>useful</strong> features that are essential for many <strong>use</strong> <strong>cases</strong>.\u000A\u000A#### [](class:fa-file-text-o) Multi-format Documents\u000A\u000ALiteStore can be <strong>used</strong> to store documents in<strong>&hellip;</strong>",
+      "rank": "39.4926086158248",
       "tags": [
         "$type:text",
-        "$subtype:css",
+        "$subtype:x-markdown",
         "$format:text",
         "$dir:admin"
       ]
@@ -189,7 +202,7 @@ Server: LiteStore/1.0.0
 This is a test document.
 ```
 
-###### Example: raw format
+##### Example: raw format
 
 ```
 $ curl -i 'http://127.0.0.1:9500/docs/test?raw=true'
@@ -205,6 +218,8 @@ Server: LiteStore/1.0.0
 
 #### PUT docs/:id
 
+Updates an existing document or creates a new document with the specified ID.
+
 ```
 $ curl -i -X PUT -d 'This is a test document.' 'http://127.0.0.1:9500/docs/test' --header "Content-Type:text/plain"
 HTTP/1.1 201 Created
@@ -219,11 +234,31 @@ Server: LiteStore/1.0.0
 
 #### PATCH docs/:id
 
+Adds, removes, replaces or tests the specified document for tags. Operations must be specified using the [JSONPatch](http://jsonpatch.com/) format.
+
+Always retrieve document tags first before applying a patch, to know the order tags have been added to the document.
+
+> %warning%
+> Limitations
+>
+> * Only **add**, **remove**, **replace** and **test** operations are supported.
+> * It is currently only possible to change tags, not other parts of a document.
+
 ```
-...
+$ curl -i -X PATCH 'http://localhost:9500/docs/test.json' --header "Content-Type:application/json" -d '[{"op":"add","path":"/tags/3","value":"test1"},{"op":"add","path":"/tags/4","value":"test2"},{"op":"add","path":"/tags/5","value":"test3"}]'
+HTTP/1.1 200 OK
+Content-Length: 187
+Content-Type: application/json
+Access-Control-Allow-Headers: Content-Type
+Access-Control-Allow-Origin: *
+Server: LiteStore/1.0.0
+
+{"id": "test.json", "data": {"test": true}, "created": "2015-09-20T09:06:25Z", "modified": null, "tags": ["$type:application", "$subtype:json", "$format:text", "test1", "test2", "test3"]}
 ```
 
 #### DELETE docs/:id
+
+Deletes the specified document.
 
 ##### Example
 

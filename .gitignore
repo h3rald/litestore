@@ -1,4 +1,6 @@
 *.log.txt
 nimcache
 *.db
+*.db-journal
 litestore
+nakefile
