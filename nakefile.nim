@@ -10,6 +10,8 @@ const
   windows_x64 = "--cpu:amd64 --os:windows"
   macosx_x64 = ""
   ls = "litestore"
+  doc = "LiteStore_UserGuide.htm"
+  db = "data.db"
   ls_file = "litestore.nim"
   zip = "zip -X"
 
@@ -34,22 +36,22 @@ task "macosx-x64-build", "Build LiteStore for Mac OS X (x64)":
 task "release", "Release LiteStore":
   echo "\n\n\n WINDOWS - x86:\n\n"
   runTask "windows-x86-build"
-  direshell zip, filename_for("windows", "x86"), ls & ".exe"
+  direshell zip, filename_for("windows", "x86"), ls & ".exe", doc, db
   direshell "rm", ls & ".exe"
   echo "\n\n\n WINDOWS - x64:\n\n"
   runTask "windows-x64-build"
-  direshell zip, filename_for("windows", "x64"), ls & ".exe"
+  direshell zip, filename_for("windows", "x64"), ls & ".exe", doc, db
   direshell "rm", ls & ".exe"
   echo "\n\n\n LINUX - x86:\n\n"
   runTask "linux-x86-build"
-  direshell zip, filename_for("linux", "x86"), ls 
+  direshell zip, filename_for("linux", "x86"), ls, doc, db
   direshell "rm", ls 
   echo "\n\n\n LINUX - ARM:\n\n"
   runTask "linux-arm-build"
-  direshell zip, filename_for("linux", "arm"), ls 
+  direshell zip, filename_for("linux", "arm"), ls, doc, db
   direshell "rm", ls 
   echo "\n\n\n MAC OS X - x64:\n\n"
   runTask "macosx-x64-build"
-  direshell zip, filename_for("macosx", "x64"), ls 
+  direshell zip, filename_for("macosx", "x64"), ls, doc, db
   direshell "rm", ls 
   echo "\n\n\n ALL DONE!"
