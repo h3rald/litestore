@@ -22,13 +22,13 @@ proc dbQuote*(s: string): string =
     else: add(result, c)
   add(result, '\'')
 
-proc selectDocumentsByTags(tags: string): string =
+proc selectDocumentsByTags(tags: string, doc_id_col = "id"): string =
   var select_tagged = "SELECT document_id FROM tags WHERE tag_id = '"
   result = ""
   for tag in tags.split(','):
     if not tag.match(PEG_TAG):
       raise newException(EInvalidTag, "Invalid tag '$1'" % tag)
-    result = result & "AND id IN (" & select_tagged & tag & "') "
+    result = result & "AND " & doc_id_col & " IN (" & select_tagged & tag & "') "
    
 proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
   result = "SELECT "
@@ -62,7 +62,12 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
   if options.single:
     result = result & "AND id = ?"
   if options.tags.len > 0:
-    result = result & options.tags.selectDocumentsByTags()
+    var doc_id_col: string
+    if options.search.len > 0 and options.select[0] != "COUNT(docid)":
+      doc_id_col = "documents.id"
+    else:
+      doc_id_col = "id"
+    result = result & options.tags.selectDocumentsByTags(doc_id_col)
   if options.search.len > 0:
     result = result & "AND searchdata MATCH '" & options.search.replace("'", "''") & "' "
   if options.orderby.len > 0 and options.select[0] != "COUNT(docid)":
@@ -112,6 +117,7 @@ proc prepareJsonDocument*(store:Datastore, doc: TRow, cols:seq[string]): JsonNod
       of "content_type":
         if rawvalue == "application/json":
           jsondoc = true
+        continue
       else:
         discard
     if rawvalue == "":

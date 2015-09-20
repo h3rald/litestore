@@ -6,7 +6,6 @@
   app.editor.config = function(obj){
     return function(element, isInitialized, context){
       var e = element;
-
       if (!isInitialized) {
         var editor = ace.edit(e);
         obj.editor = editor;
@@ -57,6 +56,9 @@
    * @param {string} args.content
    */
   app.editor.view = function(ctrl, args) {
+    if (args.ext === 'json'){
+      args.content = JSON.stringify(args.content);
+    }
     return m(".editor.panel.panal-default", {config: app.editor.config(args)}, args.content);
   };
   

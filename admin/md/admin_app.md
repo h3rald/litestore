@@ -29,12 +29,39 @@ It can be used to easily access and explore any LiteStore data store (provided t
 
 #### View Data Store Information
 
-When first loaded, the app loads the _Info_ page by default.
+When first loaded, the app loads the _Info_ page by default. This pages contains useful information on the currently-loaded LiteStore data store, some stats on documents and tags, and links to access documents by tag.
+
+![Info Page](images/app_info.png)
 
 #### Read LiteStore Documentation
 
+The **Guide** section of the Administration App contains the official LiteStore User Guide, conveniently split into separate pages by section. 
+
+> %note%
+> Note
+>
+> If the data store is loaded in read/write mode (default), you'll see some **Edit** buttons on the Guide pages. Clicking them will open the corresponding Markdown source document for editing -- Such links have been very useful to update the docs in-place!
+
+![Guide](images/app_guide.png)
+
 #### Display Documents by Tag
+
+By clicking any of the tag links on the _Info_ page or by accessing the **Tags** menu in the navigation bar you can browse all documents tagged with a specific tag. Currently, it is only possible to specify only one single tag at a time although the API allows several tags to be specified at once. 
+
+![Display documents by tag](images/app_tags.png)
 
 #### Search Documents
 
-#### View, Preview, Create and Edit Documents
+You can search for documents using the search box in the navigation bar. The Administration App lets you search through all the textual/searchable documents loaded in the currently open data store.
+
+![Search](images/app_search.png)
+
+#### View, Preview, Delete, Create and Edit Documents
+
+You can view, edit and delete any document loaded in the data store using the bundled [ACE Editor](http://ace.c9.io/) component. Additionally:
+
+* It is possible to upload local files instead of creating them by hand.
+* Preview is available for images and HTML documents
+* Source code highlighting is available for Javascript, CSS, HTML, JSON and Markdown files.
+
+![Document](images/app_document.png)

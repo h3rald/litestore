@@ -71,7 +71,9 @@
         method: "PUT", 
         url: host+"/docs/"+doc.id,
         data: doc.data,
-        serialize: function(data){return data;},
+        serialize: function(data){
+          return data;
+        },
         config: xhrcfg
       });
   };
@@ -82,7 +84,9 @@
       method: "PUT",
       url: host+"/docs/"+doc.id,
       data: doc.data,
-      serialize: function(data) {return data}
+      serialize: function(data) {
+        return data;
+      }
     });
   };
   

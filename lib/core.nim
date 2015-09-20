@@ -178,6 +178,7 @@ proc createDocument*(store: Datastore,  id="", rawdata = "", contenttype = "text
     id = $genOid()
   # Store document
   try:
+    LOG.debug("Creating document '$1'" % id)
     store.begin()
     var res = store.db.insertID(SQL_INSERT_DOCUMENT, id, data, contenttype, binary, searchable, currentTime())
     if res > 0:
@@ -212,6 +213,7 @@ proc updateDocument*(store: Datastore, id: string, rawdata: string, contenttype 
   if binary == 1:
     searchable = 0
   try:
+    LOG.debug("Updating document '$1'" % id)
     store.begin()
     var res = store.db.execAffectedRows(SQL_UPDATE_DOCUMENT, data, contenttype, binary, searchable, currentTime(), id)
     if res > 0:
@@ -239,6 +241,7 @@ proc setDocumentModified*(store: Datastore, id: string): string =
 proc destroyDocument*(store: Datastore, id: string): int64 =
   try:
     let singleOp = not LS_TRANSACTION
+    LOG.debug("Destroying document '$1'" % id)
     store.begin()
     result = store.db.execAffectedRows(SQL_DELETE_DOCUMENT, id)
     if result > 0:
@@ -261,9 +264,12 @@ proc retrieveDocument*(store: Datastore, id: string, options: QueryOptions = new
   options.single = true
   var select = prepareSelectDocumentsQuery(options)
   var raw_document = store.db.getRow(select.sql, id)
+  LOG.debug("Retrieving document '$1'" % id)
   if raw_document[0] == "":
+    LOG.debug("(No Data)")
     return (data: "", contenttype: "")
   else:
+    LOG.debug("Content Length: $1" % $(raw_document[1].len))
     if raw_document[3].parseInt == 1:
       return (data: raw_document[1].decode, contenttype: raw_document[2])
     else:
