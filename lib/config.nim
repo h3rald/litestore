@@ -3,11 +3,15 @@ import
   streams,
   strutils
 
-const cfgfile = "litestore.nimble".slurp
+const
+  cfgfile   = "litestore.nimble".slurp
 
 var
-  file*, address*, version*, appname*: string
-  port*: int
+  file*     = "data.db"
+  address*  = "127.0.0.1"
+  appname*  = "LiteStore"
+  port*     = 9500
+  version*: string
   f = newStringStream(cfgfile)
 
 if f != nil:
@@ -22,14 +26,6 @@ if f != nil:
       case e.key:
         of "version":
           version = e.value
-        of "appame":
-          appname = e.value
-        of "port":
-          port = e.value.parseInt
-        of "address":
-          address = e.value
-        of "file":
-          file = e.value
         else:
           discard
     of cfgError:
