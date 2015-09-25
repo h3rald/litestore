@@ -46,23 +46,28 @@
       }
       return Doc.put(doc, vm.file().type).then(args.onSuccess, args.onFailure);
     };
+    
+    vm.cancel = function(){
+      $("input:file").val('');
+    };
+    
     return vm;
-  }
+  };
     
   app.uploader.view = function(ctrl, args){
     var config = {
       title: "Upload Document",
       id: "upload-"+ctrl.id+"-modal",
       action: ctrl.save,
+      dismiss: ctrl.cancel,
       actionText: "Upload",
-      content: m("div", [
+      content: m("div.upload-form", [
         m(".form-group", [
         m("label", "Document ID"),
           m("input.form-control", {
             placeholder: "Enter document ID",
             onchange: m.withAttr("value", ctrl.docid),
             size: 35,
-            disabled: (ctrl.docid() === "") ? false : true,
             value: ctrl.docid()
           })
         ]),

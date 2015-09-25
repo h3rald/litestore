@@ -101,7 +101,7 @@
   /* DROPDOWN */
   app.widgets.taglink = {
     view: function(ctrl, args) {
-      var color = /^\$/.test(args.name) ? "warning" : "primary"
+      var color = /^\$/.test(args.name) ? "warning" : "primary";
       return m("span.tag-label.label.label-"+color, 
         [m("i.fa.fa-tag"), " ", m("a", {href: "/tags/"+args.name, config:m.route}, args.name)]);
     }
@@ -138,6 +138,12 @@
   /* MODAL */
   app.widgets.modal = {
     view: function(ctrl, args){
+      if (!args.dismiss){
+        args.dismiss = function(){};
+      }
+      if (!args.dismissText) {
+        args.dismissText = "Close";
+      }
       return m(".modal.fade", 
         {id: args.id, tabindex: "-1", role: "dialog"},
         [
@@ -150,7 +156,7 @@
               ]),
               m(".modal-body", [args.content]),
               m(".modal-footer", [
-                m("button.btn.btn-default[data-dismiss='modal']", "Close"),
+                m("button.btn.btn-default[data-dismiss='modal']", {onclick: args.dismiss}, args.dismissText),
                 m("button.btn.btn-primary[data-dismiss='modal']", {onclick: args.action}, args.actionText)
               ])
             ])

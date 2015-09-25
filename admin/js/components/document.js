@@ -140,9 +140,7 @@
       });
     };
     
-    var onFailure = function(data){
-      vm.flashError;
-    };
+    var onFailure = function(data) { vm.flashError(data); };
 
     var modalId = u.guid();
 
