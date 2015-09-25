@@ -88,11 +88,12 @@ proc applyPatchOperation(tags: var seq[string], op: string, path: string, value:
   if path.find(peg"^\/tags\/{\d+}$", matches) == -1:
     raise newException(EInvalidRequest, "cannot patch path '$1'" % path)
   let index = matches[0].parseInt
+  LOG.debug("- PATCH -> $1 tag index '$2' - Total tags: $3." % [op, $index, $tags.len])
   case op:
     of "remove":
       let tag = tags[index]
       if not tag.startsWith("$"):
-        system.delete(tags, index)
+        tags[index] = "" # Not removing element, otherwise subsequent indexes won't work!
       else:
         raise newException(EInvalidRequest, "Cannot remove system tag: $1" % tag)
     of "add":
@@ -272,6 +273,8 @@ proc patchDocument(LS: LiteStore, id: string, body: string): Response =
         item["value"] = %""
       try:
         apply = applyPatchOperation(tags, item["op"].str, item["path"].str, item["value"].str)
+        if not apply:
+          break
       except:
         return resError(Http400, "Bad request - $1" % getCurrentExceptionMsg())
     else:
@@ -282,7 +285,8 @@ proc patchDocument(LS: LiteStore, id: string, body: string): Response =
       for t1 in jdoc["tags"].items:
         discard LS.store.destroyTag(t1.str, id, true)
       for t2 in tags:
-        LS.store.createTag(t2, id, true)
+        if t2 != "":
+          LS.store.createTag(t2, id, true)
     except:
       return resError(Http500, "Unable to patch document '$1' - $2" % [id, getCurrentExceptionMsg()])
   return LS.getRawDocument(id)
