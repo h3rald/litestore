@@ -39,10 +39,10 @@ task "macosx-x64-build", "Build LiteStore for Mac OS X (x64)":
 
 task "release", "Release LiteStore":
   echo "Generating Guide..."
-  dirshell "./build_guide"
+  direshell "./build_guide"
   echo "Preparing Data Store preloaded with Admin App..."
-  dirshell "rm " & db
-  dirshell "litestore -d:admin import"
+  direshell "rm " & db
+  direshell "litestore -d:admin import"
   echo "\n\n\n WINDOWS - x86:\n\n"
   runTask "windows-x86-build"
   direshell zip, filename_for("windows", "x86"), ls & ".exe", doc, db

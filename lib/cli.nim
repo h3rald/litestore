@@ -116,6 +116,9 @@ if directory == nil and (operation in [opDelete, opImport, opExport] or mount):
   fail(105, "Directory option not specified.")
 
 LS.operation = operation
+LS.address = address
+LS.port = port
+LS.file = file
 LS.directory = directory
 LS.readonly = readonly
 LS.favicon = favicon
