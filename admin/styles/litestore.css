@@ -1660,8 +1660,12 @@
 }
 main {
   max-width: 850px;
-  margin: auto;
+  margin: 10px auto;
   margin-top: 60px;
+}
+article {
+  padding-left: 5px;
+  padding-right: 5px;
 }
 /* Blocks */
 blockquote {
@@ -1870,6 +1874,7 @@ span.kwd {
 span.tag-label {
   margin: auto 2px;
   font-weight: normal;
+  display: inline-block;
 }
 span.tag-label a {
   color: #efefef;
@@ -1883,6 +1888,7 @@ span.tag-label a:hover {
 }
 .search-result {
   margin: 5px 0;
+  word-break: break-word;
 }
 .note {
   -moz-background-clip: padding;
