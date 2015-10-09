@@ -2,7 +2,7 @@ LiteStore is a lightweight, self-contained, RESTful, multi-format NoSQL document
 
 For more information, see:
 
-* [Getting Started](admin/md/getting_started.md)
+* [Getting Started](admin/md/getting-started.md)
 * [Usage](admin/md/usage.md)
 
 Or read the full [LiteStore User Guide](https://h3rald.com/litestore/LiteStore_UserGuide.htm).
