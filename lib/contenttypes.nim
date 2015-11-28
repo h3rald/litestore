@@ -7,9 +7,11 @@ proc loadContentTypes(): StringTableRef =
   let json = raw_json.parseJson
   for item in json.items:
     for pair in item.pairs:
-      result[$pair.key] = $pair.val
+      result[$pair.key] = $pair.val.getStr
 
-let CONTENT_TYPES* = loadContentTypes()
+var CONTENT_TYPES* {.threadvar.}: StringTableRef 
+
+CONTENT_TYPES = loadContentTypes()
 
 proc isBinary*(ct: string): bool =
   if ct.endsWith "xml":

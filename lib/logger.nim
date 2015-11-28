@@ -36,4 +36,4 @@ proc  debug*(logger: Logger, message: string, params: varargs[string, `$`]) =
 
 var LOG* {.threadvar.}: Logger
 
-LOG.level = lvInfo
+LOG.level = lvWarn

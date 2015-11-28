@@ -14,7 +14,7 @@ var
   operation = opRun
   directory:string = nil
   readonly = false
-  logLevel = "info"
+  logLevel = "warn"
   mount = false
   
 let
@@ -34,7 +34,7 @@ let
 
   Options:
     -a, --address       Specify server address (default: 127.0.0.1).
-    -d, --directory     Specify a directory to import, export, delete, or mount.
+    -d, --directory     Specify a directory to serve, import, export, delete, or mount.
     -h, --help          Display this message.
     -l, --log           Specify the log level: debug, info, warn, error, none (default: info)
     -m, --mount         Mirror database changes to the specified directory on the filesystem.

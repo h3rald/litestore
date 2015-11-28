@@ -79,7 +79,7 @@ var
 
 PEG_TAG = peg"""^\$? [a-zA-Z0-9_\-?~:.@#^!+]+$"""
 PEG_USER_TAG = peg"""^[a-zA-Z0-9_\-?~:.@#^!+]+$"""
-PEG_DEFAULT_URL = peg"""^\/{(docs / info)} (\/ {(.+)} / \/?)$"""
+PEG_DEFAULT_URL = peg"""^\/{(docs / info / dir)} (\/ {(.+)} / \/?)$"""
 PEG_URL = peg"""^\/({(v\d+)} \/) {([^\/]+)} (\/ {(.+)} / \/?)$"""
 
 # Initialize LiteStore
