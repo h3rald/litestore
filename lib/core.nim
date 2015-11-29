@@ -294,7 +294,7 @@ proc importFile*(store: Datastore, f: string, dir = "") =
   var d_contents = f.readFile
   var d_ct = "application/octet-stream"
   if CONTENT_TYPES.hasKey(ext):
-    d_ct = CONTENT_TYPES[ext].getStr
+    d_ct = CONTENT_TYPES[ext].replace("\"", "")
   var d_binary = 0
   var d_searchable = 1
   if d_ct.isBinary:

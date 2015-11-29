@@ -16,7 +16,7 @@ Access-Control-Allow-Methods: GET,OPTIONS
 Allow: GET,OPTIONS
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 ```
 
 #### GET info
@@ -41,7 +41,7 @@ Content-Length: 965
 Content-Type: application/json
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 
 {
   "version": "LiteStore v1.0.0",

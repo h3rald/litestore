@@ -10,7 +10,6 @@ import
   os
 import 
   types, 
-  contenttypes,
   utils, 
   api_v1
 
@@ -26,23 +25,6 @@ proc handleCtrlC() {.noconv.} =
   echo ""
   LOG.info("Exiting...")
   quit()
-
-proc serveFile(req: Request, LS: LiteStore, id: string): Response =
-  let path = LS.directory / id
-  if path.fileExists:
-    try:
-      let contents = path.readFile
-      let parts = path.splitFile
-      if CONTENT_TYPES.hasKey(parts.ext):
-        result.headers = CONTENT_TYPES[parts.ext].ctHeader
-      else:
-        result.headers = ctHeader("text/plain")
-      result.content = contents
-      result.code = Http200
-    except:
-      return resError(Http500, "Unable to read file '$1'." % path)
-  else:
-    return resError(Http404, "File '$1' not found." % path)
 
 proc processApiUrl(req: Request, LS: LiteStore, info: ResourceInfo): Response = 
   if info.version == "v1" and info.resource.match(peg"^docs / info$"):

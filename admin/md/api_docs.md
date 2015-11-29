@@ -39,7 +39,7 @@ Access-Control-Allow-Methods: HEAD,GET,OPTIONS,POST
 Allow: HEAD,GET,OPTIONS,POST
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 ```
 
 #### OPTIONS docs/:id
@@ -68,7 +68,7 @@ Content-Length: 197
 Content-Type: application/json
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 
 {"id": "555f93e82190e77500000000", "data": "A document with a randomly-generated ID.", "created": "2015-05-22T08:39:04Z", "modified": null, "tags": ["$type:text", "$subtype:plain", "$format:text"]}
 ```
@@ -84,7 +84,7 @@ Content-Length: 0
 Content-Type: application/json
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 ```
 
 #### HEAD docs/:id
@@ -98,7 +98,7 @@ Content-Length: 0
 Content-Type: application/json
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 ```
 
 #### GET docs
@@ -130,7 +130,7 @@ Content-Length: 1960
 Content-Type: application/json
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 
 {
   "search": "Use Cases",
@@ -197,7 +197,7 @@ Content-Length: 24
 Content-Type: text/plain
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 
 This is a test document.
 ```
@@ -211,7 +211,7 @@ Content-Length: 191
 Content-Type: application/json
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 
 {"id": "test", "data": "This is a test document.", "created": "2015-09-19T08:07:43Z", "modified": null, "tags": ["$type:text", "$subtype:plain", "$format:text"]}
 ```
@@ -227,7 +227,7 @@ Content-Length: 161
 Content-Type: application/json
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 
 {"id": "test", "data": "This is a test document.", "created": "2015-05-22T08:40:00Z", "modified": null, "tags": ["$type:text", "$subtype:plain", "$format:text"]}
 ```
@@ -251,7 +251,7 @@ Content-Length: 187
 Content-Type: application/json
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 
 {"id": "test.json", "data": {"test": true}, "created": "2015-09-20T09:06:25Z", "modified": null, "tags": ["$type:application", "$subtype:json", "$format:text", "test1", "test2", "test3"]}
 ```
@@ -268,5 +268,5 @@ HTTP/1.1 204 No Content
 Content-Length: 0
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 ```

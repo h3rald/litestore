@@ -16,7 +16,7 @@
 #### Options
 
 * **-a**, **-\-address** &mdash; Specify server address (default: 127.0.0.1).
-* **-d**, **-\-directory** &mdash; Specify a directory to import, export, delete, or mount.
+* **-d**, **-\-directory** &mdash; Specify a directory to serve, import, export, delete, or mount.
 * **-h**, **-\-help** &mdash; Display program usage.
 * **-l**, **-\-log** &mdash; Specify the log level: debug, info, warn, error, none (default: info)
 * **-m**, **-\-mount** &mdash; Mirror database changes to the specified directory on the filesystem.
@@ -40,7 +40,11 @@
 
   [litestore -r -l:debug](class:cmd)
   
-* mouting a directory called **admin** (changes will be mirrored to filesystem):
+* serving the contents of a directory called **admin**:
+
+  [litestore -d:admin](class:cmd)
+
+* mouting a directory called **admin** (changes will be mirrored to filesystem, directory contents will be served):
 
   [litestore -d:admin -m](class:cmd)
 

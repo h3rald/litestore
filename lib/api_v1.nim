@@ -10,6 +10,7 @@ import
   times
 import 
   types,
+  contenttypes,
   core,
   utils,
   logger
@@ -63,7 +64,6 @@ proc parseQueryOptions(querystring: string, options: var QueryOptions) =
   var fragments = querystring.split('&')
   for f in fragments:
     f.parseQueryOption(options)
-
 
 proc validate(req: Request, LS: LiteStore, resource: string, id: string, cb: proc(req: Request, LS: LiteStore, resource: string, id: string):Response): Response = 
   if req.reqMethod == "POST" or req.reqMethod == "PUT" or req.reqMethod == "PATCH":
@@ -304,6 +304,12 @@ proc options(req: Request, LS: LiteStore, resource: string, id = ""): Response =
         result.headers = TAB_HEADERS.newStringTable
         result.headers["Allow"] = "GET,OPTIONS"
         result.headers["Access-Control-Allow-Methods"] = "GET,OPTIONS"
+    of "dir":
+      result.code = Http200
+      result.content = ""
+      result.headers = TAB_HEADERS.newStringTable
+      result.headers["Allow"] = "GET,OPTIONS"
+      result.headers["Access-Control-Allow-Methods"] = "GET,OPTIONS"
     of "docs":
       if id != "":
         result.code = Http200
@@ -400,6 +406,32 @@ proc patch(req: Request, LS: LiteStore, resource: string, id = ""): Response =
     return LS.patchDocument(id, req.body)
   else:
     return resError(Http400, "Bad request: document ID must be specified in PATCH requests.")
+
+proc serveFile*(req: Request, LS: LiteStore, id: string): Response =
+  let path = LS.directory / id
+  var reqMethod = req.reqMethod
+  if req.headers.hasKey("X-HTTP-Method-Override"):
+    reqMethod = req.headers["X-HTTP-Method-Override"]
+  case reqMethod.toUpper:
+    of "OPTIONS":
+      return validate(req, LS, "dir", id, options)
+    of "GET":
+      if path.fileExists:
+        try:
+          let contents = path.readFile
+          let parts = path.splitFile
+          if CONTENT_TYPES.hasKey(parts.ext):
+            result.headers = CONTENT_TYPES[parts.ext].ctHeader
+          else:
+            result.headers = ctHeader("text/plain")
+          result.content = contents
+          result.code = Http200
+        except:
+          return resError(Http500, "Unable to read file '$1'." % path)
+      else:
+        return resError(Http404, "File '$1' not found." % path)
+    else:
+      return resError(Http405, "Method not allowed: $1" % req.reqMethod) 
 
 proc route*(req: Request, LS: LiteStore, resource = "docs", id = ""): Response = 
   var reqMethod = req.reqMethod
