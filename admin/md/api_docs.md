@@ -124,7 +124,8 @@ The following query string options are supported:
 ##### Example
 
 ```
-$ curl -i 'http://localhost:9500/docs?search=Use%20Cases&limit=10&offset=0&tags=$subtype:x-markdown'
+$ curl -i 'http://localhost:9500/docs?search=Use%20Cases&limit=10
+&offset=0&tags=$subtype:x-markdown'
 HTTP/1.1 200 OK
 Content-Length: 1960
 Content-Type: application/json

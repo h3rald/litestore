@@ -187,6 +187,21 @@ pre code {
     </li>
    </ul>
    </li>
+   <li><a href="#info..LiteStore.Information.">info (LiteStore Information)</a>
+   <ul>
+    <li><a href="#OPTIONS.info">OPTIONS info</a>
+    <ul>
+     <li><a href="#Example">Example</a></li>
+    </ul>
+    </li>
+    <li><a href="#GET.dir.:id">GET dir/:id</a>
+    <ul>
+     <li><a href="#Example">Example</a>
+</li>
+    </ul>
+    </li>
+   </ul>
+   </li>
    <li><a href="#docs..LiteStore.Documents.">docs (LiteStore Documents)</a>
    <ul>
     <li><a href="#Example.Document">Example Document</a></li>
@@ -409,12 +424,12 @@ pre code {
 <p>The easiest way to get LiteStore is by downloading one of the prebuilt binaries from the [Github Release Page][release]:</p>
 
 <ul>
-<li><a href="https://github.com/h3rald/litestore/releases/download/v1.0.2litestore_v1.0.2_macosx_x64.zip">LiteStore for Mac OS X (x64)</a> &ndash; Compiled on OS X Yosemite (LLVM CLANG 6.0)</li>
-<li><a href="https://github.com/h3rald/litestore/releases/download/v1.0.2/litestore_v1.0.2_windows_x64.zip">LiteStore for Windows (x64)</a> &ndash; Cross-compiled on OS X Yosemite (MinGW-w64 GCC 4.8.2)</li>
-<li><a href="https://github.com/h3rald/litestore/releases/download/v1.0.2/litestore_v1.0.2_windows_x86.zip">LiteStore for Windows (x86)</a> &ndash; Cross-compiled on OS X Yosemite (MinGW-w64 GCC 4.8.2)</li>
-<li><a href="https://github.com/h3rald/litestore/releases/download/v1.0.2/litestore_v1.0.2_linux_x64.zip">LiteStore for Linux (x64)</a> &ndash; Cross-compiled on OS X Yosemite (GNU GCC 4.8.1)</li>
-<li><a href="https://github.com/h3rald/litestore/releases/download/v1.0.2/litestore_v1.0.2_linux_x86.zip">LiteStore for Linux (x86)</a> &ndash; Cross-compiled on OS X Yosemite (GNU GCC 4.8.1)</li>
-<li><a href="https://github.com/h3rald/litestore/releases/download/v1.0.2/litestore_v1.0.2_linux_arm.zip">LiteStore for Linux (ARM)</a> &ndash; Cross-compiled on OS X Yosemite (GNU GCC 4.8.2)</li>
+<li><a href="https://github.com/h3rald/litestore/releases/download/v1.0.3litestore_v1.0.3_macosx_x64.zip">LiteStore for Mac OS X (x64)</a> &ndash; Compiled on OS X El Capitan (LLVM CLANG 7.0.0)</li>
+<li><a href="https://github.com/h3rald/litestore/releases/download/v1.0.3/litestore_v1.0.3_windows_x64.zip">LiteStore for Windows (x64)</a> &ndash; Cross-compiled on OS X El Capitan (MinGW-w64 GCC 4.8.2)</li>
+<li><a href="https://github.com/h3rald/litestore/releases/download/v1.0.3/litestore_v1.0.3_windows_x86.zip">LiteStore for Windows (x86)</a> &ndash; Cross-compiled on OS X El Capitan (MinGW-w64 GCC 4.8.2)</li>
+<li><a href="https://github.com/h3rald/litestore/releases/download/v1.0.3/litestore_v1.0.3_linux_x64.zip">LiteStore for Linux (x64)</a> &ndash; Cross-compiled on OS X El Capitan (GNU GCC 4.8.1)</li>
+<li><a href="https://github.com/h3rald/litestore/releases/download/v1.0.3/litestore_v1.0.3_linux_x86.zip">LiteStore for Linux (x86)</a> &ndash; Cross-compiled on OS X El Capitan (GNU GCC 4.8.1)</li>
+<li><a href="https://github.com/h3rald/litestore/releases/download/v1.0.3/litestore_v1.0.3_linux_arm.zip">LiteStore for Linux (ARM)</a> &ndash; Cross-compiled on OS X El Capitan (GNU GCC 4.8.2)</li>
 </ul>
 
 
@@ -442,7 +457,7 @@ pre code {
 <p>To get the app up and running (assuming that you have the <span class="cmd">litestore</span> executable in your path):</p>
 
 <ol>
-<li>Download the default <a href="https://github.com/h3rald/litestore/releases/download/v1.0.2/data.db">data.db</a> file. This file is a LiteStore data store file containing the sample app.</li>
+<li>Download the default <a href="https://github.com/h3rald/litestore/releases/download/v1.0.3/data.db">data.db</a> file. This file is a LiteStore data store file containing the sample app.</li>
 <li>Go to the local directory in which you downloaded the <span class="cmd">data.db</span> file.</li>
 <li>Run <span class="cmd">litestore -s:data.db</span></li>
 <li>Go to <a href="http://localhost:9500/docs/admin/index.html">http://localhost:9500/docs/admin/index.html</a>.</li>
@@ -471,7 +486,7 @@ pre code {
 
 <ul>
 <li><strong>-a</strong>, <strong>--address</strong> &mdash; Specify server address (default: 127.0.0.1).</li>
-<li><strong>-d</strong>, <strong>--directory</strong> &mdash; Specify a directory to import, export, delete, or mount.</li>
+<li><strong>-d</strong>, <strong>--directory</strong> &mdash; Specify a directory to serve, import, export, delete, or mount.</li>
 <li><strong>-h</strong>, <strong>--help</strong> &mdash; Display program usage.</li>
 <li><strong>-l</strong>, <strong>--log</strong> &mdash; Specify the log level: debug, info, warn, error, none (default: info)</li>
 <li><strong>-m</strong>, <strong>--mount</strong> &mdash; Mirror database changes to the specified directory on the filesystem.</li>
@@ -496,7 +511,10 @@ pre code {
 <li><p>in read-only mode with logging level set to <strong>debug</strong>:</p>
 
 <p><span class="cmd">litestore -r -l:debug</span></p></li>
-<li><p>mouting a directory called <strong>admin</strong> (changes will be mirrored to filesystem):</p>
+<li><p>serving the contents of a directory called <strong>admin</strong>:</p>
+
+<p><span class="cmd">litestore -d:admin</span></p></li>
+<li><p>mouting a directory called <strong>admin</strong> (changes will be mirrored to filesystem, directory contents will be served):</p>
 
 <p><span class="cmd">litestore -d:admin -m</span></p></li>
 </ul>
@@ -648,7 +666,7 @@ Access-Control-Allow-Methods: GET,OPTIONS
 Allow: GET,OPTIONS
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 </code></pre>
 
 <h4 id="GET.info">GET info<a href="#document-top" title="Go to top"></a></h4>
@@ -675,7 +693,7 @@ Content-Length: 965
 Content-Type: application/json
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 
 {
   "version": "LiteStore v1.0.0",
@@ -705,6 +723,43 @@ Server: LiteStore/1.0.0
     }
   ]
 }
+</code></pre>
+
+<h3 id="info..LiteStore.Information.">info (LiteStore Information)<a href="#document-top" title="Go to top"></a></h3>
+
+<p>This resource can be queried to retrieve files within the served directory (specied via <strong>-d</strong>).</p>
+
+<h4 id="OPTIONS.info">OPTIONS info<a href="#document-top" title="Go to top"></a></h4>
+
+<p>Returns the allowed HTTP verbs for this resource.</p>
+
+<h5 id="Example">Example<a href="#document-top" title="Go to top"></a></h5>
+
+<pre><code>$ curl -i -X OPTIONS http://127.0.0.1:9500/v1/dir
+HTTP/1.1 200 OK
+Content-Length: 0
+Access-Control-Allow-Methods: GET,OPTIONS
+Allow: GET,OPTIONS
+Access-Control-Allow-Headers: Content-Type
+Access-Control-Allow-Origin: *
+Server: LiteStore/1.0.0
+</code></pre>
+
+<h4 id="GET.dir.:id">GET dir/:id<a href="#document-top" title="Go to top"></a></h4>
+
+<p>Returns the content of a file within the served directory (if it exists).</p>
+
+<h5 id="Example">Example<a href="#document-top" title="Go to top"></a></h5>
+
+<pre><code>$ curl -i http://127.0.0.1:9500/v1/dir/test.txt
+HTTP/1.1 200 OK
+Content-Length: 25
+Content-Type: text/plain
+Access-Control-Allow-Headers: Content-Type
+Access-Control-Allow-Origin: *
+Server: LiteStore/1.0.3
+
+This is a test text file.
 </code></pre>
 
 <h3 id="docs..LiteStore.Documents.">docs (LiteStore Documents)<a href="#document-top" title="Go to top"></a></h3>
@@ -748,7 +803,7 @@ Access-Control-Allow-Methods: HEAD,GET,OPTIONS,POST
 Allow: HEAD,GET,OPTIONS,POST
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 </code></pre>
 
 <h4 id="OPTIONS.docs.:id">OPTIONS docs/:id<a href="#document-top" title="Go to top"></a></h4>
@@ -775,7 +830,7 @@ Content-Length: 197
 Content-Type: application/json
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 
 {"id": "555f93e82190e77500000000", "data": "A document with a randomly-generated ID.", "created": "2015-05-22T08:39:04Z", "modified": null, "tags": ["$type:text", "$subtype:plain", "$format:text"]}
 </code></pre>
@@ -790,7 +845,7 @@ Content-Length: 0
 Content-Type: application/json
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 </code></pre>
 
 <h4 id="HEAD.docs.:id">HEAD docs/:id<a href="#document-top" title="Go to top"></a></h4>
@@ -803,7 +858,7 @@ Content-Length: 0
 Content-Type: application/json
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 </code></pre>
 
 <h4 id="GET.docs">GET docs<a href="#document-top" title="Go to top"></a></h4>
@@ -830,13 +885,14 @@ Server: LiteStore/1.0.0
 
 <h5 id="Example">Example<a href="#document-top" title="Go to top"></a></h5>
 
-<pre><code>$ curl -i 'http://localhost:9500/docs?search=Use%20Cases&amp;limit=10&amp;offset=0&amp;tags=$subtype:x-markdown'
+<pre><code>$ curl -i 'http://localhost:9500/docs?search=Use%20Cases&amp;limit=10
+&amp;offset=0&amp;tags=$subtype:x-markdown'
 HTTP/1.1 200 OK
 Content-Length: 1960
 Content-Type: application/json
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 
 {
   "search": "Use Cases",
@@ -902,7 +958,7 @@ Content-Length: 24
 Content-Type: text/plain
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 
 This is a test document.
 </code></pre>
@@ -915,7 +971,7 @@ Content-Length: 191
 Content-Type: application/json
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 
 {"id": "test", "data": "This is a test document.", "created": "2015-09-19T08:07:43Z", "modified": null, "tags": ["$type:text", "$subtype:plain", "$format:text"]}
 </code></pre>
@@ -930,7 +986,7 @@ Content-Length: 161
 Content-Type: application/json
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 
 {"id": "test", "data": "This is a test document.", "created": "2015-05-22T08:40:00Z", "modified": null, "tags": ["$type:text", "$subtype:plain", "$format:text"]}
 </code></pre>
@@ -955,7 +1011,7 @@ Content-Length: 187
 Content-Type: application/json
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 
 {"id": "test.json", "data": {"test": true}, "created": "2015-09-20T09:06:25Z", "modified": null, "tags": ["$type:application", "$subtype:json", "$format:text", "test1", "test2", "test3"]}
 </code></pre>
@@ -971,7 +1027,7 @@ HTTP/1.1 204 No Content
 Content-Length: 0
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.0
+Server: LiteStore/1.0.3
 </code></pre>
 
 <h2 id="Credits">Credits<a href="#document-top" title="Go to top"></a></h2>
@@ -989,7 +1045,7 @@ Server: LiteStore/1.0.0
 
   </div>
   <div id="footer">
-    <p><span class="copy"></span> Fabio Cevasco &ndash; October 27, 2015</p>
+    <p><span class="copy"></span> Fabio Cevasco &ndash; November 29, 2015</p>
     <p><span>Powered by</span> <a href="https://h3rald.com/hastyscribe"><span class="hastyscribe"></span></a></p>
   </div>
 </body>
