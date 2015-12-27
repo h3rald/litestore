@@ -29,13 +29,13 @@ if f != nil:
         else:
           discard
     of cfgError:
-      stderr.writeln("Configuration error.")
+      stderr.writeLine("Configuration error.")
       quit(1)
     else: 
       discard
   close(p)
 else:
-  stderr.writeln("Cannot process configuration file.")
+  stderr.writeLine("Cannot process configuration file.")
   quit(2)
 
 

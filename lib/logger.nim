@@ -14,7 +14,7 @@ proc currentTime*(plain = false): string =
 proc msg(logger: Logger, kind, message: string, params: varargs[string, `$`]) =
   let s = format(message, params)
   if kind == "WARNING":
-    stderr.writeln(currentTime(true) & " " & kind & ": " & s)
+    stderr.writeLine(currentTime(true) & " " & kind & ": " & s)
   else:
     echo currentTime(true), " ", kind, ": ", s
 

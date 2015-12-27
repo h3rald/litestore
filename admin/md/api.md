@@ -11,7 +11,7 @@ To access a LiteStore resource, use URLs composed in the following way:
 
 `http:<hostname>:<port>/v<version>/<resource>/<id>`
 
-Example: <http://localhost:9500/v1/docs/admin/index.html>
+Example: [localhost:9500/v1/docs/admin/index.html](http://localhost:9500/v1/docs/admin/index.html)
 
 > %note%
 > Remarks

@@ -153,7 +153,7 @@ proc addDocumentSystemTags*(store: Datastore, docid, contenttype: string) =
     store.db.exec(SQL_INSERT_TAG, tag, docid)
 
 proc destroyDocumentSystemTags*(store: Datastore, docid: string) = 
-  let n = store.db.execAffectedRows(SQL_DELETE_DOCUMENT_SYSTEM_TAGS, docid)
+  discard store.db.execAffectedRows(SQL_DELETE_DOCUMENT_SYSTEM_TAGS, docid)
 
 proc fail*(code: int, msg: string) =
   LOG.error(msg)
@@ -175,7 +175,7 @@ proc resError*(code: HttpCode, message: string, trace = ""): Response =
   result.content = """{"error":"$1"}""" % message
   result.headers = ctJsonHeader()
 
-proc resDocumentNotFound*(id): Response =
+proc resDocumentNotFound*(id: string): Response =
   resError(Http404, "Document '$1' not found." % id)
 
 proc eWarn*() =
