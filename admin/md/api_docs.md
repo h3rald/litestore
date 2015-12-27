@@ -246,7 +246,7 @@ Always retrieve document tags first before applying a patch, to know the order t
 > * It is currently only possible to change tags, not other parts of a document.
 
 ```
-$ curl -i -X PATCH 'http://localhost:9500/docs/test.json' --header "Content-Type:application/json" -d '[{"op":"add","path":"/tags/3","value":"test1"},{"op":"add","path":"/tags/4","value":"test2"},{"op":"add","path":"/tags/5","value":"test3"}]'
+$ curl -i -X PATCH 'http://localhost:9500/docs/test.json' --header "Content-Type:application/json" -d '[{"op":"add", "path":"/tags/3", "value":"test1"},{"op":"add", "path":"/tags/4", "value":"test2"},{"op":"add", "path":"/tags/5", "value":"test3"}]'
 HTTP/1.1 200 OK
 Content-Length: 187
 Content-Type: application/json

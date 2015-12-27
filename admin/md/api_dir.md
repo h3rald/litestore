@@ -1,8 +1,8 @@
-### info (LiteStore Information)
+### dir (LiteStore Directory)
 
 This resource can be queried to retrieve files within the served directory (specied via **-d**).
 
-#### OPTIONS info
+#### OPTIONS dir
 
 Returns the allowed HTTP verbs for this resource.
 
