@@ -17,7 +17,7 @@
     vm.image = false;
     vm.tags = [];
     try {
-      vm.ext = vm.id().match(/\.(.+)$/)[1];
+      vm.ext = vm.id().match(/\.([a-z0-9]+)$/i)[1];
     } catch(e) {
       vm.ext = "";
     }
