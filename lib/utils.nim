@@ -185,6 +185,24 @@ proc eWarn*() =
   LOG.warn(e.msg)
   LOG.debug(getStackTrace(e))
 
+proc validate*(req: Request, LS: LiteStore, resource: string, id: string, cb: proc(req: Request, LS: LiteStore, resource: string, id: string):Response): Response = 
+  if req.reqMethod == "POST" or req.reqMethod == "PUT" or req.reqMethod == "PATCH":
+    var ct =  ""
+    let body = req.body.strip
+    if body == "":
+      return resError(Http400, "Bad request: No content specified for document.")
+    if req.headers.hasKey("Content-Type"):
+      ct = req.headers["Content-Type"]
+      case ct:
+        of "application/json":
+          try:
+            discard body.parseJson()
+          except:
+            return resError(Http400, "Invalid JSON content - $1" % getCurrentExceptionMsg())
+        else:
+          discard
+  return cb(req, LS, resource, id)
+
 #  Created by Joshua Wilson on 27/05/14.
 #  Copyright (c) 2014 Joshua Wilson. All rights reserved.
 #  https://github.com/neozenith/sqlite-okapi-bm25

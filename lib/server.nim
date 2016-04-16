@@ -11,7 +11,8 @@ import
 import 
   types, 
   utils, 
-  api_v1
+  api_v1,
+  api_v2
 
 proc getReqInfo(req: Request): string =
   var url = req.url.path
@@ -27,22 +28,34 @@ proc handleCtrlC() {.noconv.} =
   quit()
 
 proc processApiUrl(req: Request, LS: LiteStore, info: ResourceInfo): Response = 
-  if info.version == "v1" and info.resource.match(peg"^docs / info$"):
-    return api_v1.route(req, LS, info.resource, info.id)
-  elif info.version == "v1" and info.resource.match(peg"^dir$"):
-    if LS.directory != nil:
-      return serveFile(req, LS, info.id)
+  if info.version == "v2":
+    if info.resource.match(peg"^docs / info$"):
+      return api_v2.route(req, LS, info.resource, info.id)
+    elif info.resource.match(peg"^dir$"):
+      if LS.directory != nil:
+        return api_v2.serveFile(req, LS, info.id)
+      else:
+        return resError(Http400, "Bad request - Not serving any directory." % info.version)
     else:
-      return resError(Http400, "Bad request - Not serving any directory." % info.version)
+      return resError(Http400, "Bad request - Invalid resource: $1" % info.resource)
+  elif info.version == "v1": 
+    if info.resource.match(peg"^docs / info$"):
+      return api_v1.route(req, LS, info.resource, info.id)
+    elif info.resource.match(peg"^dir$"):
+      if LS.directory != nil:
+        return api_v1.serveFile(req, LS, info.id)
+      else:
+        return resError(Http400, "Bad request - Not serving any directory." % info.version)
+    else:
+      return resError(Http400, "Bad request - Invalid resource: $1" % info.resource)
   else:
-    if info.version != "v1":
+    if info.version == "v1" or info.version == "v2":
       return resError(Http400, "Bad request - Invalid API version: $1" % info.version)
     else:
       if info.resource.decodeURL.strip == "":
         return resError(Http400, "Bad request - No resource specified." % info.resource)
       else:
         return resError(Http400, "Bad request - Invalid resource: $1" % info.resource)
-
 
 proc process(req: Request, LS: LiteStore): Response {.gcsafe.}=
   var matches = @["", "", ""]
@@ -52,7 +65,7 @@ proc process(req: Request, LS: LiteStore): Response {.gcsafe.}=
   try: 
     var info: ResourceInfo
     req.route peg"^\/?$":
-      info.version = "v1"
+      info.version = "v2"
       info.resource = "info"
       return req.processApiUrl(LS, info)
     req.route peg"^\/favicon.ico$":
@@ -61,7 +74,7 @@ proc process(req: Request, LS: LiteStore): Response {.gcsafe.}=
       result.headers = ctHeader("image/x-icon")
       return result
     req.route PEG_DEFAULT_URL:
-      info.version = "v1"
+      info.version = "v2"
       info.resource = matches[0]
       info.id = matches[1]
       return req.processApiUrl(LS, info)

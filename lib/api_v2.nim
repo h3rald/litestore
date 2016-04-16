@@ -18,6 +18,9 @@ import
 
 # Helper procs
 
+proc isFolder(id: string): bool =
+  return (id.len > 0 and id[id.len-1] == '/')
+
 proc orderByClause(clause: string): string =
   var matches = @["", ""]
   if clause.find(peg"{[-+ ]} {(id / created / modified)}", matches) != -1:
@@ -64,6 +67,24 @@ proc parseQueryOptions(querystring: string, options: var QueryOptions) =
   var fragments = querystring.split('&')
   for f in fragments:
     f.parseQueryOption(options)
+
+proc validate(req: Request, LS: LiteStore, resource: string, id: string, cb: proc(req: Request, LS: LiteStore, resource: string, id: string):Response): Response = 
+  if req.reqMethod == "POST" or req.reqMethod == "PUT" or req.reqMethod == "PATCH":
+    var ct =  ""
+    let body = req.body.strip
+    if body == "":
+      return resError(Http400, "Bad request: No content specified for document.")
+    if req.headers.hasKey("Content-Type"):
+      ct = req.headers["Content-Type"]
+      case ct:
+        of "application/json":
+          try:
+            discard body.parseJson()
+          except:
+            return resError(Http400, "Invalid JSON content - $1" % getCurrentExceptionMsg())
+        else:
+          discard
+  return cb(req, LS, resource, id)
 
 proc applyPatchOperation(tags: var seq[string], op: string, path: string, value: string): bool =
   var matches = @[""]
@@ -155,6 +176,8 @@ proc getRawDocuments(LS: LiteStore, options: QueryOptions = newQueryOptions()): 
     result = resError(Http404, "No documents found.")
   else:
     var content = newJObject()
+    if options.folder != "":
+      content["folder"] = %(options.folder)
     if options.search != "":
       content["search"] = %(options.search.decodeURL)
     if options.tags != "":
@@ -211,6 +234,8 @@ proc postDocument(LS: LiteStore, body: string, ct: string): Response =
     result = resError(Http500, "Unable to create document.")
 
 proc putDocument(LS: LiteStore, id: string, body: string, ct: string): Response =
+  if id.isFolder:
+    return resError(Http400, "Invalid ID '$1' (Document IDs cannot end with '/')." % id)
   let doc = LS.store.retrieveDocument(id)
   if doc.data == "":
     # Create a new document
@@ -293,7 +318,16 @@ proc options(req: Request, LS: LiteStore, resource: string, id = ""): Response =
       result.headers["Allow"] = "GET,OPTIONS"
       result.headers["Access-Control-Allow-Methods"] = "GET,OPTIONS"
     of "docs":
-      if id != "":
+      var folder: string
+      if id.isFolder:
+        folder = id
+      if folder != "":
+        result.code = Http200
+        result.content = ""
+        result.headers = TAB_HEADERS.newStringTable
+        result.headers["Allow"] = "HEAD,GET,OPTIONS"
+        result.headers["Access-Control-Allow-Methods"] = "HEAD,GET,OPTIONS"
+      elif id != "":
         result.code = Http200
         result.content = ""
         if LS.readonly:
@@ -322,9 +356,11 @@ proc options(req: Request, LS: LiteStore, resource: string, id = ""): Response =
 proc head(req: Request, LS: LiteStore, resource: string, id = ""): Response =
   var options = newQueryOptions()
   options.select = @["documents.id AS id", "created", "modified"]
+  if id.isFolder:
+    options.folder = id
   try:
     parseQueryOptions(req.url.query, options);
-    if id != "":
+    if id != "" and options.folder == "":
       result = LS.getRawDocument(id, options)
       result.content = ""
     else:
@@ -338,11 +374,13 @@ proc get(req: Request, LS: LiteStore, resource: string, id = ""): Response =
   case resource:
     of "docs":
       var options = newQueryOptions()
+      if id.isFolder:
+        options.folder = id
       if req.url.query.contains("contents=false"):
         options.select = @["documents.id AS id", "created", "modified"]
       try:
         parseQueryOptions(req.url.query, options);
-        if id != "":
+        if id != "" and options.folder == "":
           if req.url.query.contains("raw=true") or req.headers["Accept"] == "application/json":
             return LS.getRawDocument(id, options)
           else:
