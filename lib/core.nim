@@ -277,7 +277,11 @@ proc retrieveDocument*(store: Datastore, id: string, options: QueryOptions = new
 
 proc retrieveRawDocuments*(store: Datastore, options: var QueryOptions = newQueryOptions()): JsonNode =
   var select = prepareSelectDocumentsQuery(options)
-  var raw_documents = store.db.getAllRows(select.sql)
+  var raw_documents: seq[TRow]
+  if options.folder != "":
+    raw_documents = store.db.getAllRows(select.sql, options.folder & "%")
+  else:
+    raw_documents = store.db.getAllRows(select.sql)
   var documents = newSeq[JsonNode](0)
   for doc in raw_documents:
     documents.add store.prepareJsonDocument(doc, options.select)

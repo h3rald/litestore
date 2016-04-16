@@ -18,6 +18,9 @@ import
 
 # Helper procs
 
+proc isFolder(id: string): bool =
+  return (id.len > 0 and id[id.len-1] == '/')
+
 proc orderByClause(clause: string): string =
   var matches = @["", ""]
   if clause.find(peg"{[-+ ]} {(id / created / modified)}", matches) != -1:
@@ -173,6 +176,8 @@ proc getRawDocuments(LS: LiteStore, options: QueryOptions = newQueryOptions()): 
     result = resError(Http404, "No documents found.")
   else:
     var content = newJObject()
+    if options.folder != "":
+      content["folder"] = %(options.folder)
     if options.search != "":
       content["search"] = %(options.search.decodeURL)
     if options.tags != "":
@@ -311,7 +316,16 @@ proc options(req: Request, LS: LiteStore, resource: string, id = ""): Response =
       result.headers["Allow"] = "GET,OPTIONS"
       result.headers["Access-Control-Allow-Methods"] = "GET,OPTIONS"
     of "docs":
-      if id != "":
+      var folder: string
+      if id.isFolder:
+        folder = id
+      if folder != "":
+        result.code = Http200
+        result.content = ""
+        result.headers = TAB_HEADERS.newStringTable
+        result.headers["Allow"] = "HEAD,GET,OPTIONS"
+        result.headers["Access-Control-Allow-Methods"] = "HEAD,GET,OPTIONS"
+      elif id != "":
         result.code = Http200
         result.content = ""
         if LS.readonly:
@@ -340,9 +354,11 @@ proc options(req: Request, LS: LiteStore, resource: string, id = ""): Response =
 proc head(req: Request, LS: LiteStore, resource: string, id = ""): Response =
   var options = newQueryOptions()
   options.select = @["documents.id AS id", "created", "modified"]
+  if id.isFolder:
+    options.folder = id
   try:
     parseQueryOptions(req.url.query, options);
-    if id != "":
+    if id != "" and options.folder == "":
       result = LS.getRawDocument(id, options)
       result.content = ""
     else:
@@ -356,11 +372,13 @@ proc get(req: Request, LS: LiteStore, resource: string, id = ""): Response =
   case resource:
     of "docs":
       var options = newQueryOptions()
+      if id.isFolder:
+        options.folder = id
       if req.url.query.contains("contents=false"):
         options.select = @["documents.id AS id", "created", "modified"]
       try:
         parseQueryOptions(req.url.query, options);
-        if id != "":
+        if id != "" and options.folder == "":
           if req.url.query.contains("raw=true") or req.headers["Accept"] == "application/json":
             return LS.getRawDocument(id, options)
           else:

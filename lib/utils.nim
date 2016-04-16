@@ -61,6 +61,8 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
     result = result & " FROM documents WHERE 1=1 "
   if options.single:
     result = result & "AND id = ?"
+  if options.folder.len > 0:
+    result = result & "AND id LIKE ?"
   if options.tags.len > 0:
     var doc_id_col: string
     if options.search.len > 0 and options.select[0] != "COUNT(docid)":
