@@ -9,7 +9,7 @@ Returns the allowed HTTP verbs for this resource.
 ##### Example
 
 ```
-$ curl -i -X OPTIONS http://127.0.0.1:9500/v1/info
+$ curl -i -X OPTIONS http://127.0.0.1:9500/info
 HTTP/1.1 200 OK
 Content-Length: 0
 Access-Control-Allow-Methods: GET,OPTIONS
@@ -35,7 +35,7 @@ Returns the following server statistics:
 ##### Example
 
 ```
-$ curl -i http://127.0.0.1:9500/v1/info
+$ curl -i http://127.0.0.1:9500/info
 HTTP/1.1 200 OK
 Content-Length: 965
 Content-Type: application/json
@@ -44,7 +44,7 @@ Access-Control-Allow-Origin: *
 Server: LiteStore/1.0.3
 
 {
-  "version": "LiteStore v1.0.0",
+  "version": "LiteStore v1.1.0",
   "datastore_version": 1,
   "size": "5.76 MB",
   "read_only": false,

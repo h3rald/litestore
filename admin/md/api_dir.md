@@ -9,7 +9,7 @@ Returns the allowed HTTP verbs for this resource.
 ##### Example
 
 ```
-$ curl -i -X OPTIONS http://127.0.0.1:9500/v1/dir
+$ curl -i -X OPTIONS http://127.0.0.1:9500/dir
 HTTP/1.1 200 OK
 Content-Length: 0
 Access-Control-Allow-Methods: GET,OPTIONS
@@ -26,7 +26,7 @@ Returns the content of a file within the served directory (if it exists).
 ##### Example
 
 ```
-$ curl -i http://127.0.0.1:9500/v1/dir/test.txt
+$ curl -i http://127.0.0.1:9500/dir/test.txt
 HTTP/1.1 200 OK
 Content-Length: 25
 Content-Type: text/plain

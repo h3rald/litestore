@@ -39,7 +39,7 @@ Access-Control-Allow-Methods: HEAD,GET,OPTIONS,POST
 Allow: HEAD,GET,OPTIONS,POST
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.3
+Server: LiteStore/1.1.0
 ```
 
 #### OPTIONS docs/:id
@@ -50,9 +50,35 @@ Returns the allowed HTTP verbs for this resource.
 
 ```
 curl -i -X OPTIONS 'http://127.0.0.1:9500/docs/test' 
-HTTP/1.1 200 OK   
-Content-Length: 0  
-Allow: HEAD,GET,PUT,PATCH,DELETE,OPTIONS
+HTTP/1.1 200 OK
+Content-Length: 0
+Access-Control-Allow-Methods: HEAD,GET,OPTIONS
+Allow: HEAD,GET,OPTIONS
+Access-Control-Allow-Headers: Content-Type
+Access-Control-Allow-Origin: *
+Server: LiteStore/1.1.0
+```
+
+#### OPTIONS docs/:folder/
+
+> %note%
+> API v2 Required
+> 
+> This method has been introduced in version 2 of the LiteStore API.
+
+Returns the allowed HTTP verbs for this resource.
+
+##### Example
+
+```
+$ curl -i -X OPTIONS 'http://127.0.0.1:9500/docs/test/'
+HTTP/1.1 200 OK
+Content-Length: 0
+Access-Control-Allow-Methods: HEAD,GET,OPTIONS
+Allow: HEAD,GET,OPTIONS
+Access-Control-Allow-Headers: Content-Type
+Access-Control-Allow-Origin: *
+Server: LiteStore/1.1.0
 ```
 
 #### POST docs
@@ -77,6 +103,8 @@ Server: LiteStore/1.0.3
 
 Retrieves all headers related to the docs resource and no content (this is probably not that useful, but at least it should make REST purists happy).
 
+##### Example
+
 ```
 $ curl -i -X HEAD 'http://127.0.0.1:9500/docs'
 HTTP/1.1 200 OK
@@ -87,9 +115,27 @@ Access-Control-Allow-Origin: *
 Server: LiteStore/1.0.3
 ```
 
+#### HEAD docs/:folder/
+
+Retrieves all headers related to the a folder and no content. Useful to check whether a folder exists or not.
+
+##### Example
+
+```
+$ curl -i -X HEAD 'http://localhost:9500/docs/admin/images/'
+HTTP/1.1 200 OK
+Content-Length: 0
+Content-Type: application/json
+Access-Control-Allow-Headers: Content-Type
+Access-Control-Allow-Origin: *
+Server: LiteStore/1.1.0
+```
+
 #### HEAD docs/:id
 
 Retrieves all headers related to the a document and no content. Useful to check whether a document exists or not.
+
+##### Example
 
 ```
 $ curl -i -X HEAD 'http://127.0.0.1:9500/docs/test'
@@ -185,6 +231,62 @@ Server: LiteStore/1.0.3
 }
 ```
 
+#### GET docs/:folder/
+
+> %note%
+> API v2 Required
+> 
+> This method has been introduced in version 2 of the LiteStore API.
+
+Retrieves a list of documents in JSON format starting with the specified folder path (it must end with '/').
+
+> %tip%
+> Supported query options
+> 
+> The same query options of the **docs** resources are supported.
+
+##### Example
+
+```
+$ curl -i -X GET 'http://localhost:9500/docs/admin/images/?contents=false'
+HTTP/1.1 200 OK
+Content-Length: 2066
+Content-Type: application/json
+Access-Control-Allow-Headers: Content-Type
+Access-Control-Allow-Origin: *
+Server: LiteStore/1.1.0
+
+{
+  "folder": "admin/images/",
+  "total": 2,
+  "execution_time": 0.014684,
+  "results": [
+    {
+      "id": "admin/images/app_document.png",
+      "created": "2016-02-06T01:11:30Z",
+      "modified": null,
+      "tags": [
+        "$type:image",
+        "$subtype:png",
+        "$format:binary",
+        "$dir:admin"
+      ]
+    },
+    {
+      "id": "admin/images/app_guide.png",
+      "created": "2016-02-06T01:11:30Z",
+      "modified": null,
+      "tags": [
+        "$type:image",
+        "$subtype:png",
+        "$format:binary",
+        "$dir:admin"
+      ]
+    }
+  ]
+}
+```
+
 #### GET docs/:id
 
 Retrieves the specified document. By default the response is returned in the document's content type; however, it is possible to retrieve the raw document (including metadata) in JSON format by setting the **raw** query string option to true.
@@ -221,6 +323,8 @@ Server: LiteStore/1.0.3
 
 Updates an existing document or creates a new document with the specified ID.
 
+##### Example
+
 ```
 $ curl -i -X PUT -d 'This is a test document.' 'http://127.0.0.1:9500/docs/test' --header "Content-Type:text/plain"
 HTTP/1.1 201 Created
@@ -244,6 +348,8 @@ Always retrieve document tags first before applying a patch, to know the order t
 >
 > * Only **add**, **remove**, **replace** and **test** operations are supported.
 > * It is currently only possible to change tags, not other parts of a document.
+
+##### Example
 
 ```
 $ curl -i -X PATCH 'http://localhost:9500/docs/test.json' --header "Content-Type:application/json" -d '[{"op":"add", "path":"/tags/3", "value":"test1"},{"op":"add", "path":"/tags/4", "value":"test2"},{"op":"add", "path":"/tags/5", "value":"test3"}]'

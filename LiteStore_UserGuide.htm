@@ -215,16 +215,39 @@ pre code {
      <li><a href="#Example">Example</a></li>
     </ul>
     </li>
+    <li><a href="#OPTIONS.docs.:folder.">OPTIONS docs/:folder/</a>
+    <ul>
+     <li><a href="#Example">Example</a></li>
+    </ul>
+    </li>
     <li><a href="#POST.docs">POST docs</a>
     <ul>
      <li><a href="#Example">Example</a></li>
     </ul>
     </li>
-    <li><a href="#HEAD.docs">HEAD docs</a></li>
-    <li><a href="#HEAD.docs.:id">HEAD docs/:id</a></li>
+    <li><a href="#HEAD.docs">HEAD docs</a>
+    <ul>
+     <li><a href="#Example">Example</a></li>
+    </ul>
+    </li>
+    <li><a href="#HEAD.docs.:folder.">HEAD docs/:folder/</a>
+    <ul>
+     <li><a href="#Example">Example</a></li>
+    </ul>
+    </li>
+    <li><a href="#HEAD.docs.:id">HEAD docs/:id</a>
+    <ul>
+     <li><a href="#Example">Example</a></li>
+    </ul>
+    </li>
     <li><a href="#GET.docs">GET docs</a>
     <ul>
      <li><a href="#Query.String.Options">Query String Options</a></li>
+     <li><a href="#Example">Example</a></li>
+    </ul>
+    </li>
+    <li><a href="#GET.docs.:folder.">GET docs/:folder/</a>
+    <ul>
      <li><a href="#Example">Example</a></li>
     </ul>
     </li>
@@ -234,8 +257,16 @@ pre code {
      <li><a href="#Example:.raw.format">Example: raw format</a></li>
     </ul>
     </li>
-    <li><a href="#PUT.docs.:id">PUT docs/:id</a></li>
-    <li><a href="#PATCH.docs.:id">PATCH docs/:id</a></li>
+    <li><a href="#PUT.docs.:id">PUT docs/:id</a>
+    <ul>
+     <li><a href="#Example">Example</a></li>
+    </ul>
+    </li>
+    <li><a href="#PATCH.docs.:id">PATCH docs/:id</a>
+    <ul>
+     <li><a href="#Example">Example</a></li>
+    </ul>
+    </li>
     <li><a href="#DELETE.docs.:id">DELETE docs/:id</a>
     <ul>
      <li><a href="#Example">Example</a>
@@ -424,12 +455,12 @@ pre code {
 <p>The easiest way to get LiteStore is by downloading one of the prebuilt binaries from the [Github Release Page][release]:</p>
 
 <ul>
-<li><a href="https://github.com/h3rald/litestore/releases/download/v1.0.5litestore_v1.0.5_macosx_x64.zip">LiteStore for Mac OS X (x64)</a> &ndash; Compiled on OS X El Capitan (LLVM CLANG 7.0.0)</li>
-<li><a href="https://github.com/h3rald/litestore/releases/download/v1.0.5/litestore_v1.0.5_windows_x64.zip">LiteStore for Windows (x64)</a> &ndash; Cross-compiled on OS X El Capitan (MinGW-w64 GCC 4.8.2)</li>
-<li><a href="https://github.com/h3rald/litestore/releases/download/v1.0.5/litestore_v1.0.5_windows_x86.zip">LiteStore for Windows (x86)</a> &ndash; Cross-compiled on OS X El Capitan (MinGW-w64 GCC 4.8.2)</li>
-<li><a href="https://github.com/h3rald/litestore/releases/download/v1.0.5/litestore_v1.0.5_linux_x64.zip">LiteStore for Linux (x64)</a> &ndash; Cross-compiled on OS X El Capitan (GNU GCC 4.8.1)</li>
-<li><a href="https://github.com/h3rald/litestore/releases/download/v1.0.5/litestore_v1.0.5_linux_x86.zip">LiteStore for Linux (x86)</a> &ndash; Cross-compiled on OS X El Capitan (GNU GCC 4.8.1)</li>
-<li><a href="https://github.com/h3rald/litestore/releases/download/v1.0.5/litestore_v1.0.5_linux_arm.zip">LiteStore for Linux (ARM)</a> &ndash; Cross-compiled on OS X El Capitan (GNU GCC 4.8.2)</li>
+<li><a href="https://github.com/h3rald/litestore/releases/download/v1.1.0litestore_v1.1.0_macosx_x64.zip">LiteStore for Mac OS X (x64)</a> &ndash; Compiled on OS X El Capitan (LLVM CLANG 7.0.0)</li>
+<li><a href="https://github.com/h3rald/litestore/releases/download/v1.1.0/litestore_v1.1.0_windows_x64.zip">LiteStore for Windows (x64)</a> &ndash; Cross-compiled on OS X El Capitan (MinGW-w64 GCC 4.8.2)</li>
+<li><a href="https://github.com/h3rald/litestore/releases/download/v1.1.0/litestore_v1.1.0_windows_x86.zip">LiteStore for Windows (x86)</a> &ndash; Cross-compiled on OS X El Capitan (MinGW-w64 GCC 4.8.2)</li>
+<li><a href="https://github.com/h3rald/litestore/releases/download/v1.1.0/litestore_v1.1.0_linux_x64.zip">LiteStore for Linux (x64)</a> &ndash; Cross-compiled on OS X El Capitan (GNU GCC 4.8.1)</li>
+<li><a href="https://github.com/h3rald/litestore/releases/download/v1.1.0/litestore_v1.1.0_linux_x86.zip">LiteStore for Linux (x86)</a> &ndash; Cross-compiled on OS X El Capitan (GNU GCC 4.8.1)</li>
+<li><a href="https://github.com/h3rald/litestore/releases/download/v1.1.0/litestore_v1.1.0_linux_arm.zip">LiteStore for Linux (ARM)</a> &ndash; Cross-compiled on OS X El Capitan (GNU GCC 4.8.2)</li>
 </ul>
 
 
@@ -457,7 +488,7 @@ pre code {
 <p>To get the app up and running (assuming that you have the <span class="cmd">litestore</span> executable in your path):</p>
 
 <ol>
-<li>Download the default <a href="https://github.com/h3rald/litestore/releases/download/v1.0.5/data.db">data.db</a> file. This file is a LiteStore data store file containing the sample app.</li>
+<li>Download the default <a href="https://github.com/h3rald/litestore/releases/download/v1.1.0/data.db">data.db</a> file. This file is a LiteStore data store file containing the sample app.</li>
 <li>Go to the local directory in which you downloaded the <span class="cmd">data.db</span> file.</li>
 <li>Run <span class="cmd">litestore -s:data.db</span></li>
 <li>Go to <a href="http://localhost:9500/docs/admin/index.html">localhost:9500/docs/admin/index.html</a>.</li>
@@ -639,7 +670,7 @@ pre code {
 
 <p><code>http:&lt;hostname&gt;:&lt;port&gt;/v&lt;version&gt;/&lt;resource&gt;/&lt;id&gt;</code></p>
 
-<p>Example: <a href="http://localhost:9500/v1/docs/admin/index.html">localhost:9500/v1/docs/admin/index.html</a></p>
+<p>Example: <a href="http://localhost:9500/v2/docs/admin/index.html">localhost:9500/v2/docs/admin/index.html</a></p>
 
 <div class="note"><p>Remarks</p>
 
@@ -659,7 +690,7 @@ pre code {
 
 <h5 id="Example">Example<a href="#document-top" title="Go to top"></a></h5>
 
-<pre><code>$ curl -i -X OPTIONS http://127.0.0.1:9500/v1/info
+<pre><code>$ curl -i -X OPTIONS http://127.0.0.1:9500/info
 HTTP/1.1 200 OK
 Content-Length: 0
 Access-Control-Allow-Methods: GET,OPTIONS
@@ -687,7 +718,7 @@ Server: LiteStore/1.0.3
 
 <h5 id="Example">Example<a href="#document-top" title="Go to top"></a></h5>
 
-<pre><code>$ curl -i http://127.0.0.1:9500/v1/info
+<pre><code>$ curl -i http://127.0.0.1:9500/info
 HTTP/1.1 200 OK
 Content-Length: 965
 Content-Type: application/json
@@ -696,7 +727,7 @@ Access-Control-Allow-Origin: *
 Server: LiteStore/1.0.3
 
 {
-  "version": "LiteStore v1.0.0",
+  "version": "LiteStore v1.1.0",
   "datastore_version": 1,
   "size": "5.76 MB",
   "read_only": false,
@@ -735,7 +766,7 @@ Server: LiteStore/1.0.3
 
 <h5 id="Example">Example<a href="#document-top" title="Go to top"></a></h5>
 
-<pre><code>$ curl -i -X OPTIONS http://127.0.0.1:9500/v1/dir
+<pre><code>$ curl -i -X OPTIONS http://127.0.0.1:9500/dir
 HTTP/1.1 200 OK
 Content-Length: 0
 Access-Control-Allow-Methods: GET,OPTIONS
@@ -751,7 +782,7 @@ Server: LiteStore/1.0.0
 
 <h5 id="Example">Example<a href="#document-top" title="Go to top"></a></h5>
 
-<pre><code>$ curl -i http://127.0.0.1:9500/v1/dir/test.txt
+<pre><code>$ curl -i http://127.0.0.1:9500/dir/test.txt
 HTTP/1.1 200 OK
 Content-Length: 25
 Content-Type: text/plain
@@ -803,7 +834,7 @@ Access-Control-Allow-Methods: HEAD,GET,OPTIONS,POST
 Allow: HEAD,GET,OPTIONS,POST
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.3
+Server: LiteStore/1.1.0
 </code></pre>
 
 <h4 id="OPTIONS.docs.:id">OPTIONS docs/:id<a href="#document-top" title="Go to top"></a></h4>
@@ -813,9 +844,33 @@ Server: LiteStore/1.0.3
 <h5 id="Example">Example<a href="#document-top" title="Go to top"></a></h5>
 
 <pre><code>curl -i -X OPTIONS 'http://127.0.0.1:9500/docs/test' 
-HTTP/1.1 200 OK   
-Content-Length: 0  
-Allow: HEAD,GET,PUT,PATCH,DELETE,OPTIONS
+HTTP/1.1 200 OK
+Content-Length: 0
+Access-Control-Allow-Methods: HEAD,GET,OPTIONS
+Allow: HEAD,GET,OPTIONS
+Access-Control-Allow-Headers: Content-Type
+Access-Control-Allow-Origin: *
+Server: LiteStore/1.1.0
+</code></pre>
+
+<h4 id="OPTIONS.docs.:folder.">OPTIONS docs/:folder/<a href="#document-top" title="Go to top"></a></h4>
+
+<div class="note"><p>API v2 Required</p>
+
+<p>This method has been introduced in version 2 of the LiteStore API.</p></div>
+
+<p>Returns the allowed HTTP verbs for this resource.</p>
+
+<h5 id="Example">Example<a href="#document-top" title="Go to top"></a></h5>
+
+<pre><code>$ curl -i -X OPTIONS 'http://127.0.0.1:9500/docs/test/'
+HTTP/1.1 200 OK
+Content-Length: 0
+Access-Control-Allow-Methods: HEAD,GET,OPTIONS
+Allow: HEAD,GET,OPTIONS
+Access-Control-Allow-Headers: Content-Type
+Access-Control-Allow-Origin: *
+Server: LiteStore/1.1.0
 </code></pre>
 
 <h4 id="POST.docs">POST docs<a href="#document-top" title="Go to top"></a></h4>
@@ -839,6 +894,8 @@ Server: LiteStore/1.0.3
 
 <p>Retrieves all headers related to the docs resource and no content (this is probably not that useful, but at least it should make REST purists happy).</p>
 
+<h5 id="Example">Example<a href="#document-top" title="Go to top"></a></h5>
+
 <pre><code>$ curl -i -X HEAD 'http://127.0.0.1:9500/docs'
 HTTP/1.1 200 OK
 Content-Length: 0
@@ -848,9 +905,26 @@ Access-Control-Allow-Origin: *
 Server: LiteStore/1.0.3
 </code></pre>
 
+<h4 id="HEAD.docs.:folder.">HEAD docs/:folder/<a href="#document-top" title="Go to top"></a></h4>
+
+<p>Retrieves all headers related to the a folder and no content. Useful to check whether a folder exists or not.</p>
+
+<h5 id="Example">Example<a href="#document-top" title="Go to top"></a></h5>
+
+<pre><code>$ curl -i -X HEAD 'http://localhost:9500/docs/admin/images/'
+HTTP/1.1 200 OK
+Content-Length: 0
+Content-Type: application/json
+Access-Control-Allow-Headers: Content-Type
+Access-Control-Allow-Origin: *
+Server: LiteStore/1.1.0
+</code></pre>
+
 <h4 id="HEAD.docs.:id">HEAD docs/:id<a href="#document-top" title="Go to top"></a></h4>
 
 <p>Retrieves all headers related to the a document and no content. Useful to check whether a document exists or not.</p>
+
+<h5 id="Example">Example<a href="#document-top" title="Go to top"></a></h5>
 
 <pre><code>$ curl -i -X HEAD 'http://127.0.0.1:9500/docs/test'
 HTTP/1.1 200 OK
@@ -946,6 +1020,59 @@ Server: LiteStore/1.0.3
 }
 </code></pre>
 
+<h4 id="GET.docs.:folder.">GET docs/:folder/<a href="#document-top" title="Go to top"></a></h4>
+
+<div class="note"><p>API v2 Required</p>
+
+<p>This method has been introduced in version 2 of the LiteStore API.</p></div>
+
+<p>Retrieves a list of documents in JSON format starting with the specified folder path (it must end with &lsquo;/&rsquo;).</p>
+
+<div class="tip"><p>Supported query options</p>
+
+<p>The same query options of the <strong>docs</strong> resources are supported.</p></div>
+
+<h5 id="Example">Example<a href="#document-top" title="Go to top"></a></h5>
+
+<pre><code>$ curl -i -X GET 'http://localhost:9500/docs/admin/images/?contents=false'
+HTTP/1.1 200 OK
+Content-Length: 2066
+Content-Type: application/json
+Access-Control-Allow-Headers: Content-Type
+Access-Control-Allow-Origin: *
+Server: LiteStore/1.1.0
+
+{
+  "folder": "admin/images/",
+  "total": 2,
+  "execution_time": 0.014684,
+  "results": [
+    {
+      "id": "admin/images/app_document.png",
+      "created": "2016-02-06T01:11:30Z",
+      "modified": null,
+      "tags": [
+        "$type:image",
+        "$subtype:png",
+        "$format:binary",
+        "$dir:admin"
+      ]
+    },
+    {
+      "id": "admin/images/app_guide.png",
+      "created": "2016-02-06T01:11:30Z",
+      "modified": null,
+      "tags": [
+        "$type:image",
+        "$subtype:png",
+        "$format:binary",
+        "$dir:admin"
+      ]
+    }
+  ]
+}
+</code></pre>
+
 <h4 id="GET.docs.:id">GET docs/:id<a href="#document-top" title="Go to top"></a></h4>
 
 <p>Retrieves the specified document. By default the response is returned in the document&rsquo;s content type; however, it is possible to retrieve the raw document (including metadata) in JSON format by setting the <strong>raw</strong> query string option to true.</p>
@@ -980,6 +1107,8 @@ Server: LiteStore/1.0.3
 
 <p>Updates an existing document or creates a new document with the specified ID.</p>
 
+<h5 id="Example">Example<a href="#document-top" title="Go to top"></a></h5>
+
 <pre><code>$ curl -i -X PUT -d 'This is a test document.' 'http://127.0.0.1:9500/docs/test' --header "Content-Type:text/plain"
 HTTP/1.1 201 Created
 Content-Length: 161
@@ -1004,6 +1133,8 @@ Server: LiteStore/1.0.3
 <li>It is currently only possible to change tags, not other parts of a document.</li>
 </ul>
 </div>
+
+<h5 id="Example">Example<a href="#document-top" title="Go to top"></a></h5>
 
 <pre><code>$ curl -i -X PATCH 'http://localhost:9500/docs/test.json' --header "Content-Type:application/json" -d '[{"op":"add", "path":"/tags/3", "value":"test1"},{"op":"add", "path":"/tags/4", "value":"test2"},{"op":"add", "path":"/tags/5", "value":"test3"}]'
 HTTP/1.1 200 OK
@@ -1045,7 +1176,7 @@ Server: LiteStore/1.0.3
 
   </div>
   <div id="footer">
-    <p><span class="copy"></span> Fabio Cevasco &ndash; February 6, 2016</p>
+    <p><span class="copy"></span> Fabio Cevasco &ndash; April 17, 2016</p>
     <p><span>Powered by</span> <a href="https://h3rald.com/hastyscribe"><span class="hastyscribe"></span></a></p>
   </div>
 </body>
