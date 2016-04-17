@@ -176,6 +176,8 @@ proc createDocument*(store: Datastore,  id="", rawdata = "", contenttype = "text
   var data = rawdata
   if id == "":
     id = $genOid()
+  elif id.isFolder:
+    id = id & $genOid()
   # Store document
   try:
     LOG.debug("Creating document '$1'" % id)

@@ -18,9 +18,6 @@ import
 
 # Helper procs
 
-proc isFolder(id: string): bool =
-  return (id.len > 0 and id[id.len-1] == '/')
-
 proc orderByClause(clause: string): string =
   var matches = @["", ""]
   if clause.find(peg"{[-+ ]} {(id / created / modified)}", matches) != -1:
@@ -221,9 +218,11 @@ proc getInfo(LS: LiteStore): Response =
   result.content = content.pretty
   result.code = Http200
 
-proc postDocument(LS: LiteStore, body: string, ct: string): Response =
+proc postDocument(LS: LiteStore, body: string, ct: string, folder=""): Response =
+  if not folder.isFolder:
+    return resError(Http400, "Invalid folder specified when creating document: $folder" % folder) 
   try:
-    var doc = LS.store.createDocument("", body, ct)
+    var doc = LS.store.createDocument(folder, body, ct)
     if doc != "":
       result.headers = ctJsonHeader()
       result.content = doc
@@ -321,12 +320,17 @@ proc options(req: Request, LS: LiteStore, resource: string, id = ""): Response =
       var folder: string
       if id.isFolder:
         folder = id
-      if folder != "":
+      if not folder.isNil:
         result.code = Http200
         result.content = ""
-        result.headers = TAB_HEADERS.newStringTable
-        result.headers["Allow"] = "HEAD,GET,OPTIONS"
-        result.headers["Access-Control-Allow-Methods"] = "HEAD,GET,OPTIONS"
+        if LS.readonly:
+          result.headers = TAB_HEADERS.newStringTable
+          result.headers["Allow"] = "HEAD,GET,OPTIONS"
+          result.headers["Access-Control-Allow-Methods"] = "HEAD,GET,OPTIONS"
+        else:
+          result.headers = TAB_HEADERS.newStringTable
+          result.headers["Allow"] = "HEAD,GET,OPTIONS,POST,PUT"
+          result.headers["Access-Control-Allow-Methods"] = "HEAD,GET,OPTIONS,POST,PUT"
       elif id != "":
         result.code = Http200
         result.content = ""
@@ -398,13 +402,10 @@ proc get(req: Request, LS: LiteStore, resource: string, id = ""): Response =
 
 
 proc post(req: Request, LS: LiteStore, resource: string, id = ""): Response = 
-  if id == "":
-    var ct = "text/plain"
-    if req.headers.hasKey("Content-Type"):
-      ct = req.headers["Content-Type"]
-    return LS.postDocument(req.body.strip, ct)
-  else:
-    return resError(Http400, "Bad request: document ID cannot be specified in POST requests.")
+  var ct = "text/plain"
+  if req.headers.hasKey("Content-Type"):
+    ct = req.headers["Content-Type"]
+  return LS.postDocument(req.body.strip, ct, id)
 
 proc put(req: Request, LS: LiteStore, resource: string, id = ""): Response = 
   if id != "":

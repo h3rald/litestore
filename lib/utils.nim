@@ -15,6 +15,9 @@ import
   contenttypes, 
   logger
 
+proc isFolder*(id: string): bool =
+  return (id.len > 0 and id[id.len-1] == '/')
+
 proc dbQuote*(s: string): string =
   result = "'"
   for c in items(s):

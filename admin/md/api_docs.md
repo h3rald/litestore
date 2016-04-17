@@ -74,7 +74,7 @@ Returns the allowed HTTP verbs for this resource.
 $ curl -i -X OPTIONS 'http://127.0.0.1:9500/docs/test/'
 HTTP/1.1 200 OK
 Content-Length: 0
-Access-Control-Allow-Methods: HEAD,GET,OPTIONS
+Access-Control-Allow-Methods: HEAD,GET,OPTIONS,POST
 Allow: HEAD,GET,OPTIONS
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
@@ -97,6 +97,24 @@ Access-Control-Allow-Origin: *
 Server: LiteStore/1.0.3
 
 {"id": "555f93e82190e77500000000", "data": "A document with a randomly-generated ID.", "created": "2015-05-22T08:39:04Z", "modified": null, "tags": ["$type:text", "$subtype:plain", "$format:text"]}
+```
+
+#### POST docs/:folder/
+
+Creates a new document with a randomly-generated ID under the specified folder path.
+
+##### Example
+
+```
+$ curl -i -X POST -d 'A document with a randomly-generated ID.' 'http://127.0.0.1:9500/docs/test/' --header "Content-Type:text/plain"
+HTTP/1.1 201 Created
+Content-Length: 197
+Content-Type: application/json
+Access-Control-Allow-Headers: Content-Type
+Access-Control-Allow-Origin: *
+Server: LiteStore/1.0.3
+
+{"id": "test/555f93e82230f77500000000", "data": "A document with a randomly-generated ID.", "created": "2015-05-22T08:39:04Z", "modified": null, "tags": ["$type:text", "$subtype:plain", "$format:text"]}
 ```
 
 #### HEAD docs
