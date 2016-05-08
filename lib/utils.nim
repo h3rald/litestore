@@ -64,14 +64,15 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
     result = result & " FROM documents WHERE 1=1 "
   if options.single:
     result = result & "AND id = ?"
-  if options.folder.len > 0:
-    result = result & "AND id LIKE ?"
-  if options.tags.len > 0:
-    var doc_id_col: string
+  var doc_id_col: string
+  if options.tags.len > 0 or options.folder.len > 0:
     if options.search.len > 0 and options.select[0] != "COUNT(docid)":
       doc_id_col = "documents.id"
     else:
       doc_id_col = "id"
+  if options.folder.len > 0:
+    result = result & "AND " & doc_id_col & " LIKE ? "
+  if options.tags.len > 0:
     result = result & options.tags.selectDocumentsByTags(doc_id_col)
   if options.search.len > 0:
     result = result & "AND searchdata MATCH '" & options.search.replace("'", "''") & "' "
