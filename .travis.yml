@@ -5,8 +5,7 @@ env:
   - BRANCH=master
   - BRANCH=devel
 compiler:
-  # Build and test using both gcc and clang
-  - gcc
+  #- gcc
   - clang
 matrix:
   allow_failures:
@@ -37,8 +36,7 @@ install:
 before_script:
     - export PATH="nim-$BRANCH/bin${PATH:+:$PATH}"
 script:
-    # Replace uppercase strings!
-    - nim c --cc:$CC --verbosity:0 -r litestore.nim
+    - nim c --cc:$CC --verbosity:0 litestore.nim
     # Optional: build docs.
     #- nim doc --docSeeSrcUrl:https://github.com/h3rald/litestore/blob/master --project litestore.nim
 cache:
