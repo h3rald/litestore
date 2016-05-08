@@ -137,7 +137,8 @@ proc prepareJsonDocument*(store:Datastore, doc: TRow, cols:seq[string]): JsonNod
 
 proc toPlainText*(s: string): string =
   var tags = peg"""'<' [^>]+ '>'"""
-  return s.replace(tags)
+  var special_chars = peg"""\*\*+ / \_\_+ / \-\-+ / \#\#+ / \+\++ / \~\~+ / \`\`+ """
+  return s.replace(tags).replace(special_chars)
 
 proc checkIfBinary*(binary:int, contenttype:string): int =
   if binary == -1 and contenttype.isBinary:
