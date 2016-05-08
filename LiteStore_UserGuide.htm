@@ -225,6 +225,11 @@ pre code {
      <li><a href="#Example">Example</a></li>
     </ul>
     </li>
+    <li><a href="#POST.docs.:folder.">POST docs/:folder/</a>
+    <ul>
+     <li><a href="#Example">Example</a></li>
+    </ul>
+    </li>
     <li><a href="#HEAD.docs">HEAD docs</a>
     <ul>
      <li><a href="#Example">Example</a></li>
@@ -866,7 +871,7 @@ Server: LiteStore/1.1.0
 <pre><code>$ curl -i -X OPTIONS 'http://127.0.0.1:9500/docs/test/'
 HTTP/1.1 200 OK
 Content-Length: 0
-Access-Control-Allow-Methods: HEAD,GET,OPTIONS
+Access-Control-Allow-Methods: HEAD,GET,OPTIONS,POST
 Allow: HEAD,GET,OPTIONS
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
@@ -888,6 +893,23 @@ Access-Control-Allow-Origin: *
 Server: LiteStore/1.0.3
 
 {"id": "555f93e82190e77500000000", "data": "A document with a randomly-generated ID.", "created": "2015-05-22T08:39:04Z", "modified": null, "tags": ["$type:text", "$subtype:plain", "$format:text"]}
+</code></pre>
+
+<h4 id="POST.docs.:folder.">POST docs/:folder/<a href="#document-top" title="Go to top"></a></h4>
+
+<p>Creates a new document with a randomly-generated ID under the specified folder path.</p>
+
+<h5 id="Example">Example<a href="#document-top" title="Go to top"></a></h5>
+
+<pre><code>$ curl -i -X POST -d 'A document with a randomly-generated ID.' 'http://127.0.0.1:9500/docs/test/' --header "Content-Type:text/plain"
+HTTP/1.1 201 Created
+Content-Length: 197
+Content-Type: application/json
+Access-Control-Allow-Headers: Content-Type
+Access-Control-Allow-Origin: *
+Server: LiteStore/1.0.3
+
+{"id": "test/555f93e82230f77500000000", "data": "A document with a randomly-generated ID.", "created": "2015-05-22T08:39:04Z", "modified": null, "tags": ["$type:text", "$subtype:plain", "$format:text"]}
 </code></pre>
 
 <h4 id="HEAD.docs">HEAD docs<a href="#document-top" title="Go to top"></a></h4>
@@ -948,7 +970,7 @@ Server: LiteStore/1.0.3
 <li><strong>tags</strong> &ndash; Retrieve only documents with matching tag(s). Example: <code>http://127.0.0.1:9500/docs/?tags=tag1,tag2</code></li>
 <li><strong>limit</strong> &ndash; Retrieve only the first <em>n</em> results. Example: <code>http://127.0.0.1:9500/docs/?limit=5</code></li>
 <li><strong>offset</strong> &ndash; Skip the first <em>n</em> results. Example: <code>http://127.0.0.1:9500/docs/?offset=5</code></li>
-<li><strong>sort</strong> &ndash; Sort by <strong>created</strong>, <strong>modified</strong>, or <strong>id</strong>. Example: <code>http://127.0.0.1:9500/docs/?sort=id</code></li>
+<li><strong>sort</strong> &ndash; Sort by <strong>created</strong>, <strong>modified</strong>, and/or <strong>id</strong> (prepend <strong>-</strong> for DESC and <strong>+</strong> for ASC). Example: <code>http://127.0.0.1:9500/docs/?sort=-modified,-created</code></li>
 <li><strong>contents</strong> &ndash; If set to <strong>false</strong>, do not retrieve document data. Example: <code>http://127.0.0.1:9500/docs/?contents=false</code></li>
 </ul>
 
@@ -1176,7 +1198,7 @@ Server: LiteStore/1.0.3
 
   </div>
   <div id="footer">
-    <p><span class="copy"></span> Fabio Cevasco &ndash; April 17, 2016</p>
+    <p><span class="copy"></span> Fabio Cevasco &ndash; May 8, 2016</p>
     <p><span>Powered by</span> <a href="https://h3rald.com/hastyscribe"><span class="hastyscribe"></span></a></p>
   </div>
 </body>

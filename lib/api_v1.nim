@@ -18,15 +18,17 @@ import
 
 # Helper procs
 
-proc orderByClause(clause: string): string =
-  var matches = @["", ""]
-  if clause.find(peg"{[-+ ]} {(id / created / modified)}", matches) != -1:
-    if matches[0] == "-":
-      return "$1 DESC" % matches[1]
-    else:
-      return "$1 ASC" % matches[1]
-  else:
-    return ""
+proc orderByClauses(str: string): string =
+  var clauses = newSeq[string]()
+  var fragments = str.split(",")
+  for f in fragments:
+    var matches = @["", ""]
+    if f.find(peg"{[-+ ]} {(id / created / modified)}", matches) != -1:
+      if matches[0] == "-":
+        clauses.add("$1 DESC" % matches[1])
+      else:
+        clauses.add("$1 ASC" % matches[1])
+  return clauses.join(", ")
 
 proc parseQueryOption(fragment: string, options: var QueryOptions) =
   var pair = fragment.split('=')
@@ -52,7 +54,7 @@ proc parseQueryOption(fragment: string, options: var QueryOptions) =
       except:
         raise newException(EInvalidRequest, "Invalid offset value: $1" % getCurrentExceptionMsg())
     of "sort":
-      let orderby = pair[1].orderByClause()
+      let orderby = pair[1].orderByClauses()
       if orderby != "":
         options.orderby = orderby
       else:

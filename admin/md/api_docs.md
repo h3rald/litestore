@@ -177,7 +177,7 @@ The following query string options are supported:
 * **tags** &ndash; Retrieve only documents with matching tag(s). Example: `http://127.0.0.1:9500/docs/?tags=tag1,tag2`
 * **limit** &ndash; Retrieve only the first _n_ results. Example: `http://127.0.0.1:9500/docs/?limit=5`
 * **offset** &ndash; Skip the first _n_ results. Example: `http://127.0.0.1:9500/docs/?offset=5`
-* **sort** &ndash; Sort by **created**, **modified**, or **id**. Example: `http://127.0.0.1:9500/docs/?sort=id`
+* **sort** &ndash; Sort by **created**, **modified**, and/or **id** (prepend **-** for DESC and **+** for ASC). Example: `http://127.0.0.1:9500/docs/?sort=-modified,-created`
 * **contents** &ndash; If set to **false**, do not retrieve document data. Example: `http://127.0.0.1:9500/docs/?contents=false`
 
 > %tip%
