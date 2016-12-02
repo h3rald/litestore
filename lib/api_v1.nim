@@ -396,7 +396,7 @@ proc serveFile*(req: Request, LS: LiteStore, id: string): Response =
   var reqMethod = req.reqMethod
   if req.headers.hasKey("X-HTTP-Method-Override"):
     reqMethod = req.headers["X-HTTP-Method-Override"]
-  case reqMethod.toUpper:
+  case reqMethod.toUpperAscii:
     of "OPTIONS":
       return validate(req, LS, "dir", id, options)
     of "GET":
@@ -421,7 +421,7 @@ proc route*(req: Request, LS: LiteStore, resource = "docs", id = ""): Response =
   var reqMethod = req.reqMethod
   if req.headers.hasKey("X-HTTP-Method-Override"):
     reqMethod = req.headers["X-HTTP-Method-Override"]
-  case reqMethod.toUpper:
+  case reqMethod.toUpperAscii:
     of "POST":
       if LS.readonly:
         return resError(Http405, "Method not allowed: $1" % req.reqMethod) 

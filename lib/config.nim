@@ -4,7 +4,7 @@ import
   strutils
 
 const
-  cfgfile   = "litestore.nimble".slurp
+  cfgfile   = "../litestore.nimble".slurp
 
 var
   file*     = "data.db"
@@ -16,7 +16,7 @@ var
 
 if f != nil:
   var p: CfgParser
-  open(p, f, "litestore.nimble")
+  open(p, f, "../litestore.nimble")
   while true:
     var e = next(p)
     case e.kind

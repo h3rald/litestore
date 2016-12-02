@@ -197,7 +197,7 @@ proc processClient(client: AsyncSocket, address: string,
     if nMethod == "post" or nMethod == "put" or nMethod == "patch":
       # Check for Expect header
       if request.headers.hasKey("Expect"):
-        if request.headers["Expect"].toLower == "100-continue":
+        if request.headers["Expect"].toLowerAscii == "100-continue":
           await client.sendStatus("100 Continue")
         else:
           await client.sendStatus("417 Expectation Failed")

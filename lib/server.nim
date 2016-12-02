@@ -59,7 +59,7 @@ proc processApiUrl(req: Request, LS: LiteStore, info: ResourceInfo): Response =
 
 proc process(req: Request, LS: LiteStore): Response {.gcsafe.}=
   var matches = @["", "", ""]
-  template route(req, peg: expr, op: stmt): stmt {.immediate.}=
+  template route(req: Request, peg: Peg, op: untyped): untyped =
     if req.url.path.find(peg, matches) != -1:
       op
   try: 

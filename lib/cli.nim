@@ -8,7 +8,7 @@ import
   types,
   utils
 
-const favicon = "admin/favicon.ico".slurp
+const favicon = "../admin/favicon.ico".slurp
 
 var 
   operation = opRun
