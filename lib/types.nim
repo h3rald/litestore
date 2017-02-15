@@ -17,7 +17,7 @@ type
   EInvalidRequest* = object of Exception
   uarray* {.unchecked.} [T] = array[0..0, T] 
   Datastore* = object
-    db*: TDbConn
+    db*: DbConn
     path*: string
     mount*: string
   QueryOptions* = object

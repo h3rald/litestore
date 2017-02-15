@@ -97,7 +97,7 @@ proc prepareSelectTagsQuery*(options: QueryOptions): string =
     result = result & "LIMIT " & $options.limit & " "
   LOG.debug(result.replace("$", "$$"))
 
-proc prepareJsonDocument*(store:Datastore, doc: TRow, cols:seq[string]): JsonNode =
+proc prepareJsonDocument*(store:Datastore, doc: Row, cols:seq[string]): JsonNode =
   var raw_tags = store.db.getAllRows(SQL_SELECT_DOCUMENT_TAGS, doc[0])
   var tags = newSeq[JsonNode](0)
   for tag in raw_tags:

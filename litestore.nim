@@ -20,7 +20,7 @@ import
 from asyncdispatch import runForever
 
 {.compile: "vendor/sqlite/libsqlite3.c".}
-{.passC: "-DSQLITE_ENABLE_FTS3=1 -DSQLITE_ENABLE_FTS3_PARENTHESIS".}
+{.passC: "-DSQLITE_ENABLE_FTS3=1 -DSQLITE_ENABLE_FTS3_PARENTHESIS -DSQLITE_ENABLE_JSON1".}
 
 when isMainModule:
 
