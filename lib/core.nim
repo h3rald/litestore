@@ -21,13 +21,13 @@ import
 
 var LS_TRANSACTION = false
 
-proc createIndexes(db: TDbConn) =
+proc createIndexes(db: DbConn) =
   db.exec SQL_CREATE_INDEX_DOCUMENTS_DOCID
   db.exec SQL_CREATE_INDEX_DOCUMENTS_ID
   db.exec SQL_CREATE_INDEX_TAGS_TAG_ID
   db.exec SQL_CREATE_INDEX_TAGS_DOCUMENT_ID
 
-proc dropIndexes(db: TDbConn) = 
+proc dropIndexes(db: DbConn) = 
   db.exec SQL_DROP_INDEX_DOCUMENTS_DOCID
   db.exec SQL_DROP_INDEX_DOCUMENTS_ID
   db.exec SQL_DROP_INDEX_TAGS_TAG_ID
@@ -279,7 +279,7 @@ proc retrieveDocument*(store: Datastore, id: string, options: QueryOptions = new
 
 proc retrieveRawDocuments*(store: Datastore, options: var QueryOptions = newQueryOptions()): JsonNode =
   var select = prepareSelectDocumentsQuery(options)
-  var raw_documents: seq[TRow]
+  var raw_documents: seq[Row]
   if options.folder != "":
     raw_documents = store.db.getAllRows(select.sql, options.folder & "%")
   else:

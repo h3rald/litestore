@@ -5,6 +5,7 @@ author        = "Fabio Cevasco"
 description   = "Self-contained, lightweight, RESTful document store."
 license       = "MIT"
 bin           = "litestore"
+skipFiles     = @["nakefile.nim"]
 
 [Deps]
-requires: "nimrod >= 0.13.0"
+requires: "nimrod >= 0.17.2"
