@@ -1,5 +1,5 @@
 import 
-  x_asynchttpserver,
+  asynchttpserver,
   asyncdispatch, 
   times, 
   strutils, 
@@ -14,20 +14,23 @@ import
   api_v1,
   api_v2
 
-proc getReqInfo(req: Request): string =
+export 
+  api_v2
+
+proc getReqInfo(req: LSRequest): string =
   var url = req.url.path
   if req.url.anchor != "":
     url = url & "#" & req.url.anchor
   if req.url.query != "":
     url = url & "?" & req.url.query
-  return req.hostname & " " & req.reqMethod & " " & url
+  return req.hostname & " " & $req.reqMethod & " " & url
 
 proc handleCtrlC() {.noconv.} =
   echo ""
   LOG.info("Exiting...")
   quit()
 
-proc processApiUrl(req: Request, LS: LiteStore, info: ResourceInfo): Response = 
+proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSResponse = 
   if info.version == "v2":
     if info.resource.match(peg"^docs / info$"):
       return api_v2.route(req, LS, info.resource, info.id)
@@ -57,9 +60,9 @@ proc processApiUrl(req: Request, LS: LiteStore, info: ResourceInfo): Response =
       else:
         return resError(Http400, "Bad request - Invalid resource: $1" % info.resource)
 
-proc process(req: Request, LS: LiteStore): Response {.gcsafe.}=
+proc process(req: LSRequest, LS: LiteStore): LSResponse {.gcsafe.}=
   var matches = @["", "", ""]
-  template route(req: Request, peg: Peg, op: untyped): untyped =
+  template route(req: LSRequest, peg: Peg, op: untyped): untyped =
     if req.url.path.find(peg, matches) != -1:
       op
   try: 
@@ -87,7 +90,7 @@ proc process(req: Request, LS: LiteStore): Response {.gcsafe.}=
   except EInvalidRequest:
     let e = (ref EInvalidRequest)(getCurrentException())
     let trace = e.getStackTrace()
-    return resError(Http400, "Bad Request: $1" % getCurrentExceptionMsg(), trace)
+    return resError(Http400, "Bad LSRequest: $1" % getCurrentExceptionMsg(), trace)
   except:
     let e = getCurrentException()
     let trace = e.getStackTrace()
@@ -97,10 +100,11 @@ setControlCHook(handleCtrlC)
 
 proc serve*(LS: LiteStore) =
   var server = newAsyncHttpServer()
-  proc handleHttpRequest(req: Request): Future[void] {.async, gcsafe, closure.} =
+  proc handleHttpRequest(req: LSRequest): Future[void] {.async, gcsafe, closure.} =
     LOG.info(getReqInfo(req).replace("$", "$$"))
     let res = req.process(LS)
-    await req.respond(res.code, res.content, res.headers)
+    let areq = asynchttpserver.Request(req)
+    await areq.respond(res.code, res.content, res.headers)
   echo(LS.appname & " v" & LS.appversion & " started on " & LS.address & ":" & $LS.port & ".")
   if LS.mount:
     echo("Mirroring datastore changes to: " & LS.directory)

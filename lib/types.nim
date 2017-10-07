@@ -1,6 +1,6 @@
 import 
   x_db_sqlite, 
-  x_asynchttpserver, 
+  asynchttpserver, 
   pegs, 
   strtabs
 import
@@ -62,10 +62,11 @@ type
     appversion*: string
     favicon*:string
     loglevel*:string
-  Response* = tuple[
+  LSRequest* = asynchttpserver.Request
+  LSResponse* = tuple[
     code: HttpCode,
     content: string,
-    headers: StringTableRef]
+    headers: HttpHeaders]
   ResourceInfo* = tuple[
     resource: string,
     id: string,

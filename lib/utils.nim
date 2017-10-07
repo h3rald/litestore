@@ -1,7 +1,7 @@
 import 
   x_sqlite3,
   x_db_sqlite, 
-  x_asynchttpserver, 
+  asynchttpserver, 
   json,
   strutils, 
   pegs, 
@@ -166,15 +166,15 @@ proc fail*(code: int, msg: string) =
   LOG.error(msg)
   quit(code)
 
-proc ctHeader*(ct: string): StringTableRef =
-  var h = TAB_HEADERS.newStringTable
+proc ctHeader*(ct: string): HttpHeaders =
+  var h = newHttpHeaders(TAB_HEADERS)
   h["Content-Type"] = ct
   return h
 
-proc ctJsonHeader*(): StringTableRef =
+proc ctJsonHeader*(): HttpHeaders = 
   return ctHeader("application/json")
 
-proc resError*(code: HttpCode, message: string, trace = ""): Response =
+proc resError*(code: HttpCode, message: string, trace = ""): LSResponse =
   LOG.warn(message.replace("$", "$$"))
   if trace.len > 0:
     LOG.debug(trace.replace("$", "$$"))
@@ -182,7 +182,7 @@ proc resError*(code: HttpCode, message: string, trace = ""): Response =
   result.content = """{"error":"$1"}""" % message
   result.headers = ctJsonHeader()
 
-proc resDocumentNotFound*(id: string): Response =
+proc resDocumentNotFound*(id: string): LSResponse =
   resError(Http404, "Document '$1' not found." % id)
 
 proc eWarn*() =
@@ -190,8 +190,8 @@ proc eWarn*() =
   LOG.warn(e.msg)
   LOG.debug(getStackTrace(e))
 
-proc validate*(req: Request, LS: LiteStore, resource: string, id: string, cb: proc(req: Request, LS: LiteStore, resource: string, id: string):Response): Response = 
-  if req.reqMethod == "POST" or req.reqMethod == "PUT" or req.reqMethod == "PATCH":
+proc validate*(req: Request, LS: LiteStore, resource: string, id: string, cb: proc(req: Request, LS: LiteStore, resource: string, id: string):LSResponse): LSResponse = 
+  if req.reqMethod == HttpPost or req.reqMethod == HttpPut or req.reqMethod == HttpPatch:
     var ct =  ""
     let body = req.body.strip
     if body == "":
