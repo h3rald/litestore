@@ -1,19 +1,6 @@
-import jester, ../litestore, asyncdispatch, uri, strutils, sequtils, httpcore
+import jester, ../litestore, asyncdispatch, re
 
-proc lsReq(req: jester.Request): LSRequest =
-  var params = newSeq[string](0)
-  for key, value in pairs(req.params):
-    params.add("$1=$2" % @[key, value])
-  let query = params.join("&")
-  var protocol = "http"
-  if req.secure:
-    protocol = "https"
-  result.reqMethod = req.reqMeth
-  result.url = parseUri("$1://$2:$3/$4?$5" % @[protocol, req.host, $req.port, req.path, query])
-  result.hostname = req.host
-  result.body = req.body
-
-LS.init()
+litestore.setup()
 
 routes:
 
@@ -22,32 +9,32 @@ routes:
     resp "Hello, World!"
   
   # Remapping LiteStore routes on Jester
-  get "/litestore/@resource/@id?":
-    let r = get(request.lsReq, LS, @"resource", @"id")
-    resp(r.code, r.content, r.headers["content-type"]) 
+  get re"^\/litestore\/(docs|info)\/?(.*)":
+    let r = get(request.matches[0], request.matches[1], request.params)
+    resp(r.code, r.content, r.headers["Content-Type"]) 
 
-  post "/litestore/@resource/@id?":
-    let r = post(request.lsReq, LS, @"resource", @"id")
-    resp(r.code, r.content, r.headers["content-type"]) 
+  post re"^\/litestore\/docs\/?(.*)":
+    let r = post("docs", request.matches[0], request.body)
+    resp(r.code, r.content, r.headers["Content-Type"]) 
 
-  put "/litestore/@resource/@id?":
-    let r = put(request.lsReq, LS, @"resource", @"id")
-    resp(r.code, r.content, r.headers["content-type"]) 
+  put re"^\/litestore\/docs\/?(.*)":
+    let r = put("docs", request.matches[0], request.body)
+    resp(r.code, r.content, r.headers["Content-Type"]) 
 
-  patch "/litestore/@resource/@id?":
-    let r = patch(request.lsReq, LS, @"resource", @"id")
-    resp(r.code, r.content, r.headers["content-type"]) 
+  patch re"^\/litestore\/docs\/?(.*)":
+    let r = patch("docs", request.matches[0], request.body)
+    resp(r.code, r.content, r.headers["Content-Type"]) 
 
-  delete "/litestore/@resource/@id?":
-    let r = delete(request.lsReq, LS, @"resource", @"id")
-    resp(r.code, r.content, r.headers["content-type"]) 
+  delete re"^\/litestore\/docs\/?(.*)":
+    let r = delete("docs", request.matches[0])
+    resp(r.code, r.content, r.headers["Content-Type"]) 
 
-  head "/litestore/@resource/@id?":
-    let r = head(request.lsReq, LS, @"resource", @"id")
-    resp(r.code, r.content, r.headers["content-type"]) 
+  head re"^\/litestore\/docs\/?(.*)":
+    let r = head("docs", request.matches[0])
+    resp(r.code, r.content, r.headers["Content-Type"]) 
 
-  options "/litestore/@resource/@id?":
-    let r = options(request.lsReq, LS, @"resource", @"id")
-    resp(r.code, r.content, r.headers["content-type"]) 
+  options re"^\/litestore\/docs\/?(.*)":
+    let r = options("docs", request.matches[0])
+    resp(r.code, r.content, r.headers["Content-Type"]) 
 
 runForever()

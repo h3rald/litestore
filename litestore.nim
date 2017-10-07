@@ -7,7 +7,10 @@ import
   times,
   json,
   pegs, 
+  uri,
   strtabs,
+  httpcore,
+  cgi,
   base64
 import
   lib/types,
@@ -18,9 +21,7 @@ import
   lib/server
 
 export
-  server,
   types,
-  core,
   server
 
 from asyncdispatch import runForever
@@ -28,7 +29,7 @@ from asyncdispatch import runForever
 {.compile: "vendor/sqlite/libsqlite3.c".}
 {.passC: "-DSQLITE_ENABLE_FTS3=1 -DSQLITE_ENABLE_FTS3_PARENTHESIS -DSQLITE_ENABLE_JSON1".}
 
-proc init*(LS: var LiteStore, open = true) =
+proc setup*(open = true) =
   if not LS.file.fileExists:
     try:
       LOG.debug("Creating datastore: ", LS.file)
@@ -49,9 +50,6 @@ proc init*(LS: var LiteStore, open = true) =
       fail(201, "Unable to open datastore '$1'" % [LS.file])
 
 when isMainModule:
-
-  # Initialize Datastore
-  LS.init()
 
   # Manage vacuum operation separately
   if LS.operation == opVacuum:
@@ -76,3 +74,72 @@ when isMainModule:
     else:
       discard
 
+else:
+
+  proc params*(query: string): StringTableRef =
+    new(result)
+    let pairs = query.split("&")
+    for pair in pairs:
+      let data = pair.split("=")
+      result[data[0]] = data[1]
+
+  proc query*(table: StringTableRef): string = 
+    var params = newSeq[string](0)
+    for key, value in pairs(table):
+      params.add("$1=$2" % @[key, value.encodeUrl])
+    return params.join("&")
+
+  proc newLSRequest(meth: HttpMethod, resource, id,  body = "", params = newStringTable()): LSRequest = 
+    result.reqMethod = meth
+    result.body = body
+    result.headers = newHttpHeaders()
+    result.url = parseUri("$1://$2:$3/$4/$5?$6" % @["http", "localhost", "9500", resource, id, params.query()])
+
+  # Public API: Low-level
+
+  proc getInfo*(): LSResponse =
+    return LS.getInfo()
+
+  proc getRawDocuments*(options = newQueryOptions()): LSResponse =
+    return LS.getRawDocuments(options)
+
+  proc getDocument*(id: string, options = newQueryOptions()): LSResponse =
+    return LS.getDocument(id, options)
+
+  proc getRawDocument*(id: string, options = newQueryOptions()): LSResponse =
+    return LS.getRawDocument(id, options)
+
+  proc deleteDocument*(id: string): LSResponse =
+    return LS.deleteDocument(id)
+
+  proc postDocument*(body, ct: string, folder=""): LSResponse =
+    return LS.postDocument(body, ct, folder)
+
+  proc putDocument*(id, body, ct: string): LSResponse =
+    return LS.putDocument(id, body, ct)
+
+  proc patchDocument*(id, body: string): LSResponse =
+    return LS.patchDocument(id, body)
+
+  # Public API: High-level
+
+  proc get*(resource, id: string, params = newStringTable()): LSResponse =
+    return newLSRequest(HttpGet, resource, id, "", params).get(LS, resource, id)
+
+  proc post*(resource, id, body: string): LSResponse =
+    return newLSRequest(HttpPost, resource, id, body).post(LS, resource, id)
+
+  proc put*(resource, id, body: string): LSResponse =
+    return newLSRequest(HttpPut, resource, id, body).put(LS, resource, id)
+
+  proc patch*(resource, id, body: string): LSResponse =
+    return newLSRequest(HttpPatch, resource, id, body).patch(LS, resource, id)
+
+  proc delete*(resource, id: string): LSResponse =
+    return newLSRequest(HttpPatch, resource, id).delete(LS, resource, id)
+
+  proc head*(resource, id: string): LSResponse =
+    return newLSRequest(HttpHead, resource, id).head(LS, resource, id)
+
+  proc options*(resource, id: string): LSResponse =
+    return newLSRequest(HttpOptions, resource, id).options(LS, resource, id)
