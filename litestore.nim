@@ -53,11 +53,11 @@ when isMainModule:
 
   # Manage vacuum operation separately
   if LS.operation == opVacuum:
-    LS.init(false)
+    setup(false)
     vacuum LS.file
   else:
     # Open Datastore 
-    LS.init(true)
+    setup(true)
 
   case LS.operation:
     of opRun:
