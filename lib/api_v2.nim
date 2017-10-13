@@ -221,7 +221,7 @@ proc getInfo*(LS: LiteStore): LSResponse =
 
 proc postDocument*(LS: LiteStore, body: string, ct: string, folder=""): LSResponse =
   if not folder.isFolder:
-    return resError(Http400, "Invalid folder specified when creating document: $folder" % folder) 
+    return resError(Http400, "Invalid folder specified when creating document: $1" % folder) 
   try:
     var doc = LS.store.createDocument(folder, body, ct)
     if doc != "":

@@ -16,7 +16,7 @@ import
   logger
 
 proc isFolder*(id: string): bool =
-  return (id.len > 0 and id[id.len-1] == '/')
+  return (id.len == 0 or id.len > 0 and id[id.len-1] == '/')
 
 proc dbQuote*(s: string): string =
   result = "'"

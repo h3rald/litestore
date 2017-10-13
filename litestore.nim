@@ -89,10 +89,10 @@ else:
       params.add("$1=$2" % @[key, value.encodeUrl])
     return params.join("&")
 
-  proc newLSRequest(meth: HttpMethod, resource, id,  body = "", params = newStringTable()): LSRequest = 
+  proc newLSRequest(meth: HttpMethod, resource, id,  body = "", params = newStringTable(), headers = newHttpHeaders()): LSRequest = 
     result.reqMethod = meth
     result.body = body
-    result.headers = newHttpHeaders()
+    result.headers = headers
     result.url = parseUri("$1://$2:$3/$4/$5?$6" % @["http", "localhost", "9500", resource, id, params.query()])
 
   # Public API: Low-level
@@ -123,23 +123,23 @@ else:
 
   # Public API: High-level
 
-  proc get*(resource, id: string, params = newStringTable()): LSResponse =
-    return newLSRequest(HttpGet, resource, id, "", params).get(LS, resource, id)
+  proc get*(resource, id: string, params = newStringTable(), headers = newHttpHeaders()): LSResponse =
+    return newLSRequest(HttpGet, resource, id, "", params, headers).get(LS, resource, id)
 
-  proc post*(resource, id, body: string): LSResponse =
-    return newLSRequest(HttpPost, resource, id, body).post(LS, resource, id)
+  proc post*(resource, id, body: string, headers = newHttpHeaders()): LSResponse =
+    return newLSRequest(HttpPost, resource, id, body, newStringTable(), headers).post(LS, resource, id)
 
-  proc put*(resource, id, body: string): LSResponse =
-    return newLSRequest(HttpPut, resource, id, body).put(LS, resource, id)
+  proc put*(resource, id, body: string, headers = newHttpHeaders()): LSResponse =
+    return newLSRequest(HttpPut, resource, id, body, newStringTable(), headers).put(LS, resource, id)
 
-  proc patch*(resource, id, body: string): LSResponse =
-    return newLSRequest(HttpPatch, resource, id, body).patch(LS, resource, id)
+  proc patch*(resource, id, body: string, headers = newHttpHeaders()): LSResponse =
+    return newLSRequest(HttpPatch, resource, id, body, newStringTable(), headers).patch(LS, resource, id)
 
-  proc delete*(resource, id: string): LSResponse =
-    return newLSRequest(HttpPatch, resource, id).delete(LS, resource, id)
+  proc delete*(resource, id: string, headers = newHttpHeaders()): LSResponse =
+    return newLSRequest(HttpPatch, resource, id, "", newStringTable(), headers).delete(LS, resource, id)
 
-  proc head*(resource, id: string): LSResponse =
-    return newLSRequest(HttpHead, resource, id).head(LS, resource, id)
+  proc head*(resource, id: string, headers = newHttpHeaders()): LSResponse =
+    return newLSRequest(HttpHead, resource, id, "", newStringTable(), headers).head(LS, resource, id)
 
-  proc options*(resource, id: string): LSResponse =
-    return newLSRequest(HttpOptions, resource, id).options(LS, resource, id)
+  proc options*(resource, id: string, headers = newHttpHeaders()): LSResponse =
+    return newLSRequest(HttpOptions, resource, id, "", newStringTable(), headers).options(LS, resource, id)
