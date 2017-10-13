@@ -1,4 +1,4 @@
-import jester, ../litestore, asyncdispatch, re
+import jester, ../litestore, asyncdispatch, re, strtabs, asyncnet
 
 litestore.setup()
 
@@ -31,10 +31,18 @@ routes:
 
   head re"^\/litestore\/docs\/?(.*)":
     let r = head("docs", request.matches[0], request.headers)
-    resp(r.code, r.content) 
+    headers = newStringTable()
+    for key, value in r.headers.pairs:
+      headers[key] = value
+    await response.sendHeaders(r.code, headers)
+    response.client.close()
 
   options re"^\/litestore\/docs\/?(.*)":
     let r = options("docs", request.matches[0], request.headers)
-    resp(r.code, r.content) 
+    headers = newStringTable()
+    for key, value in r.headers.pairs:
+      headers[key] = value
+    await response.sendHeaders(r.code, headers)
+    response.client.close()
 
 runForever()
