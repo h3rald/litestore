@@ -62,6 +62,12 @@ const SQL_SELECT_INFO* = sql"""
 SELECT * FROM info
 """
 
+
+const SQL_SET_TOTAL_DOCS* = sql"""
+UPDATE info
+SET total_documents = ?
+"""
+
 const SQL_INCREMENT_DOCS* = sql"""
 UPDATE info
 SET total_documents = total_documents + 1

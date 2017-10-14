@@ -398,9 +398,11 @@ proc  exportDir*(store: Datastore, dir: string) =
   LOG.info("Done.");
 
 proc  deleteDir*(store: Datastore, dir: string) =
-    store.db.exec(SQL_DELETE_DOCUMENTS_BY_TAG, "$dir:"&dir)
     store.db.exec(SQL_DELETE_SEARCHDATA_BY_TAG, "$dir:"&dir)
+    store.db.exec(SQL_DELETE_DOCUMENTS_BY_TAG, "$dir:"&dir)
     store.db.exec(SQL_DELETE_TAGS_BY_TAG, "$dir:"&dir)
+    let total = store.db.getRow(SQL_COUNT_DOCUMENTS)[0].parseInt
+    store.db.exec(SQL_SET_TOTAL_DOCS, total)
 
 proc mountDir*(store: var Datastore, dir:string) =
   if not dir.dirExists:
