@@ -11,6 +11,9 @@ pages=(
     md/api_info.md
     md/api_dir.md
     md/api_docs.md
+  md/nim-api.md
+    md/nim-api_high.md
+    md/nim-api_low.md
   md/credits.md
 )
 cd admin
@@ -18,7 +21,7 @@ for page in ${pages[@]}
 do
   (cat "${page}"; printf "\n\n") >> LiteStore_UserGuide.md
 done
-hastyscribe LiteStore_UserGuide.md
+hastyscribe --field/version:1.2.0 LiteStore_UserGuide.md
 rm LiteStore_UserGuide.md
 mv LiteStore_UserGuide.htm ..
 cd ..

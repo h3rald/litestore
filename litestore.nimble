@@ -8,4 +8,4 @@ bin           = "litestore"
 skipFiles     = @["nakefile.nim"]
 
 [Deps]
-requires: "nimrod >= 0.17.2"
+requires: "nim >= 0.17.2"

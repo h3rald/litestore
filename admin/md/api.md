@@ -1,6 +1,6 @@
 ## HTTP API Reference
 
-LiteStore provide a simply and fairly RESTful HTTP API. At present, the only two resources exposed are the following:
+LiteStore provides a RESTful HTTP API. At present, the only two resources exposed are the following:
 
 * info &ndash; information about the data store (read-only)
 * docs &ndash; LiteStore documents (read-write)
