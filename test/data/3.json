@@ -1,0 +1,57 @@
+{
+  "_id": "5a6c5660d613e4c504bbf860",
+  "index": 2,
+  "guid": "b6d68ada-df9f-4f85-a135-49a99749c0fd",
+  "isActive": true,
+  "balance": "$3,663.84",
+  "picture": "http://placehold.it/32x32",
+  "age": 31,
+  "eyeColor": "blue",
+  "name": {
+    "first": "Jensen",
+    "last": "Ayers"
+  },
+  "company": "VERTIDE",
+  "email": "jensen.ayers@vertide.me",
+  "phone": "+1 (939) 447-2936",
+  "address": "131 Dank Court, Jeff, Wisconsin, 1073",
+  "about": "Ipsum ex occaecat culpa tempor. Amet non culpa consectetur labore eu culpa irure nostrud Lorem. Laborum in qui qui ullamco consequat reprehenderit. Ea veniam Lorem ad sunt culpa minim pariatur. Dolore anim incididunt amet ea magna sit qui pariatur adipisicing ullamco occaecat minim. Adipisicing anim Lorem consequat incididunt ad amet. Qui veniam ipsum aliqua culpa.",
+  "registered": "Tuesday, September 8, 2015 10:35 AM",
+  "latitude": "25.009142",
+  "longitude": "-69.645903",
+  "tags": [
+    "fugiat",
+    "sunt",
+    "duis",
+    "ullamco",
+    "consectetur"
+  ],
+  "range": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "friends": [
+    {
+      "id": 0,
+      "name": "Reed Hoffman"
+    },
+    {
+      "id": 1,
+      "name": "Gail Clayton"
+    },
+    {
+      "id": 2,
+      "name": "Snider Walsh"
+    }
+  ],
+  "greeting": "Hello, Jensen! You have 5 unread messages.",
+  "favoriteFruit": "banana"
+}

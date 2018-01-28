@@ -2,6 +2,7 @@
 nimcache
 *.db
 *.db-journal
+http_api
 litestore*.zip
 litestore
 nakefile

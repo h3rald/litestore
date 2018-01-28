@@ -1,0 +1,57 @@
+{
+  "_id": "5a6c5660692b3518d7a57db1",
+  "index": 3,
+  "guid": "bbe62851-96fd-459a-8ac6-340c7445cd4b",
+  "isActive": false,
+  "balance": "$3,489.70",
+  "picture": "http://placehold.it/32x32",
+  "age": 36,
+  "eyeColor": "brown",
+  "name": {
+    "first": "Lawson",
+    "last": "Logan"
+  },
+  "company": "TRASOLA",
+  "email": "lawson.logan@trasola.co.uk",
+  "phone": "+1 (936) 528-3401",
+  "address": "731 Vine Street, Beechmont, Colorado, 7201",
+  "about": "Ut Lorem magna esse aute. Commodo dolor laborum consequat officia tempor anim velit labore consequat aute esse amet laboris dolore. Et voluptate Lorem fugiat magna do sunt enim culpa sunt dolor. Commodo duis nostrud veniam sunt et irure anim.",
+  "registered": "Tuesday, August 8, 2017 4:50 AM",
+  "latitude": "-84.277821",
+  "longitude": "-166.812995",
+  "tags": [
+    "culpa",
+    "quis",
+    "fugiat",
+    "ipsum",
+    "labore"
+  ],
+  "range": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "friends": [
+    {
+      "id": 0,
+      "name": "Blake Graham"
+    },
+    {
+      "id": 1,
+      "name": "Stephens Conley"
+    },
+    {
+      "id": 2,
+      "name": "Nadine Munoz"
+    }
+  ],
+  "greeting": "Hello, Lawson! You have 9 unread messages.",
+  "favoriteFruit": "banana"
+}

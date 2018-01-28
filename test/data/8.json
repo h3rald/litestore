@@ -1,0 +1,57 @@
+{
+  "_id": "5a6c5660d8994ed5a0b10b5a",
+  "index": 7,
+  "guid": "c3aff117-91f2-4947-a96d-77ff72e17157",
+  "isActive": true,
+  "balance": "$1,748.49",
+  "picture": "http://placehold.it/32x32",
+  "age": 24,
+  "eyeColor": "brown",
+  "name": {
+    "first": "Gina",
+    "last": "Brooks"
+  },
+  "company": "COLUMELLA",
+  "email": "gina.brooks@columella.info",
+  "phone": "+1 (900) 466-2349",
+  "address": "221 Glen Street, Morriston, Virginia, 3010",
+  "about": "Ut proident consequat consectetur amet aute incididunt sunt. Deserunt commodo magna nostrud fugiat pariatur. Eiusmod anim tempor incididunt duis irure qui aliquip ex est aliqua laboris sunt cillum irure. Et veniam sint incididunt eiusmod fugiat enim cillum veniam amet. Veniam veniam elit quis aute adipisicing laboris enim nostrud laborum do velit.",
+  "registered": "Saturday, July 30, 2016 12:01 PM",
+  "latitude": "-11.007002",
+  "longitude": "-125.821486",
+  "tags": [
+    "sit",
+    "minim",
+    "qui",
+    "excepteur",
+    "qui"
+  ],
+  "range": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "friends": [
+    {
+      "id": 0,
+      "name": "Jamie Bradley"
+    },
+    {
+      "id": 1,
+      "name": "Hunter Olson"
+    },
+    {
+      "id": 2,
+      "name": "Gibson Mclaughlin"
+    }
+  ],
+  "greeting": "Hello, Gina! You have 7 unread messages.",
+  "favoriteFruit": "banana"
+}

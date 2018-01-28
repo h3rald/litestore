@@ -1,0 +1,57 @@
+{
+  "_id": "5a6c5660a85f5de026893e81",
+  "index": 6,
+  "guid": "afad15a9-ccea-413b-ab03-2e3dca7217bc",
+  "isActive": false,
+  "balance": "$1,611.84",
+  "picture": "http://placehold.it/32x32",
+  "age": 36,
+  "eyeColor": "green",
+  "name": {
+    "first": "Burgess",
+    "last": "Greene"
+  },
+  "company": "XYQAG",
+  "email": "burgess.greene@xyqag.name",
+  "phone": "+1 (895) 547-2197",
+  "address": "881 Fanchon Place, Floriston, Kentucky, 1428",
+  "about": "Consequat proident excepteur eu in quis velit sint ad qui mollit aliqua. Qui aliqua cillum eiusmod incididunt esse. Consequat labore consectetur eu est id reprehenderit aute proident reprehenderit enim velit eu aliquip mollit. Nulla ut elit labore amet nostrud eu fugiat fugiat laborum. Est id nulla dolor dolor officia deserunt elit ullamco quis. In Lorem ad adipisicing aliqua.",
+  "registered": "Friday, August 12, 2016 8:57 AM",
+  "latitude": "-40.438188",
+  "longitude": "-80.46053",
+  "tags": [
+    "esse",
+    "dolore",
+    "anim",
+    "irure",
+    "ad"
+  ],
+  "range": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "friends": [
+    {
+      "id": 0,
+      "name": "Jordan Ruiz"
+    },
+    {
+      "id": 1,
+      "name": "Leah Estes"
+    },
+    {
+      "id": 2,
+      "name": "Elise Huffman"
+    }
+  ],
+  "greeting": "Hello, Burgess! You have 10 unread messages.",
+  "favoriteFruit": "banana"
+}

@@ -1,0 +1,57 @@
+{
+  "_id": "5a6c56606df2a810d3eb1669",
+  "index": 1,
+  "guid": "cac6e4d0-8b0c-4282-aa94-6e0dd37cc8c6",
+  "isActive": false,
+  "balance": "$2,271.65",
+  "picture": "http://placehold.it/32x32",
+  "age": 31,
+  "eyeColor": "green",
+  "name": {
+    "first": "Hatfield",
+    "last": "Randolph"
+  },
+  "company": "CALLFLEX",
+  "email": "hatfield.randolph@callflex.org",
+  "phone": "+1 (969) 468-3496",
+  "address": "768 Thatford Avenue, Allensworth, Georgia, 6175",
+  "about": "Cupidatat reprehenderit ad est laborum Lorem eu consectetur ut mollit. Elit commodo cillum ipsum anim Lorem nostrud cillum occaecat proident. Aute aliquip officia anim aliquip. Magna culpa enim labore tempor laboris aute amet ad laborum. Fugiat Lorem velit cillum cupidatat dolore est.",
+  "registered": "Wednesday, September 23, 2015 6:15 PM",
+  "latitude": "21.356912",
+  "longitude": "-9.471178",
+  "tags": [
+    "non",
+    "nostrud",
+    "consequat",
+    "deserunt",
+    "cillum"
+  ],
+  "range": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "friends": [
+    {
+      "id": 0,
+      "name": "Rhonda Austin"
+    },
+    {
+      "id": 1,
+      "name": "Katy Golden"
+    },
+    {
+      "id": 2,
+      "name": "Elisabeth Willis"
+    }
+  ],
+  "greeting": "Hello, Hatfield! You have 10 unread messages.",
+  "favoriteFruit": "apple"
+}

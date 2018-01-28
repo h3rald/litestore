@@ -1,0 +1,57 @@
+{
+  "_id": "5a6c566020d0d4ba242d6501",
+  "index": 0,
+  "guid": "55fc5e44-76d0-4336-8a06-7a47dcbf3cac",
+  "isActive": false,
+  "balance": "$1,302.38",
+  "picture": "http://placehold.it/32x32",
+  "age": 34,
+  "eyeColor": "brown",
+  "name": {
+    "first": "Hart",
+    "last": "Walters"
+  },
+  "company": "RODEOMAD",
+  "email": "hart.walters@rodeomad.com",
+  "phone": "+1 (825) 571-3043",
+  "address": "389 Albemarle Terrace, Idamay, Utah, 220",
+  "about": "Voluptate laborum ex mollit aliquip in. Cillum reprehenderit excepteur in voluptate. Amet culpa adipisicing laborum consequat officia consectetur qui fugiat qui minim velit enim.",
+  "registered": "Friday, October 20, 2017 6:29 PM",
+  "latitude": "48.993203",
+  "longitude": "-129.102171",
+  "tags": [
+    "incididunt",
+    "reprehenderit",
+    "qui",
+    "adipisicing",
+    "irure"
+  ],
+  "range": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "friends": [
+    {
+      "id": 0,
+      "name": "Blackwell Kramer"
+    },
+    {
+      "id": 1,
+      "name": "Petra Carson"
+    },
+    {
+      "id": 2,
+      "name": "Vaughan Garrison"
+    }
+  ],
+  "greeting": "Hello, Hart! You have 6 unread messages.",
+  "favoriteFruit": "banana"
+}
