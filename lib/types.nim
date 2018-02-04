@@ -21,6 +21,7 @@ type
     path*: string
     mount*: string
   QueryOptions* = object
+    tables*: seq[string]
     jsonFilter*: string
     select*: seq[string]
     single*:bool         
@@ -99,4 +100,4 @@ TAB_HEADERS = {
 }
 
 proc newQueryOptions*(): QueryOptions =
-  return QueryOptions(select: @["documents.id AS id", "documents.data AS data", "content_type", "binary", "searchable", "created", "modified"], single: false, limit: 0, offset: 0, orderby: "", tags: "", search: "", folder: "")
+  return QueryOptions(select: @["documents.id AS id", "documents.data AS data", "content_type", "binary", "searchable", "created", "modified"], single: false, limit: 0, offset: 0, orderby: "", tags: "", search: "", folder: "", jsonFilter: "", tables: newSeq[string]())

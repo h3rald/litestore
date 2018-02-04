@@ -38,12 +38,13 @@ proc sqlOp(op: string): string =
   table["gte"] = ">="
   table["lt"] = "<"
   table["lte"] = "<="
+  table["contains"] = "contains"
   return table[op]
 
 
-proc filterClauses*(str: string): string = 
+proc filterClauses*(str: string, options: var QueryOptions): string = 
   let tokens = """
-    operator <- 'not eq' / 'eq' / 'gt' / 'gte' / 'lt' / 'lte' 
+    operator <- 'not eq' / 'eq' / 'gte' / 'gt' / 'lte' / 'lt' / 'contains'
     value <- string / number / 'null' / 'true' / 'false'
     string <- '"' ('\"' . / [^"])* '"'
     number <- '-'? '0' / [1-9] [0-9]* ('.' [0-9]+)? (( 'e' / 'E' ) ( '+' / '-' )? [0-9]+)?
@@ -78,12 +79,28 @@ proc filterClauses*(str: string): string =
           var clauses = newSeq[string](3)
           discard andClause.strip.match(clause, clauses)
           clauses[1] = sqlOp(clauses[1])
+          if clauses[2] == "true":
+            clauses[2] = "1"
+          elif clauses[2] == "false":
+            clauses[2] = "0"
           parsedAndClauses.add clauses
       if parsedAndClauses.len > 0:
         parsedClauses.add parsedAndClauses
   if parsedClauses.len == 0:
     return ""
-  return parsedClauses.mapIt(it.mapIt("json_extract(documents.data, '$1') $2 $3" % it).join(" AND ")).join(" OR ")
+  var currentArr = 0
+  var tables = newSeq[string]()
+  let resOrClauses = parsedClauses.map do (it: seq[seq[string]]) -> string:
+    let resAndClauses = it.map do (x: seq[string]) -> string:
+      if x[1] == "contains":
+        currentArr = currentArr + 1
+        tables.add "json_each(documents.data, '$1') AS arr$2" % [x[0], $currentArr]
+        return "arr$1.value == $2" % [$currentArr, x[2]]
+      else:
+        return "json_extract(documents.data, '$1') $2 $3" % x
+    return resAndClauses.join(" AND ")
+  options.tables = options.tables & tables
+  return resOrClauses.join(" OR ")
 
 proc parseQueryOption*(fragment: string, options: var QueryOptions) =
   var pair = fragment.split('=')
@@ -95,7 +112,9 @@ proc parseQueryOption*(fragment: string, options: var QueryOptions) =
     raise newException(EInvalidRequest, "Unable to decode query string fragment '$1'" % fragment)
   case pair[0]:
     of "filter":
-      options.jsonFilter = filterClauses(pair[1])
+      options.jsonFilter = filterClauses(pair[1], options)
+      if options.jsonFilter == "":
+        raise newException(EInvalidRequest, "Invalid filter clause: $1" % pair[1].replace("\"", "\\\""))
     of "search":
       options.search = pair[1]
     of "tags":
@@ -451,7 +470,7 @@ proc get*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse 
         else:
           return LS.getRawDocuments(options)
       except:
-        return resError(Http500, "Internal Server Error - $1" % getCurrentExceptionMsg())
+        return resError(Http400, "Bad Request - $1" % getCurrentExceptionMsg())
     of "info":
       if id != "":
         return resError(Http404, "Info '$1' not found." % id)
