@@ -21,6 +21,7 @@ type
     path*: string
     mount*: string
   QueryOptions* = object
+    jsonFilter*: string
     select*: seq[string]
     single*:bool         
     limit*: int           
