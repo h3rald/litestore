@@ -119,6 +119,10 @@ suite "LiteStore HTTP API":
     check(rhead.status == "200 OK")
     var rget = jget("docs/?search=Lorem&contents=false")
     check(rget.body.parseJson["total"] == %5)
+    rget = jget("docs/?filter=$.age%20gte%2034%20and%20$.age%20lte%2036%20and%20$.tags%20contains%20%22labore%22")
+    check(rget.body.parseJson["total"] == %1)
+    rget = jget("docs/?filter=$.age%20eq%2034%20or%20$.age%20eq%2036%20or%20$.eyeColor%20eq%20\"brown\"")
+    check(rget.body.parseJson["total"] == %5)
     for i in ids:
       jdelete("docs/$1" % i)
     check(info("total_documents") == %0)

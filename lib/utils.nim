@@ -34,6 +34,7 @@ proc selectDocumentsByTags(tags: string, doc_id_col = "id"): string =
     result = result & "AND " & doc_id_col & " IN (" & select_tagged & tag & "') "
    
 proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
+  var tables = options.tables
   result = "SELECT "
   if options.search.len > 0:
     if options.select[0] != "COUNT(docid)":
@@ -51,22 +52,20 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
         innerSelect = innerSelect & "LIMIT " & $options.limit
         if options.offset > 0:
           innerSelect = innerSelect & " OFFSET " & $options.offset
+      tables = options.tables & @["documents"]
       result = result & options.select.join(", ")
-      options.tables = options.tables & @["documents"]
-      result = result & options.select.join(", ")
-      result = result & " FROM " & options.tables.join(", ") & " JOIN (" & innerSelect & ") as ranktable USING(docid) JOIN searchdata USING(docid) "
+      result = result & " FROM " & tables.join(", ") & " JOIN (" & innerSelect & ") as ranktable USING(docid) JOIN searchdata USING(docid) "
       result = result & "WHERE 1=1 "
     else:
-      options.tables = options.tables & @["searchdata"]
+      tables = options.tables & @["searchdata"]
       result = result & options.select.join(", ")
-      result = result & " FROM "&options.tables.join(", ")&" "
+      result = result & " FROM "&tables.join(", ")&" "
       result = result & "WHERE 1=1 "
       options.orderby = ""
   else:
-    if not options.tables.contains "documents":
-      options.tables = options.tables & @["documents"]
+    tables = options.tables & @["documents"]
     result = result & options.select.join(", ")
-    result = result & " FROM "&options.tables.join(", ")&" WHERE 1=1 "
+    result = result & " FROM "&tables.join(", ")&" WHERE 1=1 "
   if options.single:
     result = result & "AND id = ?"
   var doc_id_col: string
