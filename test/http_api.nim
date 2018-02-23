@@ -5,6 +5,8 @@ suite "LiteStore HTTP API":
   var contents = newSeq[JsonNode](0)
   for i in 1..8:
     contents.add parseFile("data/$1.json" % i.intToStr)
+  var rpost: Response;
+  var ids = newSeq[string](0)
 
   const srv = "http://localhost:9500/"
   let cli = newHttpClient()
@@ -31,10 +33,34 @@ suite "LiteStore HTTP API":
   proc info(prop: string): JsonNode =
     return jget("info").body.parseJson[prop]
 
+  proc total(resp: Response): BiggestInt =
+    return resp.body.parseJson["total"].getNum
+
+  setup:
+    var count = 0
+    for c in contents:
+      rpost = jpost("docs/test/", c)
+      var id = rpost.body.parseJson["id"].getStr
+      ids.add(id)
+      var ops = """
+      [
+        {"op": "add", "path": "/tags/3", "value": "tag1$1"},
+        {"op": "add", "path": "/tags/4", "value": "tag$2"},
+      ]
+      """ % [$count, $(count mod 2)]
+      discard jpatch("docs/" & ids[count], ops.parseJson)
+      count += 1
+
+  teardown:
+    for i in ids:
+      jdelete("docs/$1" % i)
+    ids = newSeq[string](0)
+
+
   test "GET info":
     check(info("datastore_version") == %1)
 
-  test "POST/GET/DELETE document":
+  test "POST document":
     var rpost = jpost("docs", contents[0])
     var id = rpost.body.parseJson["id"].getStr
     check(rpost.body.parseJson["data"]["_id"] == %"5a6c566020d0d4ba242d6501")
@@ -42,24 +68,32 @@ suite "LiteStore HTTP API":
     check(rget.body.parseJson["_id"] == %"5a6c566020d0d4ba242d6501")
     var rdel = jdelete("docs/$1" % id)
     check(rdel.status == "204 No Content")
-    check(info("total_documents") == %0)
+    check(info("total_documents") == %8)
     rpost = jpost("docs/f1/f2/", contents[0])
     id = rpost.body.parseJson["id"].getStr
     check(id.startsWith("f1/f2/"))
     check(rpost.body.parseJson["data"]["_id"] == %"5a6c566020d0d4ba242d6501")
     rget = jget("docs/$1" % id)
     check(rget.body.parseJson["_id"] == %"5a6c566020d0d4ba242d6501")
+    check(info("total_documents") == %9)
     rdel = jdelete("docs/$1" % id)
     check(rdel.status == "204 No Content")
-    check(info("total_documents") == %0)
+    check(info("total_documents") == %8)
 
-  test "PUT/PATCH/GET/DELETE document":
-    var rput = jput("docs/1", contents[0])
+  test "DELETE document":
+    for i in ids:
+      jdelete("docs/$1" % i)
+    ids = newSeq[string](0)
+
+  test "PUT document":
+    var rput = jput("docs/" & ids[5], contents[0])
     var id = rput.body.parseJson["id"].getStr
-    check(id == "1")
-    var rget = jget("docs/1")
+    check(id == ids[5])
+    var rget = jget("docs/" & ids[5])
     check(rget.body.parseJson["_id"] == %"5a6c566020d0d4ba242d6501")
-    rget = jget("docs?tags=t1")
+
+  test "PATCH document tags":
+    var rget = jget("docs?tags=t1")
     check(rget.status == "404 Not Found")
     var ops = """
     [
@@ -68,29 +102,25 @@ suite "LiteStore HTTP API":
       {"op": "add", "path": "/tags/5", "value": "t3"}
     ]
     """
-    var rpatch = jpatch("docs/1", ops.parseJson)
+    var rpatch = jpatch("docs/" & ids[0], ops.parseJson)
     check(rpatch.status == "200 OK")
     rget = jget("docs/?tags=t1")
     check(rget.body.parseJson["total"] == %1)
-    rput = jput("docs/2", contents[1])
     ops = """
     [
       {"op": "add", "path": "/tags/3", "value": "t1"},
       {"op": "add", "path": "/tags/4", "value": "t3"}
     ]
     """
-    rpatch = jpatch("docs/2", ops.parseJson)
+    rpatch = jpatch("docs/" & ids[1], ops.parseJson)
     check(rpatch.status == "200 OK")
-    rput = jput("docs/test/3", contents[2])
-    rget = jget("docs/test/3")
-    check(rget.body.parseJson["_id"] == %"5a6c5660d613e4c504bbf860")
     ops = """
     [
       {"op": "add", "path": "/tags/3", "value": "t2"},
       {"op": "add", "path": "/tags/4", "value": "t3"}
     ]
     """
-    rpatch = jpatch("docs/test/3", ops.parseJson)
+    rpatch = jpatch("docs/" & ids[2], ops.parseJson)
     check(rpatch.status == "200 OK")
     ops = """
     [
@@ -98,31 +128,34 @@ suite "LiteStore HTTP API":
       {"op": "remove", "path": "/tags/4"}
     ]
     """
-    rpatch = jpatch("docs/1", ops.parseJson)
+    rpatch = jpatch("docs/" & ids[0], ops.parseJson)
     check(rpatch.status == "200 OK")
     rget = jget("docs/?tags=t2,t3")
     check(rget.body.parseJson["total"] == %1)
-    jdelete("docs/1")
-    jdelete("docs/2")
-    jdelete("docs/test/3")
-    check(info("total_documents") == %0)
+    check(info("total_documents") == %8)
 
-  test "HEAD/GET documents":
-    var ids = newSeq[string](0)
-    var rpost: Response;
-    for c in contents:
-      rpost = jpost("docs/test/", c)
-      ids.add(rpost.body.parseJson["id"].getStr)
+  test "HEAD documents":
     var rhead = jhead("docs/invalid/")
     check(rhead.status == "404 Not Found")
     rhead = jhead("docs/test/")
     check(rhead.status == "200 OK")
+
+  test "GET documents by tags":
+    var rget = jget("docs/?tags=tag1")
+    check(total(rget) == 4)
+    rget = jget("docs/?tags=tag10,tag0")
+    check(total(rget) == 1)
+    rget = jget("docs/?tags=$type:application,$subtype:json")
+    check(total(rget) == 8)
+
+  test "GET documents by search":
     var rget = jget("docs/?search=Lorem&contents=false")
     check(rget.body.parseJson["total"] == %5)
-    rget = jget("docs/?filter=$.age%20gte%2034%20and%20$.age%20lte%2036%20and%20$.tags%20contains%20%22labore%22")
+
+  test "GET documents by filter":
+    var rget = jget("docs/?filter=$.age%20gte%2034%20and%20$.age%20lte%2036%20and%20$.tags%20contains%20\"labore\"")
     check(rget.body.parseJson["total"] == %1)
     rget = jget("docs/?filter=$.age%20eq%2034%20or%20$.age%20eq%2036%20or%20$.eyeColor%20eq%20\"brown\"")
     check(rget.body.parseJson["total"] == %5)
-    for i in ids:
-      jdelete("docs/$1" % i)
-    check(info("total_documents") == %0)
+    rget = jget("docs/?filter=$.name.first%20eq%20\"Jensen\"")
+    check(rget.body.parseJson["total"] == %1)
