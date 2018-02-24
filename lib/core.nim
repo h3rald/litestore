@@ -163,7 +163,7 @@ proc retrieveRawDocument*(store: Datastore, id: string, options: QueryOptions = 
   if  raw_document[0] == "":
     return ""
   else:
-    return $store.prepareJsonDocument(raw_document, options.select)
+    return $store.prepareJsonDocument(raw_document, options)
 
 proc createDocument*(store: Datastore,  id="", rawdata = "", contenttype = "text/plain", binary = -1, searchable = 1): string =
   let singleOp = not LS_TRANSACTION
@@ -286,7 +286,7 @@ proc retrieveRawDocuments*(store: Datastore, options: var QueryOptions = newQuer
     raw_documents = store.db.getAllRows(select.sql)
   var documents = newSeq[JsonNode](0)
   for doc in raw_documents:
-    documents.add store.prepareJsonDocument(doc, options.select)
+    documents.add store.prepareJsonDocument(doc, options)
   return %documents
 
 proc countDocuments*(store: Datastore): int64 =

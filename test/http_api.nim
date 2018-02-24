@@ -159,3 +159,21 @@ suite "LiteStore HTTP API":
     check(rget.body.parseJson["total"] == %5)
     rget = jget("docs/?filter=$.name.first%20eq%20\"Jensen\"")
     check(rget.body.parseJson["total"] == %1)
+
+  test "GET documents selecting fields":
+    var rget = jget("docs/?select=$.age%20as%20age,$.email%20as%20email")
+    var json = rget.body.parseJson
+    var testdata = %*{
+      "age": 36,
+      "email": "lawson.logan@trasola.co.uk"
+    }
+    check(json["total"] == %8)
+    check(json["results"][3]["data"] == testdata)
+    rget = jget("docs/" & ids[2] & "?select=$.age%20as%20age&raw=true")
+    json = rget.body.parseJson
+    testdata = %*{
+      "age": 31
+    }
+    check(json["data"] == testdata)
+
+

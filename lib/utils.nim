@@ -37,7 +37,7 @@ proc selectDocumentsByTags(tags: string, doc_id_col = "id"): string =
 proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
   var tables = options.tables
   result = "SELECT "
-  if options.jsonFilter.len > 0:
+  if options.jsonFilter.len > 0 or options.jsonSelect.len > 0:
     if not options.tags.contains("$subtype:json"):
       options.tags = options.tags.split(",").concat(@["$subtype:json"]).join(",")
   if options.search.len > 0:
@@ -107,7 +107,7 @@ proc prepareSelectTagsQuery*(options: QueryOptions): string =
     result = result & "LIMIT " & $options.limit & " "
   LOG.debug(result.replace("$", "$$"))
 
-proc prepareJsonDocument*(store:Datastore, doc: Row, cols:seq[string]): JsonNode =
+proc prepareJsonDocument*(store:Datastore, doc: Row, options: QueryOptions): JsonNode =
   var raw_tags = store.db.getAllRows(SQL_SELECT_DOCUMENT_TAGS, doc[0])
   var tags = newSeq[JsonNode](0)
   for tag in raw_tags:
@@ -118,7 +118,7 @@ proc prepareJsonDocument*(store:Datastore, doc: Row, cols:seq[string]): JsonNode
   result = newJObject()
   var count = 0
   var jsondoc = false
-  for s in cols:
+  for s in options.select:
     var key = s
     count.inc
     var rawvalue = doc[count-1]
@@ -143,6 +143,16 @@ proc prepareJsonDocument*(store:Datastore, doc: Row, cols:seq[string]): JsonNode
     result[key] = value
   if jsondoc:
     result["data"] = result["data"].getStr().parseJson()
+    if options.jsonSelect.len > 0:
+      var obj = newJObject()
+      for field in options.jsonSelect:
+        let keys = field.path.replace("$.", "").split(".")
+        let res =  result["data"]{keys}
+        if res.isNil:
+          obj[field.alias] = newJNull()
+        else:
+          obj[field.alias] = %res
+      result["data"] = obj
   result["tags"] = %tags
 
 proc toPlainText*(s: string): string =
