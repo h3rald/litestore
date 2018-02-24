@@ -167,23 +167,76 @@ Server: LiteStore/1.0.3
 
 #### GET docs
 
-Retrieves a list of documents in JSON format.
+Retrieves a list of documents in JSON format. Several query string options are supported to query documents.
 
-##### Query String Options
+##### `content` option
 
-The following query string options are supported:
+If set to **false**, do not retrieve document data. 
 
-* **search** &ndash; Search for the specified string. Example: `http://127.0.0.1:9500/docs/?search=Something`.
-* **tags** &ndash; Retrieve only documents with matching tag(s). Example: `http://127.0.0.1:9500/docs/?tags=tag1,tag2`
-* **limit** &ndash; Retrieve only the first _n_ results. Example: `http://127.0.0.1:9500/docs/?limit=5`
-* **offset** &ndash; Skip the first _n_ results. Example: `http://127.0.0.1:9500/docs/?offset=5`
-* **sort** &ndash; Sort by **created**, **modified**, and/or **id** (prepend **-** for DESC and **+** for ASC). Example: `http://127.0.0.1:9500/docs/?sort=-modified,-created`
-* **contents** &ndash; If set to **false**, do not retrieve document data. Example: `http://127.0.0.1:9500/docs/?contents=false`
+Example: http://127.0.0.1:9500/docs/?contents=false
+
+##### `limit` and `offset` options
+
+Provide a way to implement pagination:
+
+* **limit** causes the query to retrieve only the first _n_ results. 
+* **offset** causes the query to skip the first _n_ results. 
+
+Example: http://127.0.0.1:9500/docs/?limit=10&offset=20
+
+##### `search` option
+
+Search for the specified string. 
+
+Example: http://127.0.0.1:9500/docs/?search=Something
 
 > %tip%
 > Tip
 > 
 > If **search** is specified, each result will contain a **highlight** property with a highlighted search snippet, and a **rank** property identified the rank of the result within the search. Results will also be automatically ordered by descending rank.
+
+##### `tags` option
+
+Retrieve only documents with matching tag(s). 
+
+Example: http://127.0.0.1:9500/docs/?tags=tag1,tag2
+
+##### `filter` option
+
+Retrieve only JSON documents matching the specified filter expression.
+
+Filter expressions can be composed by one or more clauses joined together through **or** or **and** operators. Each clause must be composed exactly by:
+
+* A path expression indicating a field or array item within the JSON document.
+* One operator among the following: eq, not eq, gt, gte, lt, lte, contains.
+* A value that can be a number, string, **true**, **false** or **nil**
+
+> %sidebar%
+> Limitations
+> 
+> * Parenthesis are not supported.
+> * Up to 10 **or** clauses and 10 **and** clauses are supported.
+> * Paths can only contain keys that contain only numbers, letters and underscores.
+
+Examples:
+
+* http://127.0.0.1:9500/docs/?filter=$.age%20gte%2018%20or%20$.skills%20contains%20"maths"
+* http://127.0.0.1:9500/docs/?filter=$.name.first&20eq%20"Jack"%20or%20$.fav\_food[0]%20eq%20"pizza"
+
+##### `select` option
+
+Retrieve JSON documents containing only the specified fields. Fields must be specified by comma-separated path/alias expression.
+
+Example: http://127.0.0.1:9500/docs/?select=$.name.first%20as%20FirstName,$.age%20as%20Age
+
+##### `sort` option
+
+Sort by **created**, **modified**, and/or **id** (prepend **-** for DESC and **+** for ASC). 
+
+Example: http://127.0.0.1:9500/docs/?sort=-modified,-created
+
+##### Query String Options
+
 
 ##### Example
 

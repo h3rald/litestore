@@ -2662,7 +2662,7 @@ pre {
   color: #333;
   background-color: #f8f8f8;
   border: 1px solid #ccc;
-  white-space: pre;
+  white-space: pre-wrap;
   margin: auto;
   font-family: "Source Code Pro", "Monaco", "DejaVu Sans Mono", "Courier New", monospace;
   padding: 0;
@@ -3262,9 +3262,9 @@ a[href="#document-top"]:before {
   color: #eee;
   background-color: #222;
   border: 1px solid #ccc;
-  white-space: pre;
   padding: 0 3px;
   border: 2px solid #999;
+  white-space: pre-wrap;
   border-top: 10px solid #999;
 }
 .terminal a {
@@ -3285,13 +3285,17 @@ a[href="#document-top"]:before {
 }
 .terminal p,
 .terminal p:first-child {
-  margin-top: 0;
+  margin-top: -40px;
   margin-bottom: 0;
   text-shadow: none;
   font-weight: normal;
   font-family: "Source Code Pro", "Monaco", "DejaVu Sans Mono", "Courier New", monospace;
   font-size: 85%;
   color: #eee;
+}
+.terminal p:first-child,
+.terminal p:first-child:first-child {
+  margin-top: 0px;
 }
 .terminal p:before,
 .terminal p:first-child:before {
@@ -3315,9 +3319,9 @@ a[href="#document-top"]:before {
   color: #eee;
   background-color: #222;
   border: 1px solid #ccc;
-  white-space: pre;
   padding: 0 3px;
   border: 2px solid #999;
+  white-space: pre-wrap;
   border-top: 10px solid #999;
 }
 .terminal-su a {
@@ -3338,13 +3342,17 @@ a[href="#document-top"]:before {
 }
 .terminal-su p,
 .terminal-su p:first-child {
-  margin-top: 0;
+  margin-top: -40px;
   margin-bottom: 0;
   text-shadow: none;
   font-weight: normal;
   font-family: "Source Code Pro", "Monaco", "DejaVu Sans Mono", "Courier New", monospace;
   font-size: 85%;
   color: #eee;
+}
+.terminal-su p:first-child,
+.terminal-su p:first-child:first-child {
+  margin-top: 0px;
 }
 .terminal-su p:before,
 .terminal-su p:first-child:before {
@@ -4523,6 +4531,13 @@ pre code {
     </li>
     <li><a href="#GET-docs">GET docs</a>
     <ul>
+     <li><a href="#<code>content</code>-option"><code>content</code> option</a></li>
+     <li><a href="#<code>limit</code>-and-<code>offset</code>-options"><code>limit</code> and <code>offset</code> options</a></li>
+     <li><a href="#<code>search</code>-option"><code>search</code> option</a></li>
+     <li><a href="#<code>tags</code>-option"><code>tags</code> option</a></li>
+     <li><a href="#<code>filter</code>-option"><code>filter</code> option</a></li>
+     <li><a href="#<code>select</code>-option"><code>select</code> option</a></li>
+     <li><a href="#<code>sort</code>-option"><code>sort</code> option</a></li>
      <li><a href="#Query-String-Options">Query String Options</a></li>
      <li><a href="#Example">Example</a></li>
     </ul>
@@ -5406,26 +5421,93 @@ Server: LiteStore/1.0.3
 <a name="GET-docs"></a>
 <h4>GET docs<a href="#document-top" title="Go to top"></a></h4>
 
-<p>Retrieves a list of documents in JSON format.</p>
+<p>Retrieves a list of documents in JSON format. Several query string options are supported to query documents.</p>
 
-<a name="Query-String-Options"></a>
-<h5>Query String Options<a href="#document-top" title="Go to top"></a></h5>
+<a name="<code>content</code>-option"></a>
+<h5><code>content</code> option<a href="#document-top" title="Go to top"></a></h5>
 
-<p>The following query string options are supported:</p>
+<p>If set to <strong>false</strong>, do not retrieve document data.</p>
+
+<p>Example: http://127.0.0.1:9500/docs/?contents=false</p>
+
+<a name="<code>limit</code>-and-<code>offset</code>-options"></a>
+<h5><code>limit</code> and <code>offset</code> options<a href="#document-top" title="Go to top"></a></h5>
+
+<p>Provide a way to implement pagination:</p>
 
 <ul>
-<li><strong>search</strong> &ndash; Search for the specified string. Example: <code>http://127.0.0.1:9500/docs/?search=Something</code>.</li>
-<li><strong>tags</strong> &ndash; Retrieve only documents with matching tag(s). Example: <code>http://127.0.0.1:9500/docs/?tags=tag1,tag2</code></li>
-<li><strong>limit</strong> &ndash; Retrieve only the first <em>n</em> results. Example: <code>http://127.0.0.1:9500/docs/?limit=5</code></li>
-<li><strong>offset</strong> &ndash; Skip the first <em>n</em> results. Example: <code>http://127.0.0.1:9500/docs/?offset=5</code></li>
-<li><strong>sort</strong> &ndash; Sort by <strong>created</strong>, <strong>modified</strong>, and/or <strong>id</strong> (prepend <strong>-</strong> for DESC and <strong>+</strong> for ASC). Example: <code>http://127.0.0.1:9500/docs/?sort=-modified,-created</code></li>
-<li><strong>contents</strong> &ndash; If set to <strong>false</strong>, do not retrieve document data. Example: <code>http://127.0.0.1:9500/docs/?contents=false</code></li>
+<li><strong>limit</strong> causes the query to retrieve only the first <em>n</em> results.</li>
+<li><strong>offset</strong> causes the query to skip the first <em>n</em> results.</li>
 </ul>
 
+
+<p>Example: http://127.0.0.1:9500/docs/?limit=10&amp;offset=20</p>
+
+<a name="<code>search</code>-option"></a>
+<h5><code>search</code> option<a href="#document-top" title="Go to top"></a></h5>
+
+<p>Search for the specified string.</p>
+
+<p>Example: http://127.0.0.1:9500/docs/?search=Something</p>
 
 <div class="tip"><p>Tip</p>
 
 <p>If <strong>search</strong> is specified, each result will contain a <strong>highlight</strong> property with a highlighted search snippet, and a <strong>rank</strong> property identified the rank of the result within the search. Results will also be automatically ordered by descending rank.</p></div>
+
+<a name="<code>tags</code>-option"></a>
+<h5><code>tags</code> option<a href="#document-top" title="Go to top"></a></h5>
+
+<p>Retrieve only documents with matching tag(s).</p>
+
+<p>Example: http://127.0.0.1:9500/docs/?tags=tag1,tag2</p>
+
+<a name="<code>filter</code>-option"></a>
+<h5><code>filter</code> option<a href="#document-top" title="Go to top"></a></h5>
+
+<p>Retrieve only JSON documents matching the specified filter expression.</p>
+
+<p>Filter expressions can be composed by one or more clauses joined together through <strong>or</strong> or <strong>and</strong> operators. Each clause must be composed exactly by:</p>
+
+<ul>
+<li>A path expression indicating a field or array item within the JSON document.</li>
+<li>One operator among the following: eq, not eq, gt, gte, lt, lte, contains.</li>
+<li>A value that can be a number, string, <strong>true</strong>, <strong>false</strong> or <strong>nil</strong></li>
+</ul>
+
+
+<div class="sidebar"><p>Limitations</p>
+
+<ul>
+<li>Parenthesis are not supported.</li>
+<li>Up to 10 <strong>or</strong> clauses and 10 <strong>and</strong> clauses are supported.</li>
+<li>Paths can only contain keys that contain only numbers, letters and underscores.</li>
+</ul>
+</div>
+
+<p>Examples:</p>
+
+<ul>
+<li>http://127.0.0.1:9500/docs/?filter=$.age%20gte%2018%20or%20$.skills%20contains%20"maths"</li>
+<li>http://127.0.0.1:9500/docs/?filter=$.name.first&amp;20eq%20"Jack"%20or%20$.fav_food[0]%20eq%20"pizza"</li>
+</ul>
+
+
+<a name="<code>select</code>-option"></a>
+<h5><code>select</code> option<a href="#document-top" title="Go to top"></a></h5>
+
+<p>Retrieve JSON documents containing only the specified fields. Fields must be specified by comma-separated path/alias expression.</p>
+
+<p>Example: http://127.0.0.1:9500/docs/?select=$.name.first%20as%20FirstName,$.age%20as%20Age</p>
+
+<a name="<code>sort</code>-option"></a>
+<h5><code>sort</code> option<a href="#document-top" title="Go to top"></a></h5>
+
+<p>Sort by <strong>created</strong>, <strong>modified</strong>, and/or <strong>id</strong> (prepend <strong>-</strong> for DESC and <strong>+</strong> for ASC).</p>
+
+<p>Example: http://127.0.0.1:9500/docs/?sort=-modified,-created</p>
+
+<a name="Query-String-Options"></a>
+<h5>Query String Options<a href="#document-top" title="Go to top"></a></h5>
 
 <a name="Example"></a>
 <h5>Example<a href="#document-top" title="Go to top"></a></h5>
@@ -6067,7 +6149,7 @@ runForever()
 
     </div>
     <div id="footer">
-      <p><span class="copy"></span> Fabio Cevasco &ndash; October 29, 2017</p>
+      <p><span class="copy"></span> Fabio Cevasco &ndash; February 24, 2018</p>
       <p><span>Powered by</span> <a href="https://h3rald.com/hastyscribe"><span class="hastyscribe"></span></a></p>
     </div>
   </div>
