@@ -1,3 +1,12 @@
+{{v3-option =>  
+> %note%
+> API v3 Required
+> 
+> This query string option has been introduced in version 3 of the LiteStore API.
+  
+}}
+
+
 ### docs (LiteStore Documents)
 
 A document is the main resource type managed by LiteStore. Any LiteStore document can be represented as a JSON object exposing the following properties:
@@ -119,7 +128,7 @@ Server: LiteStore/1.0.3
 
 #### HEAD docs
 
-Retrieves all headers related to the docs resource and no content (this is probably not that useful, but at least it should make REST purists happy).
+Retrieves all headers related to the **docs** resource and no content (this is probably not that useful, but at least it should make REST purists happy).
 
 ##### Example
 
@@ -203,6 +212,8 @@ Example: http://127.0.0.1:9500/docs/?tags=tag1,tag2
 
 ##### `filter` option
 
+{{v3-option}}
+
 Retrieve only JSON documents matching the specified filter expression.
 
 Filter expressions can be composed by one or more clauses joined together through **or** or **and** operators. Each clause must be composed exactly by:
@@ -225,15 +236,25 @@ Examples:
 
 ##### `select` option
 
+{{v3-option}}
+
 Retrieve JSON documents containing only the specified fields. Fields must be specified by comma-separated path/alias expression.
 
 Example: http://127.0.0.1:9500/docs/?select=$.name.first%20as%20FirstName,$.age%20as%20Age
 
 ##### `sort` option
 
-Sort by **created**, **modified**, and/or **id** (prepend **-** for DESC and **+** for ASC). 
+Sort by **created**, **modified**, **id** or a JSON path to a field (prepend **-** for DESC and **+** for ASC). 
 
-Example: http://127.0.0.1:9500/docs/?sort=-modified,-created
+> %note%
+> API v3 Required for JSON path support
+> 
+> Support for JSON paths requires version 3 of the LiteStore API.
+
+Examples: 
+
+* http://127.0.0.1:9500/docs/?sort=-modified,-created
+* http://127.0.0.1:9500/docs/?sort=-$.age,-$.name.first
 
 ##### Query String Options
 
@@ -314,7 +335,7 @@ Retrieves a list of documents in JSON format starting with the specified folder 
 > %tip%
 > Supported query options
 > 
-> The same query options of the **docs** resources are supported.
+> The same query options of the **docs** resource are supported.
 
 ##### Example
 

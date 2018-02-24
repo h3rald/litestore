@@ -176,4 +176,9 @@ suite "LiteStore HTTP API":
     }
     check(json["data"] == testdata)
 
+  test "GET documents sorting by fields":
+    var rget = jget("docs/?sort=+$.age,+$.name.first")
+    var json = rget.body.parseJson
+    check(json["results"][2]["data"]["age"] == %31)
+    check(json["results"][5]["data"]["name"]["first"] == %"Hart")
 

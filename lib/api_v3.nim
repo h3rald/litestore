@@ -18,18 +18,6 @@ import
 
 # Helper procs
 
-proc orderByClauses*(str: string): string =
-  var clauses = newSeq[string]()
-  var fragments = str.split(",")
-  for f in fragments:
-    var matches = @["", ""]
-    if f.find(peg"{[-+ ]} {(id / created / modified)}", matches) != -1:
-      if matches[0] == "-":
-        clauses.add("$1 DESC" % matches[1])
-      else:
-        clauses.add("$1 ASC" % matches[1])
-  return clauses.join(", ")
-
 proc sqlOp(op: string): string =
   let table = newStringTable()
   table["not eq"] = "<>"
@@ -41,6 +29,26 @@ proc sqlOp(op: string): string =
   table["contains"] = "contains"
   return table[op]
 
+proc orderByClauses*(str: string): string =
+  var clauses = newSeq[string]()
+  var fragments = str.split(",")
+  let clause = peg"""
+    clause <- {[-+]} {field}
+    field <- ('id' / 'created' / 'modified' / path)
+    path <- '$' (objField)+
+    ident <- [a-zA-Z0-9_]+
+    objField <- '.' ident
+  """
+  for f in fragments:
+    var matches = @["", ""]
+    if f.find(clause, matches) != -1:
+      let direction = matches[0]
+      let field = "json_extract(documents.data, '$1')" % matches[1]
+      if matches[0] == "-":
+        clauses.add("$1 DESC" % field)
+      else:
+        clauses.add("$1 ASC" % field)
+  return clauses.join(", ")
 
 proc selectClause*(str: string, options: var QueryOptions) = 
   let tokens = """

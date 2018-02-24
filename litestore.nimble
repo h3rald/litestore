@@ -1,6 +1,6 @@
 [Package]
 name          = "litestore"
-version       = "1.2.0"
+version       = "1.3.0"
 author        = "Fabio Cevasco"
 description   = "Self-contained, lightweight, RESTful document store."
 license       = "MIT"

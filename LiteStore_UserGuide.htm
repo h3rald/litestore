@@ -5370,7 +5370,7 @@ Server: LiteStore/1.0.3
 <a name="HEAD-docs"></a>
 <h4>HEAD docs<a href="#document-top" title="Go to top"></a></h4>
 
-<p>Retrieves all headers related to the docs resource and no content (this is probably not that useful, but at least it should make REST purists happy).</p>
+<p>Retrieves all headers related to the <strong>docs</strong> resource and no content (this is probably not that useful, but at least it should make REST purists happy).</p>
 
 <a name="Example"></a>
 <h5>Example<a href="#document-top" title="Go to top"></a></h5>
@@ -5464,6 +5464,10 @@ Server: LiteStore/1.0.3
 <a name="<code>filter</code>-option"></a>
 <h5><code>filter</code> option<a href="#document-top" title="Go to top"></a></h5>
 
+<div class="note"><p>API v3 Required</p>
+
+<p>This query string option has been introduced in version 3 of the LiteStore API.</p></div>
+
 <p>Retrieve only JSON documents matching the specified filter expression.</p>
 
 <p>Filter expressions can be composed by one or more clauses joined together through <strong>or</strong> or <strong>and</strong> operators. Each clause must be composed exactly by:</p>
@@ -5495,6 +5499,10 @@ Server: LiteStore/1.0.3
 <a name="<code>select</code>-option"></a>
 <h5><code>select</code> option<a href="#document-top" title="Go to top"></a></h5>
 
+<div class="note"><p>API v3 Required</p>
+
+<p>This query string option has been introduced in version 3 of the LiteStore API.</p></div>
+
 <p>Retrieve JSON documents containing only the specified fields. Fields must be specified by comma-separated path/alias expression.</p>
 
 <p>Example: http://127.0.0.1:9500/docs/?select=$.name.first%20as%20FirstName,$.age%20as%20Age</p>
@@ -5502,9 +5510,19 @@ Server: LiteStore/1.0.3
 <a name="<code>sort</code>-option"></a>
 <h5><code>sort</code> option<a href="#document-top" title="Go to top"></a></h5>
 
-<p>Sort by <strong>created</strong>, <strong>modified</strong>, and/or <strong>id</strong> (prepend <strong>-</strong> for DESC and <strong>+</strong> for ASC).</p>
+<p>Sort by <strong>created</strong>, <strong>modified</strong>, <strong>id</strong> or a JSON path to a field (prepend <strong>-</strong> for DESC and <strong>+</strong> for ASC).</p>
 
-<p>Example: http://127.0.0.1:9500/docs/?sort=-modified,-created</p>
+<div class="note"><p>API v3 Required for JSON path support</p>
+
+<p>Support for JSON paths requires version 3 of the LiteStore API.</p></div>
+
+<p>Examples:</p>
+
+<ul>
+<li>http://127.0.0.1:9500/docs/?sort=-modified,-created</li>
+<li>http://127.0.0.1:9500/docs/?sort=-$.age,-$.name.first</li>
+</ul>
+
 
 <a name="Query-String-Options"></a>
 <h5>Query String Options<a href="#document-top" title="Go to top"></a></h5>
@@ -5584,7 +5602,7 @@ Server: LiteStore/1.0.3
 
 <div class="tip"><p>Supported query options</p>
 
-<p>The same query options of the <strong>docs</strong> resources are supported.</p></div>
+<p>The same query options of the <strong>docs</strong> resource are supported.</p></div>
 
 <a name="Example"></a>
 <h5>Example<a href="#document-top" title="Go to top"></a></h5>
