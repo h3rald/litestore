@@ -42,14 +42,37 @@ proc sqlOp(op: string): string =
   return table[op]
 
 
-proc filterClauses*(str: string, options: var QueryOptions): string = 
+proc selectClause*(str: string, options: var QueryOptions) = 
+  let tokens = """
+    path <- '$' (objItem / objField)+
+    ident <- [a-zA-Z0-9_]+
+    objIndex <- '[' \d+ ']'
+    objField <- '.' ident
+    objItem <- objField objIndex
+  """
+  let fields = peg("""
+    fields <- ^{field} (\s* ',' \s* {field})*$
+    field <- path \s+ ('as' / 'AS') \s+ ident 
+  """ & tokens)
+  let field = peg("""
+    field <- ^{path} \s+ ('as' / 'AS') \s+ {ident}$ 
+  """ & tokens)
+  var fieldMatches = newSeq[string](10)
+  if str.strip.match(fields, fieldMatches):
+    for m in fieldMatches:
+      if not m.isNil:
+        var rawTuple = newSeq[string](2)
+        if m.match(field, rawTuple):
+          options.jsonSelect.add((path: rawTuple[0], alias: rawTuple[1]))
+
+proc filterClauses*(str: string, options: var QueryOptions) = 
   let tokens = """
     operator <- 'not eq' / 'eq' / 'gte' / 'gt' / 'lte' / 'lt' / 'contains'
     value <- string / number / 'null' / 'true' / 'false'
     string <- '"' ('\"' . / [^"])* '"'
     number <- '-'? '0' / [1-9] [0-9]* ('.' [0-9]+)? (( 'e' / 'E' ) ( '+' / '-' )? [0-9]+)?
     path <- '$' (objItem / objField)+
-    ident <- [a-zA-Z0-9_-]+
+    ident <- [a-zA-Z0-9_]+
     objIndex <- '[' \d+ ']'
     objField <- '.' ident
     objItem <- objField objIndex
@@ -87,7 +110,7 @@ proc filterClauses*(str: string, options: var QueryOptions): string =
       if parsedAndClauses.len > 0:
         parsedClauses.add parsedAndClauses
   if parsedClauses.len == 0:
-    return ""
+    return
   var currentArr = 0
   var tables = newSeq[string]()
   let resOrClauses = parsedClauses.map do (it: seq[seq[string]]) -> string:
@@ -100,7 +123,7 @@ proc filterClauses*(str: string, options: var QueryOptions): string =
         return "json_extract(documents.data, '$1') $2 $3" % x
     return resAndClauses.join(" AND ")
   options.tables = options.tables & tables
-  return resOrClauses.join(" OR ")
+  options.jsonFilter = resOrClauses.join(" OR ")
 
 proc parseQueryOption*(fragment: string, options: var QueryOptions) =
   var pair = fragment.split('=')
@@ -112,9 +135,13 @@ proc parseQueryOption*(fragment: string, options: var QueryOptions) =
     raise newException(EInvalidRequest, "Unable to decode query string fragment '$1'" % fragment)
   case pair[0]:
     of "filter":
-      options.jsonFilter = filterClauses(pair[1], options)
+      filterClauses(pair[1], options)
       if options.jsonFilter == "":
         raise newException(EInvalidRequest, "Invalid filter clause: $1" % pair[1].replace("\"", "\\\""))
+    of "select":
+      selectClause(pair[1], options)
+      if options.jsonSelect.len == 0:
+        raise newException(EInvalidRequest, "Invalid select clause: $1" % pair[1].replace("\"", "\\\""))
     of "search":
       options.search = pair[1]
     of "tags":

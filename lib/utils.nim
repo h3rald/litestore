@@ -7,6 +7,7 @@ import
   pegs, 
   asyncdispatch, 
   math, 
+  sequtils,
   strtabs
 
 import 
@@ -36,6 +37,9 @@ proc selectDocumentsByTags(tags: string, doc_id_col = "id"): string =
 proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
   var tables = options.tables
   result = "SELECT "
+  if options.jsonFilter.len > 0:
+    if not options.tags.contains("$subtype:json"):
+      options.tags = options.tags.split(",").concat(@["$subtype:json"]).join(",")
   if options.search.len > 0:
     if options.select[0] != "COUNT(docid)":
       let rank = "rank(matchinfo(searchdata, 'pcxnal'), 1.20, 0.75, 5.0, 0.5) AS rank"
@@ -70,16 +74,13 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
     result = result & "AND id = ?"
   var doc_id_col: string
   if options.tags.len > 0 or options.folder.len > 0:
-    if options.search.len > 0 and options.select[0] != "COUNT(docid)":
+    if options.jsonFilter.len > 0 or (options.search.len > 0 and options.select[0] != "COUNT(docid)"):
       doc_id_col = "documents.id"
     else:
       doc_id_col = "id"
   if options.folder.len > 0:
     result = result & "AND " & doc_id_col & " LIKE ? "
   if options.tags.len > 0:
-    if options.jsonFilter.len > 0:
-      if options.tags.contains("$subtype:json"):
-        options.tags = options.tags & ",$subtype:json"
     result = result & options.tags.selectDocumentsByTags(doc_id_col)
   if options.jsonFilter.len > 0:
     result = result & "AND " & options.jsonFilter
