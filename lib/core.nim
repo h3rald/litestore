@@ -174,6 +174,12 @@ proc createDocument*(store: Datastore,  id="", rawdata = "", contenttype = "text
   if binary == 1:
     searchable = 0
   var data = rawdata
+  if contenttype == "application/json":
+    # Validate JSON data
+    try:
+      discard data.parseJson 
+    except:
+      raise newException(JsonParsingError, "Invalid JSON content - " & getCurrentExceptionMsg())
   if id == "":
     id = $genOid()
   elif id.isFolder:
@@ -211,6 +217,12 @@ proc updateDocument*(store: Datastore, id: string, rawdata: string, contenttype 
   var contenttype = contenttype.replace(peg"""\;(.+)$""", "") # Strip charset for now
   var binary = checkIfBinary(binary, contenttype)
   var data = rawdata
+  if contenttype == "application/json":
+    # Validate JSON data
+    try:
+      discard data.parseJson 
+    except:
+      raise newException(JsonParsingError, "Invalid JSON content - " & getCurrentExceptionMsg())
   var searchable = searchable
   if binary == 1:
     searchable = 0
