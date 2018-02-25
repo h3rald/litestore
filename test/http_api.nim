@@ -45,7 +45,7 @@ suite "LiteStore HTTP API":
       var ops = """
       [
         {"op": "add", "path": "/tags/3", "value": "tag1$1"},
-        {"op": "add", "path": "/tags/4", "value": "tag$2"},
+        {"op": "add", "path": "/tags/4", "value": "tag$2"}
       ]
       """ % [$count, $(count mod 2)]
       discard jpatch("docs/" & ids[count], ops.parseJson)
@@ -95,44 +95,66 @@ suite "LiteStore HTTP API":
   test "PATCH document tags":
     var rget = jget("docs?tags=t1")
     check(rget.status == "404 Not Found")
-    var ops = """
-    [
+    var ops = %*[
       {"op": "add", "path": "/tags/3", "value": "t1"},
       {"op": "add", "path": "/tags/4", "value": "t2"},
       {"op": "add", "path": "/tags/5", "value": "t3"}
     ]
-    """
-    var rpatch = jpatch("docs/" & ids[0], ops.parseJson)
+    var rpatch = jpatch("docs/" & ids[0], ops)
     check(rpatch.status == "200 OK")
     rget = jget("docs/?tags=t1")
     check(rget.body.parseJson["total"] == %1)
-    ops = """
-    [
+    ops = %*[
       {"op": "add", "path": "/tags/3", "value": "t1"},
       {"op": "add", "path": "/tags/4", "value": "t3"}
     ]
-    """
-    rpatch = jpatch("docs/" & ids[1], ops.parseJson)
+    rpatch = jpatch("docs/" & ids[1], ops)
     check(rpatch.status == "200 OK")
-    ops = """
-    [
+    ops = %*[
       {"op": "add", "path": "/tags/3", "value": "t2"},
       {"op": "add", "path": "/tags/4", "value": "t3"}
     ]
-    """
-    rpatch = jpatch("docs/" & ids[2], ops.parseJson)
+    rpatch = jpatch("docs/" & ids[2], ops)
     check(rpatch.status == "200 OK")
-    ops = """
-    [
+    ops = %*[
       {"op": "replace", "path": "/tags/3", "value": "t4"},
       {"op": "remove", "path": "/tags/4"}
     ]
-    """
-    rpatch = jpatch("docs/" & ids[0], ops.parseJson)
+    rpatch = jpatch("docs/" & ids[0], ops)
     check(rpatch.status == "200 OK")
     rget = jget("docs/?tags=t2,t3")
     check(rget.body.parseJson["total"] == %1)
     check(info("total_documents") == %8)
+
+  test "PATCH document data":
+    var ops = %*[
+      {"op": "remove", "path": "/data/name/first"},
+      {"op": "add", "path": "/data/test", "value": 111},
+      {"op": "replace", "path": "/data/friends/0", "value": {"id": 11, "name": "Tom Paris"}}
+    ] 
+    var rpatch = jpatch("docs/" & ids[0], ops)
+    var data = rpatch.body.parseJson["data"]
+    check(data["name"] == %*{"last": "Walters"})
+    check(data["test"] == %111)
+    check(data["friends"][0] == %*{"id": 11, "name": "Tom Paris"})
+    ops = %*[
+      {"op": "add", "path": "/data/not_added", "value": "!!!"},
+      {"op": "test", "path": "/data/test", "value": 222},
+      {"op": "replace", "path": "/data/test", "value": "!!!"}
+    ] 
+    rpatch = jpatch("docs/" & ids[0], ops)
+    data = rpatch.body.parseJson["data"]
+    check(data["test"] == %111)
+    check(data.hasKey("not_added") == false)
+    ops = %*[
+      {"op": "replace", "path": "/data/test", "value": 222},
+      {"op": "test", "path": "/data/test", "value": 222},
+      {"op": "add", "path": "/data/not_added", "value": "!!!"}
+    ] 
+    rpatch = jpatch("docs/" & ids[0], ops)
+    data = rpatch.body.parseJson["data"]
+    check(data["test"] == %111)
+    check(data.hasKey("not_added") == false)
 
   test "HEAD documents":
     var rhead = jhead("docs/invalid/")

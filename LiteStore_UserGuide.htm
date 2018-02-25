@@ -4373,6 +4373,7 @@ pre code {
    <ul>
     <li><a href="#-Multi-format-Documents"> Multi-format Documents</a></li>
     <li><a href="#-Document-Tagging"> Document Tagging</a></li>
+    <li><a href="#-Enhanced-Querying-of-JSON-documents"> Enhanced Querying of JSON documents</a></li>
     <li><a href="#-Full-text-Search"> Full-text Search</a></li>
     <li><a href="#-RESTful-HTTP-API"> RESTful HTTP API</a></li>
     <li><a href="#-Directory-Bulk-Import/Export"> Directory Bulk Import/Export</a></li>
@@ -4560,7 +4561,8 @@ pre code {
     </li>
     <li><a href="#PATCH-docs/:id">PATCH docs/:id</a>
     <ul>
-     <li><a href="#Example">Example</a></li>
+     <li><a href="#Example:-Patching-Tags">Example: Patching Tags</a></li>
+     <li><a href="#Example:-Patching-Daya">Example: Patching Daya</a></li>
     </ul>
     </li>
     <li><a href="#DELETE-docs/:id">DELETE docs/:id</a>
@@ -4713,6 +4715,11 @@ pre code {
 <h4><span class="fa-tags"></span> Document Tagging<a href="#document-top" title="Go to top"></a></h4>
 
 <p>You can add custom tags to documents to easily categorize them and retrieve them. Some system tags are also added automatically to identify the document content type, format and collection.</p>
+
+<a name="-Enhanced-Querying-of-JSON-documents"></a>
+<h4><span class="fa-tasks"></span> Enhanced Querying of JSON documents<a href="#document-top" title="Go to top"></a></h4>
+
+<p>By leveraging the <a href="https://www.sqlite.org/json1.html">SQLite JSON1 extension</a> and implementing custom query string parsing, LiteStore provides enhanced filtering, ordering, and custom field selection of JSON documents.</p>
 
 <a name="-Full-text-Search"></a>
 <h4><span class="fa-search"></span> Full-text Search<a href="#document-top" title="Go to top"></a></h4>
@@ -4868,12 +4875,12 @@ pre code {
 <p>The easiest way to get LiteStore is by downloading one of the prebuilt binaries from the [Github Release Page][release]:</p>
 
 <ul>
-<li><a href="https://github.com/h3rald/litestore/releases/download/1.2.0litestore_1.2.0_macosx_x64.zip">LiteStore for Mac OS X (x64)</a> &ndash; Compiled on OS X El Capitan (LLVM CLANG 7.0.0)</li>
-<li><a href="https://github.com/h3rald/litestore/releases/download/1.2.0/litestore_1.2.0_windows_x64.zip">LiteStore for Windows (x64)</a> &ndash; Cross-compiled on OS X El Capitan (MinGW-w64 GCC 4.8.2)</li>
-<li><a href="https://github.com/h3rald/litestore/releases/download/1.2.0/litestore_1.2.0_windows_x86.zip">LiteStore for Windows (x86)</a> &ndash; Cross-compiled on OS X El Capitan (MinGW-w64 GCC 4.8.2)</li>
-<li><a href="https://github.com/h3rald/litestore/releases/download/1.2.0/litestore_1.2.0_linux_x64.zip">LiteStore for Linux (x64)</a> &ndash; Cross-compiled on OS X El Capitan (GNU GCC 4.8.1)</li>
-<li><a href="https://github.com/h3rald/litestore/releases/download/1.2.0/litestore_1.2.0_linux_x86.zip">LiteStore for Linux (x86)</a> &ndash; Cross-compiled on OS X El Capitan (GNU GCC 4.8.1)</li>
-<li><a href="https://github.com/h3rald/litestore/releases/download/1.2.0/litestore_1.2.0_linux_arm.zip">LiteStore for Linux (ARM)</a> &ndash; Cross-compiled on OS X El Capitan (GNU GCC 4.8.2)</li>
+<li><a href="https://github.com/h3rald/litestore/releases/download/1.3.0litestore_1.3.0_macosx_x64.zip">LiteStore for Mac OS X (x64)</a></li>
+<li><a href="https://github.com/h3rald/litestore/releases/download/1.3.0/litestore_1.3.0_windows_x64.zip">LiteStore for Windows (x64)</a></li>
+<li><a href="https://github.com/h3rald/litestore/releases/download/1.3.0/litestore_1.3.0_windows_x86.zip">LiteStore for Windows (x86)</a></li>
+<li><a href="https://github.com/h3rald/litestore/releases/download/1.3.0/litestore_1.3.0_linux_x64.zip">LiteStore for Linux (x64)</a></li>
+<li><a href="https://github.com/h3rald/litestore/releases/download/1.3.0/litestore_1.3.0_linux_x86.zip">LiteStore for Linux (x86)</a></li>
+<li><a href="https://github.com/h3rald/litestore/releases/download/1.3.0/litestore_1.3.0_linux_arm.zip">LiteStore for Linux (ARM)</a></li>
 </ul>
 
 
@@ -4904,7 +4911,7 @@ pre code {
 <p>To get the app up and running (assuming that you have the <span class="cmd">litestore</span> executable in your path):</p>
 
 <ol>
-<li>Download the default <a href="https://github.com/h3rald/litestore/releases/download/1.2.0/data.db">data.db</a> file. This file is a LiteStore data store file containing the sample app.</li>
+<li>Download the default <a href="https://github.com/h3rald/litestore/releases/download/1.3.0/data.db">data.db</a> file. This file is a LiteStore data store file containing the sample app.</li>
 <li>Go to the local directory in which you downloaded the <span class="cmd">data.db</span> file.</li>
 <li>Run <span class="cmd">litestore -s:data.db</span></li>
 <li>Go to <a href="http://localhost:9500/docs/admin/index.html">localhost:9500/docs/admin/index.html</a>.</li>
@@ -5479,7 +5486,7 @@ Server: LiteStore/1.0.3
 </ul>
 
 
-<div class="sidebar"><p>Limitations</p>
+<div class="warning"><p>Limitations</p>
 
 <ul>
 <li>Parenthesis are not supported.</li>
@@ -5701,20 +5708,23 @@ Server: LiteStore/1.0.3
 <a name="PATCH-docs/:id"></a>
 <h4>PATCH docs/:id<a href="#document-top" title="Go to top"></a></h4>
 
-<p>Adds, removes, replaces or tests the specified document for tags. Operations must be specified using the <a href="http://jsonpatch.com/">JSONPatch</a> format.</p>
+<p>Adds, removes, replaces or tests the specified document for tags or data. Operations must be specified using the <a href="http://jsonpatch.com/">JSONPatch</a> format.</p>
 
-<p>Always retrieve document tags first before applying a patch, to know the order tags have been added to the document.</p>
+<div class="tip"><p>Tip</p>
+
+<p>If you plan on patching tags, always retrieve document tags first before applying a patch, to know the order tags have been added to the document.</p></div>
 
 <div class="warning"><p>Limitations</p>
 
 <ul>
 <li>Only <strong>add</strong>, <strong>remove</strong>, <strong>replace</strong> and <strong>test</strong> operations are supported.</li>
-<li>It is currently only possible to change tags, not other parts of a document.</li>
+<li>It is only possible to patch <strong>data</strong> and/or <strong>tags</strong> of a document.</li>
+<li>It is only possible to patch the data of JSON documents.</li>
 </ul>
 </div>
 
-<a name="Example"></a>
-<h5>Example<a href="#document-top" title="Go to top"></a></h5>
+<a name="Example:-Patching-Tags"></a>
+<h5>Example: Patching Tags<a href="#document-top" title="Go to top"></a></h5>
 
 <pre><code>$ curl -i -X PATCH 'http://localhost:9500/docs/test.json' --header "Content-Type:application/json" -d '[{"op":"add", "path":"/tags/3", "value":"test1"},{"op":"add", "path":"/tags/4", "value":"test2"},{"op":"add", "path":"/tags/5", "value":"test3"}]'
 HTTP/1.1 200 OK
@@ -5725,6 +5735,43 @@ Access-Control-Allow-Origin: *
 Server: LiteStore/1.0.3
 
 {"id": "test.json", "data": {"test": true}, "created": "2015-09-20T09:06:25Z", "modified": null, "tags": ["$type:application", "$subtype:json", "$format:text", "test1", "test2", "test3"]}
+</code></pre>
+
+<a name="Example:-Patching-Daya"></a>
+<h5>Example: Patching Daya<a href="#document-top" title="Go to top"></a></h5>
+
+<p>Given the following document:</p>
+
+<pre><code>{
+  "id": "test",
+  "data": {
+    "name": {
+      "first": "Tom",
+      "last": "Paris"
+    },
+    "rank": "lieutenant"
+  },
+  "created": "2018-02-25T14:33:14Z",
+  "modified": null,
+  "tags": [
+    "$type:application",
+    "$subtype:json",
+    "$format:text"
+  ]
+}
+</code></pre>
+
+<p>The following PATCH operation can be applied to change its data.</p>
+
+<pre><code>$ curl -i -X PATCH 'http://localhost:9500/docs/test' --header "Content-Type:application/json" -d '[{"op": "replace", "path": "/data/name", "value": "Seven of Nine"}, {"op": "remove", "path": "/data/rank"}]'
+HTTP/1.1 200 OK
+server: LiteStore/1.3.0
+access-control-allow-origin: *
+content-type: application/json
+access-control-allow-headers: Content-Type
+Content-Length: 172
+
+{"id":"test","data":{"name":"Seven of Nine"},"created":"2018-02-25T14:33:14Z","modified":"2018-02-25T14:35:52Z","tags":["$type:application","$subtype:json","$format:text"]}
 </code></pre>
 
 <a name="DELETE-docs/:id"></a>
@@ -6167,7 +6214,7 @@ runForever()
 
     </div>
     <div id="footer">
-      <p><span class="copy"></span> Fabio Cevasco &ndash; February 24, 2018</p>
+      <p><span class="copy"></span> Fabio Cevasco &ndash; February 25, 2018</p>
       <p><span>Powered by</span> <a href="https://h3rald.com/hastyscribe"><span class="hastyscribe"></span></a></p>
     </div>
   </div>

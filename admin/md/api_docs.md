@@ -222,7 +222,7 @@ Filter expressions can be composed by one or more clauses joined together throug
 * One operator among the following: eq, not eq, gt, gte, lt, lte, contains.
 * A value that can be a number, string, **true**, **false** or **nil**
 
-> %sidebar%
+> %warning%
 > Limitations
 > 
 > * Parenthesis are not supported.
@@ -431,17 +431,21 @@ Server: LiteStore/1.0.3
 
 #### PATCH docs/:id
 
-Adds, removes, replaces or tests the specified document for tags. Operations must be specified using the [JSONPatch](http://jsonpatch.com/) format.
+Adds, removes, replaces or tests the specified document for tags or data. Operations must be specified using the [JSONPatch](http://jsonpatch.com/) format.
 
-Always retrieve document tags first before applying a patch, to know the order tags have been added to the document.
+> %tip%
+> Tip
+> 
+> If you plan on patching tags, always retrieve document tags first before applying a patch, to know the order tags have been added to the document.
 
 > %warning%
 > Limitations
->
+> 
 > * Only **add**, **remove**, **replace** and **test** operations are supported.
-> * It is currently only possible to change tags, not other parts of a document.
+> * It is only possible to patch **data** and/or **tags** of a document.
+> * It is only possible to patch the data of JSON documents.
 
-##### Example
+##### Example: Patching Tags
 
 ```
 $ curl -i -X PATCH 'http://localhost:9500/docs/test.json' --header "Content-Type:application/json" -d '[{"op":"add", "path":"/tags/3", "value":"test1"},{"op":"add", "path":"/tags/4", "value":"test2"},{"op":"add", "path":"/tags/5", "value":"test3"}]'
@@ -453,6 +457,44 @@ Access-Control-Allow-Origin: *
 Server: LiteStore/1.0.3
 
 {"id": "test.json", "data": {"test": true}, "created": "2015-09-20T09:06:25Z", "modified": null, "tags": ["$type:application", "$subtype:json", "$format:text", "test1", "test2", "test3"]}
+```
+
+##### Example: Patching Daya
+
+Given the following document:
+
+```
+{
+  "id": "test",
+  "data": {
+    "name": {
+      "first": "Tom",
+      "last": "Paris"
+    },
+    "rank": "lieutenant"
+  },
+  "created": "2018-02-25T14:33:14Z",
+  "modified": null,
+  "tags": [
+    "$type:application",
+    "$subtype:json",
+    "$format:text"
+  ]
+}
+```
+
+The following PATCH operation can be applied to change its data.
+
+```
+$ curl -i -X PATCH 'http://localhost:9500/docs/test' --header "Content-Type:application/json" -d '[{"op": "replace", "path": "/data/name", "value": "Seven of Nine"}, {"op": "remove", "path": "/data/rank"}]'
+HTTP/1.1 200 OK
+server: LiteStore/1.3.0
+access-control-allow-origin: *
+content-type: application/json
+access-control-allow-headers: Content-Type
+Content-Length: 172
+
+{"id":"test","data":{"name":"Seven of Nine"},"created":"2018-02-25T14:33:14Z","modified":"2018-02-25T14:35:52Z","tags":["$type:application","$subtype:json","$format:text"]}
 ```
 
 #### DELETE docs/:id

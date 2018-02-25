@@ -42,7 +42,6 @@ proc orderByClauses*(str: string): string =
   for f in fragments:
     var matches = @["", ""]
     if f.find(clause, matches) != -1:
-      let direction = matches[0]
       let field = "json_extract(documents.data, '$1')" % matches[1]
       if matches[0] == "-":
         clauses.add("$1 DESC" % field)
@@ -196,19 +195,16 @@ proc validate*(req: LSRequest, LS: LiteStore, resource: string, id: string, cb: 
           discard
   return cb(req, LS, resource, id)
 
-proc applyPatchOperation*(tags: var seq[string], op: string, path: string, value: string): bool =
-  var matches = @[""]
-  if path.find(peg"^\/tags\/{\d+}$", matches) == -1:
-    raise newException(EInvalidRequest, "cannot patch path '$1'" % path)
-  let index = matches[0].parseInt
-  LOG.debug("- PATCH -> $1 tag index '$2' - Total tags: $3." % [op, $index, $tags.len])
+
+proc patchTag(tags: var seq[string], index: int, op, path, value: string): bool =
+  LOG.debug("- PATCH -> $1 tag['$2'] = \"$3\" - Total tags: $4." % [op, $index, $value, $tags.len])
   case op:
     of "remove":
       let tag = tags[index]
       if not tag.startsWith("$"):
         tags[index] = "" # Not removing element, otherwise subsequent indexes won't work!
       else:
-        raise newException(EInvalidRequest, "Cannot remove system tag: $1" % tag)
+        raise newException(EInvalidRequest, "cannot remove system tag: $1" % tag)
     of "add":
       if value.match(PEG_USER_TAG):
         tags.insert(value, index)
@@ -220,7 +216,7 @@ proc applyPatchOperation*(tags: var seq[string], op: string, path: string, value
     of "replace":
       if value.match(PEG_USER_TAG):
         if tags[index].startsWith("$"):
-          raise newException(EInvalidRequest, "Cannot replace system tag: $1" % tags[index])
+          raise newException(EInvalidRequest, "cannot replace system tag: $1" % tags[index])
         else:
           tags[index] = value
       else:
@@ -232,8 +228,90 @@ proc applyPatchOperation*(tags: var seq[string], op: string, path: string, value
       if tags[index] != value:
         return false
     else:
-      raise newException(EInvalidRequest, "invalid operation: $1" % op)
+      raise newException(EInvalidRequest, "invalid patch operation: $1" % op)
   return true
+
+proc patchData*(data: var JsonNode, origData: JsonNode, op: string, path: string, value: JsonNode): bool =
+  LOG.debug("- PATCH -> $1 path $2 with $3" % [op, path, $value])
+  var keys = path.replace(peg"^\/data\/", "").split("/")
+  if keys.len == 0:
+    raise newException(EInvalidRequest, "no valid path specified: $1" % path)
+  var d = data
+  var dorig = origData
+  var c = 1
+  for key in keys:
+    if d.kind == JArray:
+      try:
+        var index = key.parseInt
+        if c >= keys.len:
+          d.elems[index] = value
+          case op:
+            of "remove":
+              d.elems.del(index)
+            of "add": 
+              d.elems.insert(value, index)
+            of "replace": 
+              d.elems[index] = value
+            of "test": 
+              if d.elems[index] != value:
+                return false
+            else:
+              raise newException(EInvalidRequest, "invalid patch operation: $1" % op)
+        else:
+          d = d[index]
+          dorig = dorig[index]
+      except:
+        raise newException(EInvalidRequest, "invalid index key '$1' in path '$2'" % [key, path])
+    else:
+      if c >= keys.len:
+        case op:
+          of "remove":
+            if d.hasKey(key):
+              d.delete(key)
+            else:
+              raise newException(EInvalidRequest, "key '$1' not found in path '$2'" % [key, path])
+          of "add": 
+            d[key] = value
+          of "replace": 
+            if d.hasKey(key):
+              d[key] = value
+            else:
+              raise newException(EInvalidRequest, "key '$1' not found in path '$2'" % [key, path])
+          of "test": 
+            if dorig.hasKey(key):
+              if dorig[key] != value:
+                return false
+            else:
+              raise newException(EInvalidRequest, "key '$1' not found in path '$2'" % [key, path])
+          else:
+            raise newException(EInvalidRequest, "invalid patch operation: $1" % op)
+      else:
+        d = d[key]
+        dorig = dorig[key]
+    c += 1
+  return true
+
+
+proc applyPatchOperation*(data: var JsonNode, origData: JsonNode, tags: var seq[string], op: string, path: string, value: JsonNode): bool =
+  var matches = @[""]
+  let p = peg"""
+    path <- ^tagPath / fieldPath$
+    tagPath <- '\/tags\/' {\d+}
+    fieldPath <- '\/data\/' ident ('\/' ident)*
+    ident <- [a-zA-Z0-9_]+ / '-'
+  """
+  if path.find(p, matches) == -1:
+    raise newException(EInvalidRequest, "cannot patch path '$1'" % path)
+  if path.match(peg"^\/tags\/"):
+    let index = matches[0].parseInt
+    if value.kind != JString:
+      raise newException(EInvalidRequest, "tag '$1' is not a string." % $value)
+    let tag = value.getStr
+    return patchTag(tags, index, op, path, tag)
+  elif tags.contains("$subtype:json"):
+    return patchData(data, origData, op, path, value)
+  else:
+    raise newException(EInvalidRequest, "cannot patch data of a non-JSON document.")
 
 # Low level procs
 
@@ -377,21 +455,28 @@ proc patchDocument*(LS: LiteStore, id: string, body: string): LSResponse =
   if jbody.kind != JArray:
     return resError(Http400, "Bad request: PATCH request body is not an array.")
   var options = newQueryOptions()
-  options.select = @["documents.id AS id", "created", "modified"]
+  options.select = @["documents.id AS id", "created", "modified", "data"]
   let doc = LS.store.retrieveRawDocument(id, options)
   if doc == "":
     return resDocumentNotFound(id)
   let jdoc = doc.parseJson
-  var tags = newSeq[string](0)
+  var tags = newSeq[string]()
+  var origTags = newSeq[string]()
   for tag in jdoc["tags"].items:
     tags.add(tag.str)
+    origTags.add(tag.str)
+  var data: JsonNode
+  var origData: JsonNode
+  if tags.contains("$subtype:json"):
+    origData = jdoc["data"].getStr.parseJson
+    data = origData.copy
   var c = 1
   for item in jbody.items:
     if item.hasKey("op") and item.hasKey("path"):
       if not item.hasKey("value"):
         item["value"] = %""
       try:
-        apply = applyPatchOperation(tags, item["op"].str, item["path"].str, item["value"].str)
+        apply = applyPatchOperation(data, origData, tags, item["op"].str, item["path"].str, item["value"])
         if not apply:
           break
       except:
@@ -400,14 +485,22 @@ proc patchDocument*(LS: LiteStore, id: string, body: string): LSResponse =
         return resError(Http400, "Bad request: patch operation #$1 is malformed." % $c)
     c.inc
   if apply:
-    try:
-      for t1 in jdoc["tags"].items:
-        discard LS.store.destroyTag(t1.str, id, true)
-      for t2 in tags:
-        if t2 != "":
-          LS.store.createTag(t2, id, true)
-    except:
-      return resError(Http500, "Unable to patch document '$1' - $2" % [id, getCurrentExceptionMsg()])
+    if not origData.isNil and origData != data:
+      try:
+        var doc = LS.store.updateDocument(id, data.pretty, "application/json")
+        if doc == "":
+          return resError(Http500, "Unable to patch document '$1'." % id)
+      except:
+        return resError(Http500, "Unable to patch document '$1' - $2" % id, getCurrentExceptionMsg())
+    if origTags != tags:
+      try:
+        for t1 in jdoc["tags"].items:
+          discard LS.store.destroyTag(t1.str, id, true)
+        for t2 in tags:
+          if t2 != "":
+            LS.store.createTag(t2, id, true)
+      except:
+        return resError(Http500, "Unable to patch document '$1' - $2" % [id, getCurrentExceptionMsg()])
   return LS.getRawDocument(id)
 
 # Main routing
