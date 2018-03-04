@@ -42,7 +42,9 @@ proc orderByClauses*(str: string): string =
   for f in fragments:
     var matches = @["", ""]
     if f.find(clause, matches) != -1:
-      let field = "json_extract(documents.data, '$1')" % matches[1]
+      var field = matches[1]
+      if field[0] == '$':
+        field = "json_extract(documents.data, '$1')" % matches[1]
       if matches[0] == "-":
         clauses.add("$1 DESC" % field)
       else:
