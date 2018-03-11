@@ -7,9 +7,9 @@ import
 
 proc currentTime*(plain = false): string =
   if plain:
-    return getTime().getGMTime().format("yyyy-MM-dd' @ 'HH:mm:ss")
+    return getTime().utc.format("yyyy-MM-dd' @ 'HH:mm:ss")
   else:
-    return getTime().getGMTime().format("yyyy-MM-dd'T'HH:mm:ss'Z'")
+    return getTime().utc.format("yyyy-MM-dd'T'HH:mm:ss'Z'")
 
 proc msg(logger: Logger, kind, message: string, params: varargs[string, `$`]) =
   let s = format(message, params)

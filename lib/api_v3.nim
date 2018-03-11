@@ -133,6 +133,8 @@ proc filterClauses*(str: string, options: var QueryOptions) =
   options.jsonFilter = resOrClauses.join(" OR ")
 
 proc parseQueryOption*(fragment: string, options: var QueryOptions) =
+  if fragment == "":
+    return
   var pair = fragment.split('=')
   if pair.len < 2 or pair[1] == "":
     raise newException(EInvalidRequest, "Invalid query string fragment '$1'" % fragment)

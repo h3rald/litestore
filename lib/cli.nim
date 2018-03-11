@@ -1,5 +1,5 @@
 import
-  parseopt2,
+  parseopt,
   strutils,
   strtabs
 import
