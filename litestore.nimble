@@ -1,6 +1,6 @@
 [Package]
 name          = "litestore"
-version       = "1.3.0"
+version       = "1.3.1"
 author        = "Fabio Cevasco"
 description   = "Self-contained, lightweight, RESTful document store."
 license       = "MIT"
@@ -8,4 +8,4 @@ bin           = "litestore"
 skipFiles     = @["nakefile.nim"]
 
 [Deps]
-requires: "nim >= 0.17.2"
+requires: "nim >= 0.18.0"
