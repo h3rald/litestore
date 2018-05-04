@@ -3,7 +3,11 @@ nimcache
 *.db
 *.db-journal
 http_api
+html5
+css3
+sqlite3_analyzer
 litestore*.zip
 litestore
 nakefile
+LiteStore_UserGuide.htm
 jester_integration

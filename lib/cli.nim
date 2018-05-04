@@ -16,6 +16,9 @@ var
   readonly = false
   logLevel = "warn"
   mount = false
+  exOperation:string = nil
+  exFile:string = nil
+  exUri:string = nil
   
 let
   usage* = appname & " v" & version & " - Lightweight REST Document Store" & """
@@ -27,6 +30,7 @@ let
   Commands:
     run                 Start LiteStore server (default if no command specified).
     delete              Delete a previously-imported specified directory (requires -d).
+    execute             Execute an operation on data stored in the datastore (requires -o, -u, and in certain cases -f).
     import              Import the specified directory into the datastore (requires -d).
     export              Export the previously-imported specified directory to the current directory (requires -d).
     optimize            Optimize search indexes.
@@ -35,12 +39,15 @@ let
   Options:
     -a, --address       Specify server address (default: 127.0.0.1).
     -d, --directory     Specify a directory to serve, import, export, delete, or mount.
+    -f, --file          Specify a file to read containing input data for an operation to be executed.
     -h, --help          Display this message.
     -l, --log           Specify the log level: debug, info, warn, error, none (default: info)
     -m, --mount         Mirror database changes to the specified directory on the filesystem.
+    -o, --operation     Specify an operation to execute via the execute command: get, put, delete, patch, post, head, options.
     -p, --port          Specify server port number (default: 9500).
     -r, --readonly      Allow only data retrieval operations.
     -s, --store         Specify a datastore file (default: data.db)
+    -u, --uri           Specify an uri to execute an operation through the execute command.
     -v, --version       Display the program version.
 """
 
@@ -52,6 +59,8 @@ for kind, key, val in getOpt():
           operation = opRun
         of "import":
           operation = opImport
+        of "execute":
+          operation = opExecute
         of "export":
           operation = opExport
         of "delete":
@@ -95,6 +104,18 @@ for kind, key, val in getOpt():
           if val == "":
             fail(104, "Directory not specified.")
           directory = val
+        of "operation", "o":
+          if val == "":
+            fail(106, "Operation not specified.")
+          exOperation = val
+        of "file", "f":
+          if val == "":
+            fail(107, "File not specified.")
+          exFile = val
+        of "uri", "u":
+          if val == "":
+            fail(108, "URI not specified.")
+          exUri = val
         of "mount", "m":
           mount = true
         of "version", "v":
@@ -112,8 +133,17 @@ for kind, key, val in getOpt():
 
 # Validation
 
-if directory == nil and (operation in [opDelete, opImport, opExport] or mount):
-  fail(105, "Directory option not specified.")
+if directory.isNil and (operation in [opDelete, opImport, opExport] or mount):
+  fail(105, "--directory option not specified.")
+
+if exFile.isNil and (exOperation in ["put", "post", "patch"]):
+  fail(109, "--file option not specified")
+
+if exUri.isNil and operation == opExecute:
+  fail(110, "--uri option not specified")
+
+if exOperation.isNil and operation == opExecute:
+  fail(111, "--operation option not specified")
 
 LS.operation = operation
 LS.address = address
@@ -124,3 +154,6 @@ LS.readonly = readonly
 LS.favicon = favicon
 LS.loglevel = loglevel
 LS.mount = mount
+LS.execution.file = exFile
+LS.execution.uri = exUri
+LS.execution.operation = exOperation

@@ -71,7 +71,7 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
       else:
         return resError(Http400, "Bad request - Invalid resource: $1" % info.resource)
 
-proc process(req: LSRequest, LS: LiteStore): LSResponse {.gcsafe.}=
+proc process*(req: LSRequest, LS: LiteStore): LSResponse {.gcsafe.}=
   var matches = @["", "", ""]
   template route(req: LSRequest, peg: Peg, op: untyped): untyped =
     if req.url.path.find(peg, matches) != -1:
@@ -101,7 +101,7 @@ proc process(req: LSRequest, LS: LiteStore): LSResponse {.gcsafe.}=
   except EInvalidRequest:
     let e = (ref EInvalidRequest)(getCurrentException())
     let trace = e.getStackTrace()
-    return resError(Http400, "Bad LSRequest: $1" % getCurrentExceptionMsg(), trace)
+    return resError(Http400, "Bad Request: $1" % getCurrentExceptionMsg(), trace)
   except:
     let e = getCurrentException()
     let trace = e.getStackTrace()

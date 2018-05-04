@@ -16,6 +16,10 @@ type
   EFileExists* = object of Exception
   EInvalidRequest* = object of Exception
   uarray* {.unchecked.} [T] = array[0..0, T] 
+  ExecutionData* = object
+    operation*: string
+    file*: string
+    uri*: string
   Datastore* = object
     db*: DbConn
     path*: string
@@ -43,7 +47,8 @@ type
     opExport, 
     opDelete,
     opVacuum,
-    opOptimize
+    opOptimize,
+    opExecute
   LogLevel* = enum
     lvDebug
     lvInfo
@@ -54,6 +59,7 @@ type
     level*: LogLevel
   LiteStore* = object
     store*: Datastore
+    execution*: ExecutionData
     address*: string
     port*: int
     operation*: Operation

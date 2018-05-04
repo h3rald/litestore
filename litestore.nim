@@ -29,6 +29,40 @@ from asyncdispatch import runForever
 {.compile: "vendor/sqlite/libsqlite3.c".}
 {.passC: "-DSQLITE_ENABLE_FTS3=1 -DSQLITE_ENABLE_FTS3_PARENTHESIS -DSQLITE_ENABLE_JSON1".}
 
+proc executeOperation*() =
+  let file = LS.execution.file
+  let uri = LS.execution.uri
+  let operation = LS.execution.operation
+  var req:LSRequest 
+  case operation.toUpperAscii:
+    of "GET":
+      req.reqMethod = HttpGet
+    of "POST":
+      req.reqMethod = HttpPost
+    of "PUT":
+      req.reqMethod = HttpPut
+    of "PATCH":
+      req.reqMethod = HttpPatch
+    of "DELETE":
+      req.reqMethod = HttpDelete
+    of "OPTIONS":
+      req.reqMethod = HttpOptions
+    of "HEAD":
+      req.reqMethod = HttpHead
+    else:
+      fail(203, "Operation '$1' is not supported" % [operation])
+  if not file.isNil:
+    req.body = file.readFile
+  req.headers = newHttpHeaders()
+  req.hostname = "<cli>"
+  req.url = parseUri("$1://$2:$3/$4" % @["http", "localhost", "9500", uri])
+  let resp = req.process(LS)
+  echo resp.content
+  if resp.code.int < 300 and resp.code.int >= 200:
+    quit(0)
+  else:
+    quit(resp.code.int)
+
 proc setup*(open = true) =
   if not LS.file.fileExists:
     try:
@@ -71,6 +105,8 @@ when isMainModule:
       LS.store.deleteDir(LS.directory)
     of opOptimize:
       LS.store.optimize
+    of opExecute:
+      executeOperation()
     else:
       discard
 
