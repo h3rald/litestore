@@ -18,11 +18,14 @@ var
   mount = false
   exOperation:string = nil
   exFile:string = nil
+  exBody:string = nil
+  exType:string = nil
   exUri:string = nil
   
 let
   usage* = appname & " v" & version & " - Lightweight REST Document Store" & """
-  (c) 2015 Fabio Cevasco
+  
+(c) 2015-2018 Fabio Cevasco
 
   Usage:
     litestore [command] [option1 option2 ...]
@@ -30,7 +33,7 @@ let
   Commands:
     run                 Start LiteStore server (default if no command specified).
     delete              Delete a previously-imported specified directory (requires -d).
-    execute             Execute an operation on data stored in the datastore (requires -o, -u, and in certain cases -f).
+    execute             Execute an operation on data stored in the datastore (requires -o, -u, and in certain cases -f or -b and -t).
     import              Import the specified directory into the datastore (requires -d).
     export              Export the previously-imported specified directory to the current directory (requires -d).
     optimize            Optimize search indexes.
@@ -38,8 +41,9 @@ let
 
   Options:
     -a, --address       Specify server address (default: 127.0.0.1).
+    -b, --body          Specify a string containing input data for an operation to be executed.
     -d, --directory     Specify a directory to serve, import, export, delete, or mount.
-    -f, --file          Specify a file to read containing input data for an operation to be executed.
+    -b, --body          Specify a file containing input data for an operation to be executed.
     -h, --help          Display this message.
     -l, --log           Specify the log level: debug, info, warn, error, none (default: info)
     -m, --mount         Mirror database changes to the specified directory on the filesystem.
@@ -47,6 +51,7 @@ let
     -p, --port          Specify server port number (default: 9500).
     -r, --readonly      Allow only data retrieval operations.
     -s, --store         Specify a datastore file (default: data.db)
+    -t, --type          Specify a content type for the body an operation to be executed via the execute command.
     -u, --uri           Specify an uri to execute an operation through the execute command.
     -v, --version       Display the program version.
 """
@@ -116,6 +121,14 @@ for kind, key, val in getOpt():
           if val == "":
             fail(108, "URI not specified.")
           exUri = val
+        of "body", "b":
+          if val == "":
+            fail(112, "Body not specified.")
+          exBody = val
+        of "type", "t":
+          if val == "":
+            fail(113, "Content type not specified.")
+          exType = val
         of "mount", "m":
           mount = true
         of "version", "v":
@@ -155,5 +168,7 @@ LS.favicon = favicon
 LS.loglevel = loglevel
 LS.mount = mount
 LS.execution.file = exFile
+LS.execution.body = exBody
+LS.execution.ctype = exType
 LS.execution.uri = exUri
 LS.execution.operation = exOperation

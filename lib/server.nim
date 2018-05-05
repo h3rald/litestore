@@ -39,9 +39,9 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
       if LS.directory != nil:
         return api_v3.serveFile(req, LS, info.id)
       else:
-        return resError(Http400, "Bad request - Not serving any directory." % info.version)
+        return resError(Http400, "Bad Request - Not serving any directory." % info.version)
     else:
-      return resError(Http400, "Bad request - Invalid resource: $1" % info.resource)
+      return resError(Http400, "Bad Request - Invalid resource: $1" % info.resource)
   elif info.version == "v2":
     if info.resource.match(peg"^docs / info$"):
       return api_v2.route(req, LS, info.resource, info.id)
@@ -49,9 +49,9 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
       if LS.directory != nil:
         return api_v2.serveFile(req, LS, info.id)
       else:
-        return resError(Http400, "Bad request - Not serving any directory." % info.version)
+        return resError(Http400, "Bad Request - Not serving any directory." % info.version)
     else:
-      return resError(Http400, "Bad request - Invalid resource: $1" % info.resource)
+      return resError(Http400, "Bad Request - Invalid resource: $1" % info.resource)
   elif info.version == "v1": 
     if info.resource.match(peg"^docs / info$"):
       return api_v1.route(req, LS, info.resource, info.id)
@@ -59,17 +59,17 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
       if LS.directory != nil:
         return api_v1.serveFile(req, LS, info.id)
       else:
-        return resError(Http400, "Bad request - Not serving any directory." % info.version)
+        return resError(Http400, "Bad Request - Not serving any directory." % info.version)
     else:
-      return resError(Http400, "Bad request - Invalid resource: $1" % info.resource)
+      return resError(Http400, "Bad Request - Invalid resource: $1" % info.resource)
   else:
     if info.version == "v1" or info.version == "v2" or info.version == "v3":
-      return resError(Http400, "Bad request - Invalid API version: $1" % info.version)
+      return resError(Http400, "Bad Request - Invalid API version: $1" % info.version)
     else:
       if info.resource.decodeURL.strip == "":
-        return resError(Http400, "Bad request - No resource specified." % info.resource)
+        return resError(Http400, "Bad Request - No resource specified." % info.resource)
       else:
-        return resError(Http400, "Bad request - Invalid resource: $1" % info.resource)
+        return resError(Http400, "Bad Request - Invalid resource: $1" % info.resource)
 
 proc process*(req: LSRequest, LS: LiteStore): LSResponse {.gcsafe.}=
   var matches = @["", "", ""]

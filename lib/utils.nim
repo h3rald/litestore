@@ -31,14 +31,16 @@ proc selectDocumentsByTags(tags: string, doc_id_col = "id"): string =
   result = ""
   for tag in tags.split(','):
     if not tag.match(PEG_TAG):
-      raise newException(EInvalidTag, "Invalid tag '$1'" % tag)
+      raise newException(EInvalidTag, "Invalid Tag '$1'" % tag)
     result = result & "AND " & doc_id_col & " IN (" & select_tagged & tag & "') "
    
 proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
   var tables = options.tables
   result = "SELECT "
   if options.jsonFilter.len > 0 or options.jsonSelect.len > 0:
-    if not options.tags.contains("$subtype:json"):
+    if options.tags.len == 0:
+      options.tags = "$subtype:json"
+    elif not options.tags.contains("$subtype:json"):
       options.tags = options.tags.split(",").concat(@["$subtype:json"]).join(",")
   if options.search.len > 0:
     if options.select[0] != "COUNT(docid)":
@@ -215,7 +217,7 @@ proc validate*(req: Request, LS: LiteStore, resource: string, id: string, cb: pr
     var ct =  ""
     let body = req.body.strip
     if body == "":
-      return resError(Http400, "Bad request: No content specified for document.")
+      return resError(Http400, "Bad Request: No content specified for document.")
     if req.headers.hasKey("Content-Type"):
       ct = req.headers["Content-Type"]
       case ct:

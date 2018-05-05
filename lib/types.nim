@@ -19,6 +19,8 @@ type
   ExecutionData* = object
     operation*: string
     file*: string
+    body*: string
+    ctype*: string
     uri*: string
   Datastore* = object
     db*: DbConn

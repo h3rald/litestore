@@ -233,6 +233,8 @@ proc updateDocument*(store: Datastore, id: string, rawdata: string, contenttype 
     if res > 0:
       if binary <= 0 and searchable >= 0:
         store.db.exec(SQL_UPDATE_SEARCHCONTENT, data.toPlainText, id)
+      store.destroyDocumentSystemTags(id)
+      store.addDocumentSystemTags(id, contenttype)
       if store.hasMirror and id.startsWith(store.mount):
         var filename = id.unixToNativePath
         if fileExists(filename):

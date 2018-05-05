@@ -472,8 +472,11 @@ proc patchDocument*(LS: LiteStore, id: string, body: string): LSResponse =
   var data: JsonNode
   var origData: JsonNode
   if tags.contains("$subtype:json"):
-    origData = jdoc["data"].getStr.parseJson
-    data = origData.copy
+    try:
+      origData = jdoc["data"].getStr.parseJson
+      data = origData.copy
+    except:
+      discard
   var c = 1
   for item in jbody.items:
     if item.hasKey("op") and item.hasKey("path"):

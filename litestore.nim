@@ -31,6 +31,8 @@ from asyncdispatch import runForever
 
 proc executeOperation*() =
   let file = LS.execution.file
+  let body = LS.execution.body
+  let ctype = LS.execution.ctype
   let uri = LS.execution.uri
   let operation = LS.execution.operation
   var req:LSRequest 
@@ -51,9 +53,13 @@ proc executeOperation*() =
       req.reqMethod = HttpHead
     else:
       fail(203, "Operation '$1' is not supported" % [operation])
-  if not file.isNil:
+  if not body.isNil:
+    req.body = body
+  elif not file.isNil:
     req.body = file.readFile
   req.headers = newHttpHeaders()
+  if not ctype.isNil:
+    req.headers["Content-Type"] = ctype
   req.hostname = "<cli>"
   req.url = parseUri("$1://$2:$3/$4" % @["http", "localhost", "9500", uri])
   let resp = req.process(LS)
