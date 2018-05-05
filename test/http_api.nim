@@ -34,7 +34,7 @@ suite "LiteStore HTTP API":
     return jget("info").body.parseJson[prop]
 
   proc total(resp: Response): BiggestInt =
-    return resp.body.parseJson["total"].getNum
+    return resp.body.parseJson["total"].getInt
 
   setup:
     var count = 0

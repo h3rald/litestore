@@ -459,7 +459,7 @@ Server: LiteStore/1.0.3
 {"id": "test.json", "data": {"test": true}, "created": "2015-09-20T09:06:25Z", "modified": null, "tags": ["$type:application", "$subtype:json", "$format:text", "test1", "test2", "test3"]}
 ```
 
-##### Example: Patching Daya
+##### Example: Patching Data
 
 Given the following document:
 

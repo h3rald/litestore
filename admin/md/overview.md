@@ -19,30 +19,38 @@ And yes, you can even store the code of your client-side application inside the 
 
 Despite being fairly small and self-contained, LiteStore comes with many useful features that are essential for many use cases.
 
-#### [](class:fa-file-text-o) Multi-format Documents
+#### Multi-format Documents
 
 LiteStore can be used to store documents in virtually any format, as long as you specify an appropriate content type for them. Textual documents are stored as-is, while binary documents are base64-encoded (not the best thing in the world, but definitely the easiest and most portal option).
 
-#### [](class:fa-tags) Document Tagging
+#### Document Tagging
 
 You can add custom tags to documents to easily categorize them and retrieve them. Some system tags are also added automatically to identify the document content type, format and collection.
 
-#### [](class:fa-tasks) Enhanced Querying of JSON documents
+#### Enhanced Querying of JSON documents
 
 By leveraging the [SQLite JSON1 extension](https://www.sqlite.org/json1.html) and implementing custom query string parsing, LiteStore provides enhanced filtering, ordering, and custom field selection of JSON documents.
 
-#### [](class:fa-search) Full-text Search
+#### Full-text Search
 
 By leveraging [SQLite FTS4 extension](http://www.sqlite.org/fts3.html) and implementing an enhanced algorithm for result rankings, LiteStore provides full-text search for all textual documents out-of-the-box.
 
-#### [](class:fa-gears) RESTful HTTP API
+#### RESTful HTTP API
 
 Every operation can be performed on the data store using a simple but powerful RESTful HTTP API, perfect for client-side, single-page applications.
 
-#### [](class:fa-exchange) Directory Bulk Import/Export
+#### Nim API
+
+If you want, you can use LiteStore as a [Nim](https://nim-lang.org) library and perform data store operations from your own Nim program.
+
+#### Command-line API
+
+Every operation can also be performed from command line, using the [litestore execute](class:cmd) command.
+
+#### Directory Bulk Import/Export
 
 To make serving a single-page application _from LiteStore_ even easier and faster, you can automatically import (and export) the contents of a directory recursively.
 
-#### [](class:fa-cloud-upload) Directory Mounting and Mirroring
+#### Directory Mounting and Mirroring
 
 After importing the contents of a directory into a LiteStore data store, you can _mount it_ on LiteStore and mirror all data store changes to the filesystem. Incidentally, that's how most of the LiteStore Admin test app was built [](class:fa-smile-o).

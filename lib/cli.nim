@@ -43,7 +43,7 @@ let
     -a, --address       Specify server address (default: 127.0.0.1).
     -b, --body          Specify a string containing input data for an operation to be executed.
     -d, --directory     Specify a directory to serve, import, export, delete, or mount.
-    -b, --body          Specify a file containing input data for an operation to be executed.
+    -f, --file          Specify a file containing input data for an operation to be executed.
     -h, --help          Display this message.
     -l, --log           Specify the log level: debug, info, warn, error, none (default: info)
     -m, --mount         Mirror database changes to the specified directory on the filesystem.
