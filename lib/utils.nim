@@ -158,9 +158,26 @@ proc prepareJsonDocument*(store:Datastore, doc: Row, options: QueryOptions): Jso
   result["tags"] = %tags
 
 proc toPlainText*(s: string): string =
+  var str: string
+  var json: JsonNode
   var tags = peg"""'<' [^>]+ '>'"""
   var special_chars = peg"""\*\*+ / \_\_+ / \-\-+ / \#\#+ / \+\++ / \~\~+ / \`\`+ """
-  return s.replace(tags).replace(special_chars)
+  try:
+    json = s.parseJson()
+  except:
+    discard
+  if not json.isNil:
+    if json.kind == JObject:
+      # Only process string values
+      str = toSeq(json.pairs).filterIt(it.val.kind == JString).mapIt(it.val.getStr).join(" ")
+    elif json.kind == JArray:
+      # Only process string values
+      str = toSeq(json.items).filterIt(it.kind == JString).mapIt(it.getStr).join(" ")
+    else:
+      str = s
+  else:
+    str = s
+  return str.replace(tags).replace(special_chars)
 
 proc checkIfBinary*(binary:int, contenttype:string): int =
   if binary == -1 and contenttype.isBinary:
