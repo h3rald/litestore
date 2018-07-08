@@ -364,30 +364,27 @@ proc getRawDocuments*(LS: LiteStore, options: QueryOptions = newQueryOptions()):
   options.offset = 0
   options.select = @["COUNT(docid)"]
   let total = LS.store.retrieveRawDocuments(options)[0].num
-  if docs.len == 0:
-    result = resError(Http404, "No documents found.")
-  else:
-    var content = newJObject()
-    if options.folder != "":
-      content["folder"] = %(options.folder)
-    if options.search != "":
-      content["search"] = %(options.search.decodeURL)
-    if options.tags != "":
-      content["tags"] = newJArray()
-      for tag in options.tags.replace("+", "%2B").decodeURL.split(","):
-        content["tags"].add(%tag)
-    if orig_limit > 0:
-      content["limit"] = %orig_limit
-      if orig_offset > 0:
-        content["offset"] = %orig_offset
-    if options.orderby != "":
-      content["sort"] = %options.orderby
-    content["total"] = %total
-    content["execution_time"] = %(cputime()-t0)
-    content["results"] = docs
-    result.headers = ctJsonHeader()
-    result.content = content.pretty
-    result.code = Http200
+  var content = newJObject()
+  if options.folder != "":
+    content["folder"] = %(options.folder)
+  if options.search != "":
+    content["search"] = %(options.search.decodeURL)
+  if options.tags != "":
+    content["tags"] = newJArray()
+    for tag in options.tags.replace("+", "%2B").decodeURL.split(","):
+      content["tags"].add(%tag)
+  if orig_limit > 0:
+    content["limit"] = %orig_limit
+    if orig_offset > 0:
+      content["offset"] = %orig_offset
+  if options.orderby != "":
+    content["sort"] = %options.orderby
+  content["total"] = %total
+  content["execution_time"] = %(cputime()-t0)
+  content["results"] = docs
+  result.headers = ctJsonHeader()
+  result.content = content.pretty
+  result.code = Http200
 
 proc getInfo*(LS: LiteStore): LSResponse =
   let info = LS.store.retrieveInfo()

@@ -94,7 +94,8 @@ suite "LiteStore HTTP API":
 
   test "PATCH document tags":
     var rget = jget("docs?tags=t1")
-    check(rget.status == "404 Not Found")
+    check(rget.status == "200 OK")
+    check(rget.body.parseJson["results"].len == 0)
     var ops = %*[
       {"op": "add", "path": "/tags/3", "value": "t1"},
       {"op": "add", "path": "/tags/4", "value": "t2"},
@@ -158,7 +159,7 @@ suite "LiteStore HTTP API":
 
   test "HEAD documents":
     var rhead = jhead("docs/invalid/")
-    check(rhead.status == "404 Not Found")
+    check(rhead.status == "200 OK")
     rhead = jhead("docs/test/")
     check(rhead.status == "200 OK")
 
