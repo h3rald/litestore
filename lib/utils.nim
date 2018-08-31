@@ -150,7 +150,7 @@ proc prepareJsonDocument*(store:Datastore, doc: Row, options: QueryOptions): Jso
       for field in options.jsonSelect:
         let keys = field.path.replace("$.", "").split(".")
         let res =  result["data"]{keys}
-        if res.isNil:
+        if res.len == 0:
           obj[field.alias] = newJNull()
         else:
           obj[field.alias] = %res
@@ -166,7 +166,7 @@ proc toPlainText*(s: string): string =
     json = s.parseJson()
   except:
     discard
-  if not json.isNil:
+  if json.len > 0:
     if json.kind == JObject:
       # Only process string values
       str = toSeq(json.pairs).filterIt(it.val.kind == JString).mapIt(it.val.getStr).join(" ")
@@ -288,7 +288,7 @@ proc okapi_bm25f_kb*(pCtx: Pcontext, nVal: int32, apVal: PValueArg) {.cdecl.} =
   var sum = 0.0;
   for i in 0..termCount-1:
     for col in 0..colCount-1:
-      let currentX = X_OFFSET + (3 *  col * (i + 1))
+      let currentX = X_OFFSET + (3 * col * (i + 1))
       let termFrequency = matchinfo[currentX].float
       let docsWithTerm = matchinfo[currentX + 2].float
       var idf: float = ln((totalDocs - docsWithTerm + 0.5) / (docsWithTerm + 0.5))

@@ -207,7 +207,7 @@ proc getInfo*(LS: LiteStore): LSResponse =
   content["size"] = %($((LS.file.getFileSize().float/(1024*1024)).formatFloat(ffDecimal, 2)) & " MB")
   content["read_only"] = %LS.readonly
   content["log_level"] = %LS.loglevel
-  if LS.directory == nil: 
+  if LS.directory.len == 0: 
     content["directory"] = newJNull()
   else: 
     content["directory"] = %LS.directory 
@@ -321,7 +321,7 @@ proc options*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSRespo
       var folder: string
       if id.isFolder:
         folder = id
-      if not folder.isNil:
+      if not folder.len == 0:
         result.code = Http200
         result.content = ""
         if LS.readonly:

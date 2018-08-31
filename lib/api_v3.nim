@@ -69,7 +69,7 @@ proc selectClause*(str: string, options: var QueryOptions) =
   var fieldMatches = newSeq[string](10)
   if str.strip.match(fields, fieldMatches):
     for m in fieldMatches:
-      if not m.isNil:
+      if m.len > 0:
         var rawTuple = newSeq[string](2)
         if m.match(field, rawTuple):
           options.jsonSelect.add((path: rawTuple[0], alias: rawTuple[1]))
@@ -102,12 +102,12 @@ proc filterClauses*(str: string, options: var QueryOptions) =
   discard str.strip.match(orClauses, orClausesMatches)
   var parsedClauses = newSeq[seq[seq[string]]]()
   for orClause in orClausesMatches:
-    if not orClause.isNil:
+    if orClause.len > 0:
       var andClausesMatches = newSeq[string](10)
       discard orClause.strip.match(andClauses, andClausesMatches)
       var parsedAndClauses = newSeq[seq[string]]()
       for andClause in andClausesMatches:
-        if not andClause.isNil:
+        if andClause.len > 0:
           var clauses = newSeq[string](3)
           discard andClause.strip.match(clause, clauses)
           clauses[1] = sqlOp(clauses[1])
@@ -398,7 +398,7 @@ proc getInfo*(LS: LiteStore): LSResponse =
   content["size"] = %($((LS.file.getFileSize().float/(1024*1024)).formatFloat(ffDecimal, 2)) & " MB")
   content["read_only"] = %LS.readonly
   content["log_level"] = %LS.loglevel
-  if LS.directory == nil: 
+  if LS.directory.len == 0: 
     content["directory"] = newJNull()
   else: 
     content["directory"] = %LS.directory 
@@ -489,7 +489,7 @@ proc patchDocument*(LS: LiteStore, id: string, body: string): LSResponse =
         return resError(Http400, "Bad request: patch operation #$1 is malformed." % $c)
     c.inc
   if apply:
-    if not origData.isNil and origData != data:
+    if origData.len > 0 and origData != data:
       try:
         var doc = LS.store.updateDocument(id, data.pretty, "application/json")
         if doc == "":
@@ -530,7 +530,7 @@ proc options*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSRespo
       var folder: string
       if id.isFolder:
         folder = id
-      if not folder.isNil:
+      if folder.len > 0:
         result.code = Http200
         result.content = ""
         if LS.readonly:

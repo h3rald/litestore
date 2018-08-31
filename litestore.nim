@@ -53,12 +53,12 @@ proc executeOperation*() =
       req.reqMethod = HttpHead
     else:
       fail(203, "Operation '$1' is not supported" % [operation])
-  if not body.isNil:
+  if body.len > 0:
     req.body = body
-  elif not file.isNil:
+  elif file.len > 0:
     req.body = file.readFile
   req.headers = newHttpHeaders()
-  if not ctype.isNil:
+  if ctype.len > 0:
     req.headers["Content-Type"] = ctype
   req.hostname = "<cli>"
   req.url = parseUri("$1://$2:$3/$4" % @["http", "localhost", "9500", uri])
@@ -168,8 +168,8 @@ else:
   proc get*(resource, id: string, params = newStringTable(), headers = newHttpHeaders()): LSResponse =
     return newLSRequest(HttpGet, resource, id, "", params, headers).get(LS, resource, id)
 
-  proc post*(resource, id, body: string, headers = newHttpHeaders()): LSResponse =
-    return newLSRequest(HttpPost, resource, id, body, newStringTable(), headers).post(LS, resource, id)
+  proc post*(resource, folder, body: string, headers = newHttpHeaders()): LSResponse =
+    return newLSRequest(HttpPost, resource, "", body, newStringTable(), headers).post(LS, resource, folder & "/")
 
   proc put*(resource, id, body: string, headers = newHttpHeaders()): LSResponse =
     return newLSRequest(HttpPut, resource, id, body, newStringTable(), headers).put(LS, resource, id)
