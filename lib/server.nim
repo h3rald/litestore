@@ -36,7 +36,7 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
     if info.resource.match(peg"^docs / info$"):
       return api_v3.route(req, LS, info.resource, info.id)
     elif info.resource.match(peg"^dir$"):
-      if LS.directory != nil:
+      if LS.directory.len > 0:
         return api_v3.serveFile(req, LS, info.id)
       else:
         return resError(Http400, "Bad Request - Not serving any directory." % info.version)
@@ -46,7 +46,7 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
     if info.resource.match(peg"^docs / info$"):
       return api_v2.route(req, LS, info.resource, info.id)
     elif info.resource.match(peg"^dir$"):
-      if LS.directory != nil:
+      if LS.directory.len > 0:
         return api_v2.serveFile(req, LS, info.id)
       else:
         return resError(Http400, "Bad Request - Not serving any directory." % info.version)
@@ -56,7 +56,7 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
     if info.resource.match(peg"^docs / info$"):
       return api_v1.route(req, LS, info.resource, info.id)
     elif info.resource.match(peg"^dir$"):
-      if LS.directory != nil:
+      if LS.directory.len > 0:
         return api_v1.serveFile(req, LS, info.id)
       else:
         return resError(Http400, "Bad Request - Not serving any directory." % info.version)

@@ -105,7 +105,7 @@ proc dbError*(db: DbConn) {.noreturn.} =
 
 proc dbQuote*(s: string): string =
   ## DB quotes the string.
-  if s.isNil: return "NULL"
+  if s.len == 0: return "NULL"
   result = "'"
   for c in items(s):
     if c == '\'': add(result, "''")

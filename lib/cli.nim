@@ -12,15 +12,15 @@ const favicon = "../admin/favicon.ico".slurp
 
 var 
   operation = opRun
-  directory:string = nil
+  directory:string = ""
   readonly = false
   logLevel = "warn"
   mount = false
-  exOperation:string = nil
-  exFile:string = nil
-  exBody:string = nil
-  exType:string = nil
-  exUri:string = nil
+  exOperation:string = ""
+  exFile:string = ""
+  exBody:string = ""
+  exType:string = ""
+  exUri:string = ""
   
 let
   usage* = appname & " v" & version & " - Lightweight REST Document Store" & """
@@ -146,16 +146,16 @@ for kind, key, val in getOpt():
 
 # Validation
 
-if directory.isNil and (operation in [opDelete, opImport, opExport] or mount):
+if directory == "" and (operation in [opDelete, opImport, opExport] or mount):
   fail(105, "--directory option not specified.")
 
-if exFile.isNil and (exOperation in ["put", "post", "patch"]):
+if exFile == "" and (exOperation in ["put", "post", "patch"]):
   fail(109, "--file option not specified")
 
-if exUri.isNil and operation == opExecute:
+if exUri == "" and operation == opExecute:
   fail(110, "--uri option not specified")
 
-if exOperation.isNil and operation == opExecute:
+if exOperation == "" and operation == opExecute:
   fail(111, "--operation option not specified")
 
 LS.operation = operation

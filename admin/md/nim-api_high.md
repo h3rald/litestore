@@ -35,7 +35,8 @@ Creates a new resource.
 ##### Parameters
 
 {{p-resource}}
-{{p-id}}
+{{ p-folder => folder 
+: The folder that will contain the resource (set to an empty string if not needed).}}
 {{p-body}}
 {{p-headers}}
 

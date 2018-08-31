@@ -188,7 +188,7 @@ proc getInfo(LS: LiteStore): LSResponse =
   content["size"] = %($((LS.file.getFileSize().float/(1024*1024)).formatFloat(ffDecimal, 2)) & " MB")
   content["read_only"] = %LS.readonly
   content["log_level"] = %LS.loglevel
-  if LS.directory == nil: 
+  if LS.directory.len == 0: 
     content["directory"] = newJNull()
   else: 
     content["directory"] = %LS.directory 
