@@ -129,7 +129,7 @@ else:
   proc query*(table: StringTableRef): string = 
     var params = newSeq[string](0)
     for key, value in pairs(table):
-      params.add("$1=$2" % @[key, value.encodeUrl])
+      params.add("$1=$2" % @[key, value])
     return params.join("&")
 
   proc newLSRequest(meth: HttpMethod, resource, id,  body = "", params = newStringTable(), headers = newHttpHeaders()): LSRequest = 
