@@ -22,7 +22,8 @@ import
 
 export
   types,
-  server
+  server,
+  utils
 
 from asyncdispatch import runForever
 
