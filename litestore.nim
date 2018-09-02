@@ -23,6 +23,7 @@ import
 export
   types,
   server,
+  logger,
   utils
 
 from asyncdispatch import runForever
