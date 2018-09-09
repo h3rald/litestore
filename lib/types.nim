@@ -36,6 +36,7 @@ type
     offset*: int           
     orderby*: string      
     tags*: string
+    like*: string
     folder*: string
     search*: string
   TagExpression* = object
@@ -109,4 +110,4 @@ TAB_HEADERS = {
 }
 
 proc newQueryOptions*(): QueryOptions =
-  return QueryOptions(select: @["documents.id AS id", "documents.data AS data", "content_type", "binary", "searchable", "created", "modified"], single: false, limit: 0, offset: 0, orderby: "", tags: "", search: "", folder: "", jsonFilter: "", jsonSelect: newSeq[tuple[path: string, alias: string]](), tables: newSeq[string]())
+  return QueryOptions(select: @["documents.id AS id", "documents.data AS data", "content_type", "binary", "searchable", "created", "modified"], single: false, limit: 0, offset: 0, orderby: "", tags: "", search: "", folder: "", like: "", jsonFilter: "", jsonSelect: newSeq[tuple[path: string, alias: string]](), tables: newSeq[string]())
