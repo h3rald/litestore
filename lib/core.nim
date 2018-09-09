@@ -126,23 +126,32 @@ proc destroyTag*(store: Datastore, tagid, documentid: string, system=false): int
     store.rollback()
     raise newException(EInvalidTag, "Invalid Tag: $1" % tagid)
 
-proc retrieveTag*(store: Datastore, id: string, options: QueryOptions = newQueryOptions()): string =
+proc retrieveTag*(store: Datastore, id: string, options: QueryOptions = newQueryOptions()): JsonNode =
   var options = options
   options.single = true
   var query = prepareSelectTagsQuery(options)
   var raw_tag = store.db.getRow(query.sql, id)
-  return $(%[("id", %raw_tag[0]), ("documents", %(raw_tag[1].parseInt))])
+  return %[("id", %raw_tag[0]), ("documents", %(raw_tag[1].parseInt))]
 
-proc retrieveTags*(store: Datastore, options: QueryOptions = newQueryOptions()): string =
+proc retrieveTags*(store: Datastore, options: QueryOptions = newQueryOptions()): JsonNode =
   var query = prepareSelectTagsQuery(options)
-  var raw_tags = store.db.getAllRows(query.sql)
+  var raw_tags: seq[Row]
+  if (options.like.len > 0):
+    raw_tags = store.db.getAllRows(query.sql, options.like.replace("*", "%"))
+  else:
+    raw_tags = store.db.getAllRows(query.sql)
   var tags = newSeq[JsonNode](0)
   for tag in raw_tags:
     tags.add(%[("id", %tag[0]), ("documents", %(tag[1].parseInt))])
-  return $(%tags)
+  return %tags
 
-proc countTags*(store: Datastore): int64 =
-  return store.db.getRow(SQL_COUNT_TAGS)[0].parseInt
+proc countTags*(store: Datastore, q = "", like = ""): int64 =
+  var query = SQL_COUNT_TAGS
+  if q.len > 0:
+    query = q.sql
+  if like.len > 0:
+    return store.db.getRow(query, like)[0].parseInt
+  return store.db.getRow(query)[0].parseInt
 
 proc retrieveTagsWithTotals*(store: Datastore): JsonNode =
   var data = store.db.getAllRows(SQL_SELECT_TAGS_WITH_TOTALS)

@@ -98,15 +98,24 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
   LOG.debug(result.replace("$", "$$"))
  
 proc prepareSelectTagsQuery*(options: QueryOptions): string =
-  result = "SELECT tag_id, COUNT(document_id) "
-  result = result & "FROM tags "
+  var group = true
+  if options.select.len > 0 and options.select[0] == "COUNT(tag_id)":
+    result  = "SELECT COUNT(DISTINCT tag_id) "
+    result = result & "FROM tags "
+    group = false
+  else:
+    result = "SELECT tag_id, COUNT(document_id) "
+    result = result & "FROM tags "
   if options.single:
     result = result & "WHERE tag_id = ?"
-  result = result & "GROUP BY tag_id"
-  if options.orderby.len > 0:
-    result = result & "ORDER BY " & options.orderby&" " 
+  elif options.like.len > 0:
+    result = result & "WHERE tag_id LIKE ? " 
+  if group:
+    result = result & "GROUP BY tag_id "
   if options.limit > 0:
     result = result & "LIMIT " & $options.limit & " "
+  if options.offset > 0:
+    result = result & "OFFSET " & $options.offset & " "
   LOG.debug(result.replace("$", "$$"))
 
 proc prepareJsonDocument*(store:Datastore, doc: Row, options: QueryOptions): JsonNode =
@@ -223,6 +232,9 @@ proc resError*(code: HttpCode, message: string, trace = ""): LSResponse =
 
 proc resDocumentNotFound*(id: string): LSResponse =
   resError(Http404, "Document '$1' not found." % id)
+
+proc resTagNotFound*(id: string): LSResponse =
+  resError(Http404, "Tag '$1' not found." % id)
 
 proc eWarn*() =
   var e = getCurrentException()
