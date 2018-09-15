@@ -80,6 +80,14 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
       doc_id_col = "documents.id"
     else:
       doc_id_col = "id"
+  if options.createdAfter != "":
+    result = result & "AND created > \"" & $options.createdAfter & "\" "
+  if options.createdBefore != "":
+    result = result & "AND created < \"" & $options.createdBefore & "\" "
+  if options.modifiedAfter != "":
+    result = result & "AND modified > \"" & $options.modifiedAfter & "\" "
+  if options.modifiedBefore != "":
+    result = result & "AND modified < \"" & $options.modifiedBefore & "\" "
   if options.folder.len > 0:
     result = result & "AND " & doc_id_col & " LIKE ? "
   if options.tags.len > 0:
