@@ -154,7 +154,7 @@ proc countTags*(store: Datastore, q = "", like = ""): int64 =
   if q.len > 0:
     query = q.sql
   if like.len > 0:
-    if (like[like.len-1] == '*'):
+    if (like[like.len-1] == '%' or like[like.len-1] == '*'):
       let str = like.substr(0, like.len-2)
       return store.db.getRow(query, str, str & "{")[0].parseInt
     else:
