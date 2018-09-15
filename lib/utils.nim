@@ -117,7 +117,10 @@ proc prepareSelectTagsQuery*(options: QueryOptions): string =
   if options.single:
     result = result & "WHERE tag_id = ?"
   elif options.like.len > 0:
-    result = result & "WHERE tag_id LIKE ? " 
+    if options.like[options.like.len-1] == '*':
+      result = result & "WHERE tag_id BETWEEN ? AND ? " 
+    else:
+      result = result & "WHERE tag_id LIKE ? " 
   if group:
     result = result & "GROUP BY tag_id "
   if options.limit > 0:

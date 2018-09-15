@@ -137,7 +137,11 @@ proc retrieveTags*(store: Datastore, options: QueryOptions = newQueryOptions()):
   var query = prepareSelectTagsQuery(options)
   var raw_tags: seq[Row]
   if (options.like.len > 0):
-    raw_tags = store.db.getAllRows(query.sql, options.like.replace("*", "%"))
+    if (options.like[options.like.len-1] == '*'):
+      let str = options.like.substr(0, options.like.len-2)
+      raw_tags = store.db.getAllRows(query.sql, str, str & "{")
+    else:
+      raw_tags = store.db.getAllRows(query.sql, options.like.replace("*", "%"))
   else:
     raw_tags = store.db.getAllRows(query.sql)
   var tags = newSeq[JsonNode](0)
@@ -150,7 +154,11 @@ proc countTags*(store: Datastore, q = "", like = ""): int64 =
   if q.len > 0:
     query = q.sql
   if like.len > 0:
-    return store.db.getRow(query, like)[0].parseInt
+    if (like[like.len-1] == '*'):
+      let str = like.substr(0, like.len-2)
+      return store.db.getRow(query, str, str & "{")[0].parseInt
+    else:
+      return store.db.getRow(query, like)[0].parseInt
   return store.db.getRow(query)[0].parseInt
 
 proc retrieveTagsWithTotals*(store: Datastore): JsonNode =
