@@ -89,7 +89,7 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
   if options.modifiedBefore != "":
     result = result & "AND modified < \"" & $options.modifiedBefore & "\" "
   if options.folder.len > 0:
-    result = result & "AND " & doc_id_col & " LIKE ? "
+    result = result & "AND " & doc_id_col & " BETWEEN ? and ? "
   if options.tags.len > 0:
     result = result & options.tags.selectDocumentsByTags(doc_id_col)
   if options.jsonFilter.len > 0:
