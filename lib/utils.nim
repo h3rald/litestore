@@ -186,7 +186,7 @@ proc toPlainText*(s: string): string =
     json = s.parseJson()
   except:
     discard
-  if json.len > 0:
+  if not json.isNil:
     if json.kind == JObject:
       # Only process string values
       str = toSeq(json.pairs).filterIt(it.val.kind == JString).mapIt(it.val.getStr).join(" ")
