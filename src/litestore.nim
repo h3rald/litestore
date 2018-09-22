@@ -1,6 +1,6 @@
 import 
-  lib/x_sqlite3, 
-  lib/x_db_sqlite as db, 
+  litestorepkg/lib/x_sqlite3, 
+  litestorepkg/lib/x_db_sqlite as db, 
   strutils, 
   os,
   oids,
@@ -13,12 +13,12 @@ import
   cgi,
   base64
 import
-  lib/types,
-  lib/logger,
-  lib/utils, 
-  lib/core,
-  lib/cli,
-  lib/server
+  litestorepkg/lib/types,
+  litestorepkg/lib/logger,
+  litestorepkg/lib/utils, 
+  litestorepkg/lib/core,
+  litestorepkg/lib/cli,
+  litestorepkg/lib/server
 
 export
   types,
