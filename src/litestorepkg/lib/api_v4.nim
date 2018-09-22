@@ -198,7 +198,7 @@ proc parseQueryOption*(fragment: string, options: var QueryOptions) =
     of "contents", "raw":
       discard
     else:
-      raise newException(EInvalidRequest, "Invalid option: $1" % pair[0])
+      discard
 
 proc parseQueryOptions*(querystring: string, options: var QueryOptions) =
   var fragments = querystring.split('&')
