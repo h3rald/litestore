@@ -6,6 +6,7 @@ description   = "Self-contained, lightweight, RESTful document store."
 license       = "MIT"
 bin           = "litestore"
 skipFiles     = @["nakefile.nim"]
+skipDirs      = @["test"]
 
 [Deps]
-requires: "nim >= 0.18.1"
+requires: "nim >= 0.18.0"
