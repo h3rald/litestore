@@ -1,12 +1,3 @@
-{{v3-option =>  
-> %note%
-> API v3 Required
-> 
-> This query string option has been introduced in version 3 of the LiteStore API.
-  
-}}
-
-
 ### docs (LiteStore Documents)
 
 A document is the main resource type managed by LiteStore. Any LiteStore document can be represented as a JSON object exposing the following properties:
@@ -212,7 +203,10 @@ Example: http://127.0.0.1:9500/docs/?tags=tag1,tag2
 
 ##### `filter` option
 
-{{v3-option}}
+> %note%
+> API v3 Required
+> 
+> This query string option has been introduced in version 3 of the LiteStore API.
 
 Retrieve only JSON documents matching the specified filter expression.
 
@@ -236,7 +230,10 @@ Examples:
 
 ##### `select` option
 
-{{v3-option}}
+> %note%
+> API v3 Required
+> 
+> This query string option has been introduced in version 3 of the LiteStore API.
 
 Retrieve JSON documents containing only the specified fields. Fields must be specified by comma-separated path/alias expression.
 
