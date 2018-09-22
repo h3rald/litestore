@@ -76,7 +76,7 @@
       }
       return md.link(href, title, text);
     };
-    var html = marked(s, {renderer: hs});
+    var html = marked(s, {renderer: hs}).replace(/\{\{\$version\}\}/g, app.system.v);
     var $html = $('<div>').append($(html).clone());
     return u.fixHeadings($html, 2);
   };
