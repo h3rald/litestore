@@ -104,7 +104,7 @@ PEG_URL = peg"""^\/({(v\d+)} \/) {([^\/]+)} (\/ {(.+)} / \/?)$"""
 var LS* {.threadvar.}: LiteStore
 var TAB_HEADERS* {.threadvar.}: array[0..2, (string, string)]
 
-LS.appversion = version
+LS.appversion = pkgVersion
 LS.appname = appname
 
 TAB_HEADERS = {

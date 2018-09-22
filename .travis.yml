@@ -36,9 +36,7 @@ install:
 before_script:
     - export PATH="nim-$BRANCH/bin${PATH:+:$PATH}"
 script:
-    - nim c --cc:$CC --verbosity:0 litestore.nim
-    # Optional: build docs.
-    #- nim doc --docSeeSrcUrl:https://github.com/h3rald/litestore/blob/master --project litestore.nim
+    - nim c --cc:$CC --verbosity:0 src/litestore.nim
 cache:
   directories:
     - nim-master

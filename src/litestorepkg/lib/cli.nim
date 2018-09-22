@@ -8,7 +8,7 @@ import
   types,
   utils
 
-const favicon = "../admin/favicon.ico".slurp
+const favicon = "../../admin/favicon.ico".slurp
 
 var 
   operation = opRun
@@ -23,7 +23,7 @@ var
   exUri:string = ""
   
 let
-  usage* = appname & " v" & version & " - Lightweight REST Document Store" & """
+  usage* = appname & " v" & pkgVersion & " - Lightweight REST Document Store" & """
   
 (c) 2015-2018 Fabio Cevasco
 
@@ -132,7 +132,7 @@ for kind, key, val in getOpt():
         of "mount", "m":
           mount = true
         of "version", "v":
-          echo version
+          echo pkgVersion
           quit(0)
         of "help", "h":
           echo usage
