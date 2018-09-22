@@ -170,7 +170,7 @@ proc prepareJsonDocument*(store:Datastore, doc: Row, options: QueryOptions): Jso
       for field in options.jsonSelect:
         let keys = field.path.replace("$.", "").split(".")
         let res =  result["data"]{keys}
-        if res.len == 0:
+        if res.isNil:
           obj[field.alias] = newJNull()
         else:
           obj[field.alias] = %res

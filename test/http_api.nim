@@ -1,4 +1,4 @@
-import unittest, json, httpclient, strutils, os
+import unittest, json, httpclient, strutils, os, times
 
 suite "LiteStore HTTP API":
 
@@ -7,6 +7,7 @@ suite "LiteStore HTTP API":
     contents.add parseFile("data/$1.json" % i.intToStr)
   var rpost: Response;
   var ids = newSeq[string](0)
+  let t_now = now().utc.toTime.toUnix
 
   const srv = "http://localhost:9500/"
   let cli = newHttpClient()
@@ -205,3 +206,16 @@ suite "LiteStore HTTP API":
     check(json["results"][2]["data"]["age"] == %31)
     check(json["results"][5]["data"]["name"]["first"] == %"Hart")
 
+  test "GET documents in range":
+    var rget = jget("docs/?created-after=$1&created-before=$2" % [$t_now, $(t_now+10)])
+    var json = rget.body.parseJson
+    check(json["total"] == %8)
+
+  test "GET tags":
+    var rget = jget("tags")
+    var json = rget.body.parseJson
+    rget = jget("tags/?like=tag*")
+    json = rget.body.parseJson
+    check(json["total"] == %10)
+    check(json["results"][0]["id"] == %"tag0")
+    check(json["results"][0]["documents"] == %4)

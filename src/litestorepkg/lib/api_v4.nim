@@ -161,22 +161,22 @@ proc parseQueryOption*(fragment: string, options: var QueryOptions) =
       options.tags = pair[1]
     of "created-after":
       try:
-        options.createdAfter = pair[1].parseInt.fromUnix.local.format("yyyy-MM-dd'T'HH:mm:ss'Z'")
+        options.createdAfter = pair[1].parseInt.fromUnix.utc.format("yyyy-MM-dd'T'HH:mm:ss'Z'")
       except:
         raise newException(EInvalidRequest, "Invalid created-after value: $1" % getCurrentExceptionMsg())
     of "created-before":
       try:
-        options.createdBefore = pair[1].parseInt.fromUnix.local.format("yyyy-MM-dd'T'HH:mm:ss'Z'")
+        options.createdBefore = pair[1].parseInt.fromUnix.utc.format("yyyy-MM-dd'T'HH:mm:ss'Z'")
       except:
         raise newException(EInvalidRequest, "Invalid created-before value: $1" % getCurrentExceptionMsg())
     of "modified-after":
       try:
-        options.modifiedAfter = pair[1].parseInt.fromUnix.local.format("yyyy-MM-dd'T'HH:mm:ss'Z'")
+        options.modifiedAfter = pair[1].parseInt.fromUnix.utc.format("yyyy-MM-dd'T'HH:mm:ss'Z'")
       except:
         raise newException(EInvalidRequest, "Invalid modified.after value: $1" % getCurrentExceptionMsg())
     of "modified-before":
       try:
-        options.modifiedBefore = pair[1].parseInt.fromUnix.local.format("yyyy-MM-dd'T'HH:mm:ss'Z'")
+        options.modifiedBefore = pair[1].parseInt.fromUnix.utc.format("yyyy-MM-dd'T'HH:mm:ss'Z'")
       except:
         raise newException(EInvalidRequest, "Invalid modified-before value: $1" % getCurrentExceptionMsg())
     of "limit":
@@ -195,6 +195,8 @@ proc parseQueryOption*(fragment: string, options: var QueryOptions) =
         options.orderby = orderby
       else:
         raise newException(EInvalidRequest, "Invalid sort value: $1" % pair[1])
+    of "contents", "raw":
+      discard
     else:
       raise newException(EInvalidRequest, "Invalid option: $1" % pair[0])
 
