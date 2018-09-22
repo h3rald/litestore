@@ -10,7 +10,7 @@ compiler:
 matrix:
   allow_failures:
     # Ignore failures when building against the devel Nim branch
-    - env: BRANCH=devel
+    - env: BRANCH=master
   fast_finish: true
 install:
   - |
@@ -39,7 +39,7 @@ script:
     - nim c --cc:$CC --verbosity:0 litestore.nim
     # Optional: build docs.
     #- nim doc --docSeeSrcUrl:https://github.com/h3rald/litestore/blob/master --project litestore.nim
-cache:
-  directories:
-    - nim-master
-    - nim-devel
+#cache:
+#  directories:
+#    - nim-master
+#    - nim-devel
