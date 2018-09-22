@@ -19,6 +19,7 @@ description   = pkgDescription
 license       = pkgLicense
 bin           = @[pkgName]
 srcDir        = "src"
+skipDirs      = @["test"]
 
 # Dependencies
 
