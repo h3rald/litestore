@@ -2,13 +2,6 @@
 
 The following [proc](class:kwd)s implement low-level operations on the LiteStore data store. Unlike the high-level API, the [proc](class:kwd)s exposed by this API do not perform the same validation checks as the corresponding HTTP operations, and they are meant to be used with caution in more advanced use cases.
 
-{{p-ct => ct
-: Determines the content type of the [body](class:kwd) parameter.}}
-{{p-options => options
-: A [QueryOptions](#QueryOptions) object representing a query to execute on a document.}}
-{{p-folder => folder
-: A logical folder where the document will be saved.}}
-
 #### getInfo
 
      proc getInfo*(): LSResponse 
@@ -23,7 +16,10 @@ Retrieves multiple documents in JSON format based on the specified options.
 
 ##### Parameters
 
-{{p-options}}
+<dl>
+<dt>options</dt>
+<dd>A [QueryOptions](#QueryOptions) object representing a query to execute on a document.</dd>
+</dl>
 
 #### getDocument
 
@@ -33,8 +29,12 @@ Retrieves a single document.
 
 ##### Parameters
 
-{{p-id}}
-{{p-options}}
+<dl>
+<dt>id</dt> 
+<dd>The identifier of the resource (set to an empty string if not needed).</dd>
+<dt>options</dt>
+<dd>A [QueryOptions](#QueryOptions) object representing a query to execute on a document.</dd>
+</dl>
 
 #### getRawDocument
 
@@ -44,8 +44,12 @@ Retrieves a single document in JSON format.
 
 ##### Parameters
 
-{{p-id}}
-{{p-options}}
+<dl>
+<dt>id</dt> 
+<dd>The identifier of the resource (set to an empty string if not needed).</dd>
+<dt>options</dt>
+<dd>A [QueryOptions](#QueryOptions) object representing a query to execute on a document.</dd>
+</dl>
 
 #### deleteDocument
 
@@ -55,7 +59,10 @@ Deletes the specified document.
 
 ##### Parameters
 
-{{p-id}}
+<dl>
+<dt>id</dt> 
+<dd>The identifier of the resource (set to an empty string if not needed).</dd>
+</dl>
 
 #### postDocument
 
@@ -65,9 +72,14 @@ Creates a new document in the specified folder.
 
 ##### Parameters
 
-{{p-body}}
-{{p-ct}}
-{{p-folder}}
+<dl>
+<dt>body</dt>
+<dd>The request body.</dd>
+<dt>ct</dt>
+<dd>Determines the content type of the [body](class:kwd) parameter.</dd>
+<dt>folder</dt>
+<dd>A logical folder where the document will be saved.</dd>
+</dl>
 
 #### putDocument
 
@@ -77,18 +89,26 @@ Modifies an existing document.
 
 ##### Parameters
 
-{{p-id}}
-{{p-body}}
-{{p-ct}}
+<dl>
+<dt>id</dt> 
+<dd>The identifier of the resource (set to an empty string if not needed).</dd>
+<dt>body</dt>
+<dd>The request body.</dd>
+<dt>ct</dt>
+<dd>Determines the content type of the [body](class:kwd) parameter.</dd>
+</dl>
 
 #### patchDocument
 
      proc patchDocument*(id, body: string): LSResponse 
 
-Modifies the tags of an existing document.
+Modifies the tags of an existing document (or the body of a JSON document).
 
 ##### Parameters
 
-{{p-id}}
-{{p-body}}
-
+<dl>
+<dt>id</dt> 
+<dd>The identifier of the resource (set to an empty string if not needed).</dd>
+<dt>body</dt>
+<dd>The request body.</dd>
+</dl>

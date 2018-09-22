@@ -8,6 +8,7 @@
   
   app.init = function(info){
     app.system = info;
+    app.system.v = app.system.version.match(/(v.+)$/)[1];
     m.route(document.body, "/info", {
       "/info": app.info,
       "/html/:id...": app.htmldoc,
