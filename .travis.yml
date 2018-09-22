@@ -9,8 +9,8 @@ compiler:
   - clang
 matrix:
   allow_failures:
-    # Ignore failures when building against the master Nim branch
-    - env: BRANCH=master
+    # Ignore failures when building against the devel Nim branch
+    - env: BRANCH=devel
   fast_finish: true
 install:
   - |
