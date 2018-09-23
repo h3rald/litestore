@@ -42,7 +42,7 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
       else:
         return resError(Http400, "Bad Request - Not serving any directory." % info.version)
     else:
-      return resError(Http400, "Bad Request - Invalid resource: $1" % info.resource)
+      return resError(Http404, "Resource Not Found: $1" % info.resource)
   elif info.version == "v3":
     if info.resource.match(peg"^docs / info$"):
       return api_v3.route(req, LS, info.resource, info.id)
@@ -52,7 +52,7 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
       else:
         return resError(Http400, "Bad Request - Not serving any directory." % info.version)
     else:
-      return resError(Http400, "Bad Request - Invalid resource: $1" % info.resource)
+      return resError(Http404, "Resource Not Found: $1" % info.resource)
   elif info.version == "v2":
     if info.resource.match(peg"^docs / info$"):
       return api_v2.route(req, LS, info.resource, info.id)
@@ -62,7 +62,7 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
       else:
         return resError(Http400, "Bad Request - Not serving any directory." % info.version)
     else:
-      return resError(Http400, "Bad Request - Invalid resource: $1" % info.resource)
+      return resError(Http404, "Resource Not Found: $1" % info.resource)
   elif info.version == "v1": 
     if info.resource.match(peg"^docs / info$"):
       return api_v1.route(req, LS, info.resource, info.id)
@@ -72,7 +72,7 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
       else:
         return resError(Http400, "Bad Request - Not serving any directory." % info.version)
     else:
-      return resError(Http400, "Bad Request - Invalid resource: $1" % info.resource)
+      return resError(Http404, "Resource Not Found: $1" % info.resource)
   else:
     if info.version == "v1" or info.version == "v2" or info.version == "v3" or info.version == "v4":
       return resError(Http400, "Bad Request - Invalid API version: $1" % info.version)
@@ -80,7 +80,7 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
       if info.resource.decodeURL.strip == "":
         return resError(Http400, "Bad Request - No resource specified." % info.resource)
       else:
-        return resError(Http400, "Bad Request - Invalid resource: $1" % info.resource)
+        return resError(Http404, "Resource Not Found: $1" % info.resource)
 
 proc process*(req: LSRequest, LS: LiteStore): LSResponse {.gcsafe.}=
   var matches = @["", "", ""]
@@ -112,7 +112,7 @@ proc process*(req: LSRequest, LS: LiteStore): LSResponse {.gcsafe.}=
   except EInvalidRequest:
     let e = (ref EInvalidRequest)(getCurrentException())
     let trace = e.getStackTrace()
-    return resError(Http400, "Bad Request: $1" % getCurrentExceptionMsg(), trace)
+    return resError(Http404, "Resource Not Found: $1" % getCurrentExceptionMsg().split(" ")[2], trace)
   except:
     let e = getCurrentException()
     let trace = e.getStackTrace()

@@ -342,34 +342,37 @@ proc applyPatchOperation*(data: var JsonNode, origData: JsonNode, tags: var seq[
 
 # Low level procs
 
-proc getTag*(LS: LiteStore, id: string, options = newQueryOptions()): LSResponse =
+proc getTag*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequest): LSResponse =
   let doc = LS.store.retrieveTag(id, options)
   result.headers = ctJsonHeader()
+  setOrigin(LS, req, result.headers)
   if doc == newJObject():
     result = resTagNotFound(id)
   else:
     result.content = $doc
     result.code = Http200
 
-proc getRawDocument*(LS: LiteStore, id: string, options = newQueryOptions()): LSResponse =
+proc getRawDocument*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequest): LSResponse =
   let doc = LS.store.retrieveRawDocument(id, options)
   result.headers = ctJsonHeader()
+  setOrigin(LS, req, result.headers)
   if doc == "":
     result = resDocumentNotFound(id)
   else:
     result.content = doc
     result.code = Http200
 
-proc getDocument*(LS: LiteStore, id: string, options = newQueryOptions()): LSResponse =
+proc getDocument*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequest): LSResponse =
   let doc = LS.store.retrieveDocument(id, options)
   if doc.data == "":
     result = resDocumentNotFound(id)
   else:
     result.headers = doc.contenttype.ctHeader
+    setOrigin(LS, req, result.headers)
     result.content = doc.data
     result.code = Http200
 
-proc deleteDocument*(LS: LiteStore, id: string): LSResponse =
+proc deleteDocument*(LS: LiteStore, id: string, req: LSRequest): LSResponse =
   let doc = LS.store.retrieveDocument(id)
   if doc.data == "":
     result = resDocumentNotFound(id)
@@ -380,13 +383,14 @@ proc deleteDocument*(LS: LiteStore, id: string): LSResponse =
         result = resError(Http500, "Unable to delete document '$1'" % id)
       else:
         result.headers = newHttpHeaders(TAB_HEADERS)
+        setOrigin(LS, req, result.headers)
         result.headers["Content-Length"] = "0"
         result.content = ""
         result.code = Http204
     except:
       result = resError(Http500, "Unable to delete document '$1'" % id)
 
-proc getTags*(LS: LiteStore, options: QueryOptions = newQueryOptions()): LSResponse =
+proc getTags*(LS: LiteStore, options: QueryOptions = newQueryOptions(), req: LSRequest): LSResponse =
   var options = options
   let t0 = cpuTime()
   let docs = LS.store.retrieveTags(options)
@@ -407,10 +411,11 @@ proc getTags*(LS: LiteStore, options: QueryOptions = newQueryOptions()): LSRespo
   content["execution_time"] = %(cputime()-t0)
   content["results"] = docs
   result.headers = ctJsonHeader()
+  setOrigin(LS, req, result.headers)
   result.content = content.pretty
   result.code = Http200
 
-proc getRawDocuments*(LS: LiteStore, options: QueryOptions = newQueryOptions()): LSResponse =
+proc getRawDocuments*(LS: LiteStore, options: QueryOptions = newQueryOptions(), req: LSRequest): LSResponse =
   var options = options
   let t0 = cpuTime()
   let docs = LS.store.retrieveRawDocuments(options)
@@ -439,10 +444,11 @@ proc getRawDocuments*(LS: LiteStore, options: QueryOptions = newQueryOptions()):
   content["execution_time"] = %(cputime()-t0)
   content["results"] = docs
   result.headers = ctJsonHeader()
+  setOrigin(LS, req, result.headers)
   result.content = content.pretty
   result.code = Http200
 
-proc getInfo*(LS: LiteStore): LSResponse =
+proc getInfo*(LS: LiteStore, req: LSRequest): LSResponse =
   let info = LS.store.retrieveInfo()
   let version = info[0]
   let total_documents = info[1]
@@ -463,16 +469,18 @@ proc getInfo*(LS: LiteStore): LSResponse =
   content["total_tags"] = %total_tags
   content["tags"] = tags
   result.headers = ctJsonHeader()
+  setOrigin(LS, req, result.headers)
   result.content = content.pretty
   result.code = Http200
 
-proc postDocument*(LS: LiteStore, body: string, ct: string, folder=""): LSResponse =
+proc postDocument*(LS: LiteStore, body: string, ct: string, folder="", req: LSRequest): LSResponse =
   if not folder.isFolder:
     return resError(Http400, "Invalid folder specified when creating document: $1" % folder) 
   try:
     var doc = LS.store.createDocument(folder, body, ct)
     if doc != "":
       result.headers = ctJsonHeader()
+      setOrigin(LS, req, result.headers)
       result.content = doc
       result.code = Http201
     else:
@@ -480,7 +488,7 @@ proc postDocument*(LS: LiteStore, body: string, ct: string, folder=""): LSRespon
   except:
     result = resError(Http500, "Unable to create document.")
 
-proc putDocument*(LS: LiteStore, id: string, body: string, ct: string): LSResponse =
+proc putDocument*(LS: LiteStore, id: string, body: string, ct: string, req: LSRequest): LSResponse =
   if id.isFolder:
     return resError(Http400, "Invalid ID '$1' (Document IDs cannot end with '/')." % id)
   let doc = LS.store.retrieveDocument(id)
@@ -489,6 +497,7 @@ proc putDocument*(LS: LiteStore, id: string, body: string, ct: string): LSRespon
     var doc = LS.store.createDocument(id, body, ct)
     if doc != "":
       result.headers = ctJsonHeader()
+      setOrigin(LS, req, result.headers)
       result.content = doc
       result.code = Http201
     else:
@@ -499,6 +508,7 @@ proc putDocument*(LS: LiteStore, id: string, body: string, ct: string): LSRespon
       var doc = LS.store.updateDocument(id, body, ct)
       if doc != "":
         result.headers = ctJsonHeader()
+        setOrigin(LS, req, result.headers)
         result.content = doc
         result.code = Http200
       else:
@@ -506,7 +516,7 @@ proc putDocument*(LS: LiteStore, id: string, body: string, ct: string): LSRespon
     except:
       result = resError(Http500, "Unable to update document '$1'." % id)
 
-proc patchDocument*(LS: LiteStore, id: string, body: string): LSResponse =
+proc patchDocument*(LS: LiteStore, id: string, body: string, req: LSRequest): LSResponse =
   var apply = true
   let jbody = body.parseJson
   if jbody.kind != JArray:
@@ -561,7 +571,7 @@ proc patchDocument*(LS: LiteStore, id: string, body: string): LSResponse =
             LS.store.createTag(t2, id, true)
       except:
         return resError(Http500, "Unable to patch document '$1' - $2" % [id, getCurrentExceptionMsg()])
-  return LS.getRawDocument(id)
+  return LS.getRawDocument(id, newQueryOptions(), req)
 
 # Main routing
 
@@ -574,12 +584,21 @@ proc options*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSRespo
         result.code = Http200
         result.content = ""
         result.headers = newHttpHeaders(TAB_HEADERS)
+        setOrigin(LS, req, result.headers)
         result.headers["Allow"] = "GET,OPTIONS"
         result.headers["Access-Control-Allow-Methods"] = "GET,OPTIONS"
     of "dir":
       result.code = Http200
       result.content = ""
       result.headers = newHttpHeaders(TAB_HEADERS)
+      setOrigin(LS, req, result.headers)
+      result.headers["Allow"] = "GET,OPTIONS"
+      result.headers["Access-Control-Allow-Methods"] = "GET,OPTIONS"
+    of "tags":
+      result.code = Http200
+      result.content = ""
+      result.headers = newHttpHeaders(TAB_HEADERS)
+      setOrigin(LS, req, result.headers)
       result.headers["Allow"] = "GET,OPTIONS"
       result.headers["Access-Control-Allow-Methods"] = "GET,OPTIONS"
     of "docs":
@@ -591,10 +610,12 @@ proc options*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSRespo
         result.content = ""
         if LS.readonly:
           result.headers = newHttpHeaders(TAB_HEADERS)
+          setOrigin(LS, req, result.headers)
           result.headers["Allow"] = "HEAD,GET,OPTIONS"
           result.headers["Access-Control-Allow-Methods"] = "HEAD,GET,OPTIONS"
         else:
           result.headers = newHttpHeaders(TAB_HEADERS)
+          setOrigin(LS, req, result.headers)
           result.headers["Allow"] = "HEAD,GET,OPTIONS,POST,PUT"
           result.headers["Access-Control-Allow-Methods"] = "HEAD,GET,OPTIONS,POST,PUT"
       elif id != "":
@@ -602,10 +623,12 @@ proc options*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSRespo
         result.content = ""
         if LS.readonly:
           result.headers = newHttpHeaders(TAB_HEADERS)
+          setOrigin(LS, req, result.headers)
           result.headers["Allow"] = "HEAD,GET,OPTIONS"
           result.headers["Access-Control-Allow-Methods"] = "HEAD,GET,OPTIONS"
         else:
           result.headers = newHttpHeaders(TAB_HEADERS)
+          setOrigin(LS, req, result.headers)
           result.headers["Allow"] = "HEAD,GET,OPTIONS,PUT,PATCH,DELETE"
           result.headers["Allow-Patch"] = "application/json-patch+json"
           result.headers["Access-Control-Allow-Methods"] = "HEAD,GET,OPTIONS,PUT,PATCH,DELETE"
@@ -614,10 +637,12 @@ proc options*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSRespo
         result.content = ""
         if LS.readonly:
           result.headers = newHttpHeaders(TAB_HEADERS)
+          setOrigin(LS, req, result.headers)
           result.headers["Allow"] = "HEAD,GET,OPTIONS"
           result.headers["Access-Control-Allow-Methods"] = "HEAD,GET,OPTIONS"
         else:
           result.headers = newHttpHeaders(TAB_HEADERS)
+          setOrigin(LS, req, result.headers)
           result.headers["Allow"] = "HEAD,GET,OPTIONS,POST"
           result.headers["Access-Control-Allow-Methods"] = "HEAD,GET,OPTIONS,POST"
     else:
@@ -631,10 +656,10 @@ proc head*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse
   try:
     parseQueryOptions(req.url.query, options);
     if id != "" and options.folder == "":
-      result = LS.getRawDocument(id, options)
+      result = LS.getRawDocument(id, options, req)
       result.content = ""
     else:
-      result = LS.getRawDocuments(options)
+      result = LS.getRawDocuments(options, req)
       result.content = ""
   except:
     return resError(Http400, "Bad request - $1" % getCurrentExceptionMsg())
@@ -652,11 +677,11 @@ proc get*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse 
         parseQueryOptions(req.url.query, options);
         if id != "" and options.folder == "":
           if req.url.query.contains("raw=true") or req.headers.hasKey("Accept") and req.headers["Accept"] == "application/json":
-            return LS.getRawDocument(id, options)
+            return LS.getRawDocument(id, options, req)
           else:
-            return LS.getDocument(id, options)
+            return LS.getDocument(id, options, req)
         else:
-          return LS.getRawDocuments(options)
+          return LS.getRawDocuments(options, req)
       except:
         return resError(Http400, "Bad Request - $1" % getCurrentExceptionMsg())
     of "tags":
@@ -664,15 +689,15 @@ proc get*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse 
       try:
         parseQueryOptions(req.url.query, options);
         if id != "": 
-          return LS.getTag(id, options)
+          return LS.getTag(id, options, req)
         else:
-          return LS.getTags(options)
+          return LS.getTags(options, req)
       except:
         return resError(Http400, "Bad Request - $1" % getCurrentExceptionMsg())
     of "info":
       if id != "":
         return resError(Http404, "Info '$1' not found." % id)
-      return LS.getInfo()
+      return LS.getInfo(req)
     else:
       discard # never happens really.
 
@@ -680,26 +705,26 @@ proc post*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse
   var ct = "text/plain"
   if req.headers.hasKey("Content-Type"):
     ct = req.headers["Content-Type"]
-  return LS.postDocument(req.body.strip, ct, id)
+  return LS.postDocument(req.body.strip, ct, id, req)
 
 proc put*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse = 
   if id != "":
     var ct = "text/plain"
     if req.headers.hasKey("Content-Type"):
       ct = req.headers["Content-Type"]
-    return LS.putDocument(id, req.body.strip, ct)
+    return LS.putDocument(id, req.body.strip, ct, req)
   else:
     return resError(Http400, "Bad request: document ID must be specified in PUT requests.")
 
 proc delete*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse = 
   if id != "":
-    return LS.deleteDocument(id)
+    return LS.deleteDocument(id, req)
   else:
     return resError(Http400, "Bad request: document ID must be specified in DELETE requests.")
 
 proc patch*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse = 
   if id != "":
-    return LS.patchDocument(id, req.body)
+    return LS.patchDocument(id, req.body, req)
   else:
     return resError(Http400, "Bad request: document ID must be specified in PATCH requests.")
 
@@ -720,6 +745,7 @@ proc serveFile*(req: LSRequest, LS: LiteStore, id: string): LSResponse =
             result.headers = CONTENT_TYPES[parts.ext].ctHeader
           else:
             result.headers = ctHeader("text/plain")
+          setOrigin(LS, req, result.headers)
           result.content = contents
           result.code = Http200
         except:

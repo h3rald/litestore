@@ -16,6 +16,29 @@ import
   contenttypes, 
   logger
 
+proc setOrigin*(LS: LiteStore, req: LSRequest, headers: var HttpHeaders) = 
+  var host = ""
+  var port = ""
+  var protocol = "http"
+  if req.url.hostname != "" and req.url.port != "":
+    host = req.url.hostname
+    port = req.url.port
+  elif req.headers.hasKey("Host"):
+    var parts = req.headers["Host"].split(":")
+    if (parts.len >= 2):
+      host = parts[0]
+      port = parts[1]
+    else:
+      host = parts[0]
+      port = "80"
+  else:
+    headers["Access-Control-Allow-Origin"] = "*"
+    return
+  if req.url.scheme != "":
+    protocol = req.url.scheme
+  headers["Vary"] = "Origin"
+  headers["Access-Control-Allow-Origin"] = "$1://$2:$3" % [protocol, host, port]
+
 proc isFolder*(id: string): bool =
   return (id.len == 0 or id.len > 0 and id[id.len-1] == '/')
 

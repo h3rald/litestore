@@ -27,7 +27,7 @@ A document is the main resource type managed by LiteStore. Any LiteStore documen
 
 #### OPTIONS docs
 
-Returns the allowed HTTP verbs for the this resource.
+Returns the allowed HTTP verbs for this resource.
 
 ##### Example
 
@@ -238,6 +238,50 @@ Examples:
 Retrieve JSON documents containing only the specified fields. Fields must be specified by comma-separated path/alias expression.
 
 Example: http://127.0.0.1:9500/docs/?select=$.name.first%20as%20FirstName,$.age%20as%20Age
+
+##### `created-after` option
+
+Retrieve only documents created after a the specified timestamp.
+
+Example: http://127.0.0.1:9500/?created-after=1537695677
+
+> %note%
+> API v4 Required
+> 
+> This query string option has been introduced in version 4 of the LiteStore API.
+
+##### `created-before` option
+
+Retrieve only documents created before a the specified timestamp.
+
+Example: http://127.0.0.1:9500/?created-before=1537695677
+
+> %note%
+> API v4 Required
+> 
+> This query string option has been introduced in version 4 of the LiteStore API.
+
+##### `modified-after` option
+
+Retrieve only documents modified after a the specified timestamp.
+
+Example: http://127.0.0.1:9500/?modified-after=1537695677
+
+> %note%
+> API v4 Required
+> 
+> This query string option has been introduced in version 4 of the LiteStore API.
+
+##### `modified-before` option
+
+Retrieve only documents modified before a the specified timestamp.
+
+Example: http://127.0.0.1:9500/?modified-before=1537695677
+
+> %note%
+> API v4 Required
+> 
+> This query string option has been introduced in version 4 of the LiteStore API.
 
 ##### `sort` option
 
