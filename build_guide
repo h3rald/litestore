@@ -11,6 +11,7 @@ pages=(
     md/api_info.md
     md/api_dir.md
     md/api_docs.md
+    md/api_tags.md
   md/nim-api.md
     md/nim-api_high.md
     md/nim-api_low.md
