@@ -4,6 +4,7 @@ nimcache
 *.db-journal
 http_api
 test.nim
+auth.json
 html5
 css3
 sqlite3_analyzer

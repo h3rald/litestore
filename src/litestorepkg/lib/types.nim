@@ -2,6 +2,7 @@ import
   x_db_sqlite, 
   asynchttpserver, 
   pegs, 
+  json,
   strtabs
 import
   config
@@ -76,6 +77,7 @@ type
     readonly*: bool
     appname*: string
     appversion*: string
+    auth*: JsonNode
     favicon*:string
     loglevel*:string
   LSRequest* = asynchttpserver.Request
