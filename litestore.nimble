@@ -76,26 +76,26 @@ task release, "Release LiteStore":
   shell "litestore -d:admin import"
   echo "\n\n\n WINDOWS - x86:\n\n"
   windows_x86_buildTask()
-  shell zip, "$1 $2 $3 $4 $5" % [filename_for("windows", "x86"), ls & ".exe", doc, db]
+  shell zip, "$1 $2 $3 $4" % [filename_for("windows", "x86"), ls & ".exe", doc, db]
   shell "rm", ls & ".exe"
   echo "\n\n\n WINDOWS - x64:\n\n"
   windows_x64_buildTask()
-  shell zip, "$1 $2 $3 $4 $5" % [filename_for("windows", "x64"), ls & ".exe", doc, db]
+  shell zip, "$1 $2 $3 $4" % [filename_for("windows", "x64"), ls & ".exe", doc, db]
   shell "rm", ls & ".exe"
   echo "\n\n\n LINUX - x64:\n\n"
   linux_x64_buildTask()
-  shell zip, "$1 $2 $3 $4 $5" % [filename_for("linux", "x64"), ls, doc, db]
+  shell zip, "$1 $2 $3 $4" % [filename_for("linux", "x64"), ls, doc, db]
   shell "rm", ls 
   echo "\n\n\n LINUX - x86:\n\n"
   linux_x86_buildTask()
-  shell zip, "$1 $2 $3 $4 $5" % [filename_for("linux", "x86"), ls, doc, db]
+  shell zip, "$1 $2 $3 $4" % [filename_for("linux", "x86"), ls, doc, db]
   shell "rm", ls 
   echo "\n\n\n LINUX - ARM:\n\n"
   linux_arm_buildTask()
-  shell zip, "$1 $2 $3 $4 $5" % [filename_for("linux", "arm"), ls, doc, db]
+  shell zip, "$1 $2 $3 $4" % [filename_for("linux", "arm"), ls, doc, db]
   shell "rm", ls 
   echo "\n\n\n MAC OS X - x64:\n\n"
   macosx_x64_buildTask()
-  shell zip, "$1 $2 $3 $4 $5" % [filename_for("macosx", "x64"), ls, doc, db]
+  shell zip, "$1 $2 $3 $4" % [filename_for("macosx", "x64"), ls, doc, db]
   shell "rm", ls 
   echo "\n\n\n ALL DONE!"
