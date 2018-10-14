@@ -7,7 +7,10 @@ import
   strtabs, 
   logger,
   cgi,
-  os
+  os,
+  json,
+  tables,
+  jwt
 import 
   types, 
   utils, 
@@ -33,6 +36,30 @@ proc handleCtrlC() {.noconv.} =
   quit()
 
 proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSResponse = 
+  let reqUri = info.resource & "/" & info.id
+  let uriParts = reqUri.split("/")
+  let uri = "/" & uriParts[0..uriParts.len-2].join("/") & "/"
+  let reqMethod = $req.reqMethod
+  # Authentication/Authorization
+  if LS.auth != newJNull():
+    if LS.auth["access"].hasKey(uri):
+      let access = LS.auth["access"][uri]
+      if access.hasKey(reqMethod):
+        if not req.headers.hasKey("Authorization"): 
+          return resError(Http401, "Unauthorized - No token")
+        let token = req.headers["Authorization"].replace(peg"^ 'Bearer '", "")
+        # Validate token
+        try:
+          let jwt = token.toJwt()
+          var sig = LS.auth["signature"].getStr 
+          discard verify(jwt, sig) 
+          verifyTimeClaims(jwt)
+          # Validate scope
+          let scopes = $jwt.claims["scope"].node.str.split(peg"\s+")
+          if not scopes.contains access[reqMethod].getStr:
+            return resError(Http403, "Forbidden - You are not permitted to access this resource")
+        except:
+          return resError(Http401, "Unauthorized - Invalid token")
   if info.version == "v4":
     if info.resource.match(peg"^docs / info / tags$"):
       return api_v4.route(req, LS, info.resource, info.id)

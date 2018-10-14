@@ -1,7 +1,8 @@
 import
   parseopt,
   strutils,
-  strtabs
+  strtabs,
+  json
 import
   logger,
   config,
@@ -16,6 +17,7 @@ var
   readonly = false
   logLevel = "warn"
   mount = false
+  auth = newJNull()
   exOperation:string = ""
   exFile:string = ""
   exBody:string = ""
@@ -129,6 +131,10 @@ for kind, key, val in getOpt():
           if val == "":
             fail(113, "Content type not specified.")
           exType = val
+        of "auth":
+          if val == "":
+            fail(114, "Authentication/Authorization configuration file not specified.")
+          auth = val.parseFile
         of "mount", "m":
           mount = true
         of "version", "v":
@@ -166,6 +172,7 @@ LS.directory = directory
 LS.readonly = readonly
 LS.favicon = favicon
 LS.loglevel = loglevel
+LS.auth = auth
 LS.mount = mount
 LS.execution.file = exFile
 LS.execution.body = exBody
