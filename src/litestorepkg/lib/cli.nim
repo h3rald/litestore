@@ -43,6 +43,7 @@ let
 
   Options:
     -a, --address       Specify server address (default: 127.0.0.1).
+    --auth              Specify an authentication/authorization configuration file.
     -b, --body          Specify a string containing input data for an operation to be executed.
     -d, --directory     Specify a directory to serve, import, export, delete, or mount.
     -f, --file          Specify a file containing input data for an operation to be executed.

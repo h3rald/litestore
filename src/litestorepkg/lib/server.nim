@@ -35,47 +35,68 @@ proc handleCtrlC() {.noconv.} =
   LOG.info("Exiting...")
   quit()
 
+template auth(uri: string): typed =
+  let cfg = access[uri]
+  if cfg.hasKey(reqMethod):
+    LOG.debug("Authenticating: " & reqMethod & " " & uri)
+    if not req.headers.hasKey("Authorization"): 
+      return resError(Http401, "Unauthorized - No token")
+    let token = req.headers["Authorization"].replace(peg"^ 'Bearer '", "")
+    # Validate token
+    try:
+      let jwt = token.toJwt()
+      var sig = LS.auth["signature"].getStr 
+      discard verify(jwt, sig) 
+      verifyTimeClaims(jwt)
+      let scopes = cfg[reqMethod]
+      # Validate scope
+      var authorized = ""
+      let reqScopes = ($jwt.claims["scope"].node.str).split(peg"\s+")
+      LOG.debug("Resource scopes: " & $scopes)
+      LOG.debug("Request scopes: " & $reqScopes)
+      for scope in scopes:
+        for reqScope in reqScopes:
+          if reqScope == scope.getStr:
+            authorized = scope.getStr
+            break
+      if authorized == "":
+        return resError(Http403, "Forbidden - You are not permitted to access this resource")
+      LOG.debug("Authorization successful: " & authorized)
+    except:
+      return resError(Http401, "Unauthorized - Invalid token")
+
 proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSResponse = 
-  let uriSingle = "/" & info.resource & "/" & info.id
-  let uriParts = uriSingle.split("/")
-  let uriAny = uriParts[0..uriParts.len-2].join("/") & "/*"
+  var reqUri = "/" & info.resource & "/" & info.id
+  if reqUri[^1] == '/':
+    reqUri.removeSuffix({'/'})
   let reqMethod = $req.reqMethod
   # Authentication/Authorization
   if LS.auth != newJNull():
-    var uri = ""
-    if LS.auth["access"].hasKey(uriSingle):
-      uri = uriSingle
-    elif LS.auth["access"].hasKey(uriAny):
-      uri = uriAny
-    if uri != "":
-      let access = LS.auth["access"][uri]
-      if access.hasKey(reqMethod):
-        LOG.debug("Authenticating: " & reqMethod & " " & uri)
-        if not req.headers.hasKey("Authorization"): 
-          return resError(Http401, "Unauthorized - No token")
-        let token = req.headers["Authorization"].replace(peg"^ 'Bearer '", "")
-        # Validate token
-        try:
-          let jwt = token.toJwt()
-          var sig = LS.auth["signature"].getStr 
-          discard verify(jwt, sig) 
-          verifyTimeClaims(jwt)
-          let scopes = access[reqMethod]
-          # Validate scope
-          var authorized = ""
-          let reqScopes = ($jwt.claims["scope"].node.str).split(peg"\s+")
-          LOG.debug("Resource scopes: " & $scopes)
-          LOG.debug("Request scopes: " & $reqScopes)
-          for scope in scopes:
-            for reqScope in reqScopes:
-              if reqScope == scope.getStr:
-                authorized = scope.getStr
-                break
-          if authorized == "":
-            return resError(Http403, "Forbidden - You are not permitted to access this resource")
-          LOG.debug("Authorization successful: " & authorized)
-        except:
-          return resError(Http401, "Unauthorized - Invalid token")
+    var uri = reqUri
+    let access = LS.auth["access"]
+    while true:
+      # Match exact url
+      if access.hasKey(uri):
+        auth(uri)
+        break
+      # Match exact url adding /* (e.g. /docs would match also /docs/* in auth.json)
+      elif uri[^1] != '*' and uri[^1] != '/':
+        if access.hasKey(uri & "/*"):
+          auth(uri & "/*")
+          break
+      var parts = uri.split("/")
+      if parts[^1] == "*":
+        discard parts.pop
+      discard parts.pop
+      if parts.len > 0:
+        # Go up one level
+        uri = parts.join("/") & "/*"
+      else:
+        # If at the end of the URL, check generic URL
+        uri = "/*"
+        if access.hasKey(uri):
+          auth(uri)
+        break
   if info.version == "v4":
     if info.resource.match(peg"^docs / info / tags$"):
       return api_v4.route(req, LS, info.resource, info.id)

@@ -23,7 +23,7 @@ skipDirs      = @["test"]
 
 # Dependencies
 
-requires "nim >= 0.18.0", "https://github.com/h3rald/nim-jwt"
+requires "nim >= 0.19.0", "https://github.com/h3rald/nim-jwt"
 
 # Build
 
