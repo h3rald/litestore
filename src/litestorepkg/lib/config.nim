@@ -4,7 +4,7 @@ const
   pkgAuthor*      = "Fabio Cevasco"
   pkgDescription* = "Self-contained, lightweight, RESTful document store."
   pkgLicense*     = "MIT"
-  appname*        = "LiteStore"
+  appname*        = "LiteStore+OAuth2"
 
 var
   file*           = "data.db"
