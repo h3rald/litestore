@@ -20,7 +20,7 @@ license       = pkgLicense
 bin           = @[pkgName]
 srcDir        = "src"
 skipDirs      = @["test"]
-installExt    = @["nim", "c", "h", "json"]
+installExt    = @["nim", "c", "h", "json", "ico"]
 
 # Dependencies
 
