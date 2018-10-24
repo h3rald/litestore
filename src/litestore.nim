@@ -142,28 +142,28 @@ else:
   # Public API: Low-level
 
   proc getInfo*(): LSResponse =
-    return LS.getInfo()
+    return LS.getInfo(newLSRequest("info"))
 
   proc getRawDocuments*(options = newQueryOptions()): LSResponse =
-    return LS.getRawDocuments(options)
+    return LS.getRawDocuments(options, newLSRequest("docs"))
 
   proc getDocument*(id: string, options = newQueryOptions()): LSResponse =
-    return LS.getDocument(id, options)
+    return LS.getDocument(id, options, newLSRequest("docs", id))
 
   proc getRawDocument*(id: string, options = newQueryOptions()): LSResponse =
-    return LS.getRawDocument(id, options)
+    return LS.getRawDocument(id, options, newLSRequest("docs", id))
 
   proc deleteDocument*(id: string): LSResponse =
-    return LS.deleteDocument(id)
+    return LS.deleteDocument(id, newLSRequest("docs", id))
 
   proc postDocument*(body, ct: string, folder=""): LSResponse =
-    return LS.postDocument(body, ct, folder)
+    return LS.postDocument(body, ct, folder, newLSRequest("docs", "", body))
 
   proc putDocument*(id, body, ct: string): LSResponse =
-    return LS.putDocument(id, body, ct)
+    return LS.putDocument(id, body, ct newLSRequest("docs", id, body))
 
   proc patchDocument*(id, body: string): LSResponse =
-    return LS.patchDocument(id, body)
+    return LS.patchDocument(id, body, newLSRequest("docs", id, body))
 
   # Public API: High-level
 
