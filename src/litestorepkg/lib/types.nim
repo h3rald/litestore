@@ -111,7 +111,7 @@ LS.appname = appname
 
 TAB_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Server": LS.appname & "/" & LS.appversion
 }
 
