@@ -23,19 +23,19 @@ proc setOrigin*(LS: LiteStore, req: LSRequest, headers: var HttpHeaders) =
   if req.url.hostname != "" and req.url.port != "":
     host = req.url.hostname
     port = req.url.port
-  elif req.headers.hasKey("Host"):
-    var parts = req.headers["Host"].split(":")
+  elif req.headers.hasKey("origin"):
+    let parts = req.headers["origin"].split("://")
+    protocol = parts[0]
+    let server = parts[1].split(":")
     if (parts.len >= 2):
-      host = parts[0]
-      port = parts[1]
+      host = server[0]
+      port = server[1]
     else:
-      host = parts[0]
+      host = server[0]
       port = "80"
   else:
     headers["Access-Control-Allow-Origin"] = "*"
     return
-  if req.url.scheme != "":
-    protocol = req.url.scheme
   headers["Vary"] = "Origin"
   headers["Access-Control-Allow-Origin"] = "$1://$2:$3" % [protocol, host, port]
 
