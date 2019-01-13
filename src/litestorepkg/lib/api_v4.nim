@@ -580,70 +580,69 @@ proc options*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSRespo
     of "info":
       result.headers = newHttpHeaders(TAB_HEADERS)
       setOrigin(LS, req, result.headers)
-      result.headers["Allow"] = "GET,OPTIONS"
+      result.headers["Allow"] = "GET, OPTIONS"
       result.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
       if id != "":
         return resError(Http404, "Info '$1' not found." % id)
       else:
-        result.code = Http200
+        result.code = Http204
         result.content = ""
     of "dir":
-      result.code = Http200
+      result.code = Http204
       result.content = ""
       result.headers = newHttpHeaders(TAB_HEADERS)
       setOrigin(LS, req, result.headers)
-      result.headers["Allow"] = "GET,OPTIONS"
+      result.headers["Allow"] = "GET, OPTIONS"
       result.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
     of "tags":
-      result.code = Http200
+      result.code = Http204
       result.content = ""
       result.headers = newHttpHeaders(TAB_HEADERS)
       setOrigin(LS, req, result.headers)
-      result.headers["Allow"] = "GET,OPTIONS"
+      result.headers["Allow"] = "GET, OPTIONS"
       result.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
     of "docs":
       var folder: string
       if id.isFolder:
         folder = id
       if folder.len > 0:
-        result.code = Http200
+        result.code = Http204
         result.content = ""
         if LS.readonly:
           result.headers = newHttpHeaders(TAB_HEADERS)
           setOrigin(LS, req, result.headers)
-          result.headers["Allow"] = "HEAD,GET,OPTIONS"
+          result.headers["Allow"] = "HEAD, GET, OPTIONS"
           result.headers["Access-Control-Allow-Methods"] = "HEAD, GET, OPTIONS"
         else:
           result.headers = newHttpHeaders(TAB_HEADERS)
           setOrigin(LS, req, result.headers)
-          result.headers["Allow"] = "HEAD,GET,OPTIONS,POST,PUT"
+          result.headers["Allow"] = "HEAD, GET, OPTIONS, POST, PUT"
           result.headers["Access-Control-Allow-Methods"] = "HEAD, GET, OPTIONS, POST, PUT"
       elif id != "":
-        result.code = Http200
         result.content = ""
         if LS.readonly:
           result.headers = newHttpHeaders(TAB_HEADERS)
           setOrigin(LS, req, result.headers)
-          result.headers["Allow"] = "HEAD,GET,OPTIONS"
+          result.headers["Allow"] = "HEAD, GET, OPTIONS"
           result.headers["Access-Control-Allow-Methods"] = "HEAD, GET, OPTIONS"
         else:
           result.headers = newHttpHeaders(TAB_HEADERS)
           setOrigin(LS, req, result.headers)
-          result.headers["Allow"] = "HEAD,GET,OPTIONS,PUT,PATCH,DELETE"
+          result.headers["Allow"] = "HEAD, GET, OPTIONS, PUT, PATCH, DELETE"
           result.headers["Allow-Patch"] = "application/json-patch+json"
           result.headers["Access-Control-Allow-Methods"] = "HEAD, GET, OPTIONS, PUT, PATCH, DELETE"
       else:
-        result.code = Http200
+        result.code = Http204
         result.content = ""
         if LS.readonly:
           result.headers = newHttpHeaders(TAB_HEADERS)
           setOrigin(LS, req, result.headers)
-          result.headers["Allow"] = "HEAD,GET,OPTIONS"
+          result.headers["Allow"] = "HEAD, GET, OPTIONS"
           result.headers["Access-Control-Allow-Methods"] = "HEAD, GET, OPTIONS"
         else:
           result.headers = newHttpHeaders(TAB_HEADERS)
           setOrigin(LS, req, result.headers)
-          result.headers["Allow"] = "HEAD,GET,OPTIONS,POST"
+          result.headers["Allow"] = "HEAD, GET, OPTIONS, POST"
           result.headers["Access-Control-Allow-Methods"] = "HEAD, GET, OPTIONS, POST"
     else:
       discard # never happens really.
