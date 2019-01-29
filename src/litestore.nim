@@ -1,12 +1,12 @@
-import 
-  litestorepkg/lib/x_sqlite3, 
-  litestorepkg/lib/x_db_sqlite as db, 
-  strutils, 
+import
+  litestorepkg/lib/x_sqlite3,
+  litestorepkg/lib/x_db_sqlite as db,
+  strutils,
   os,
   oids,
   times,
   json,
-  pegs, 
+  pegs,
   uri,
   strtabs,
   httpcore,
@@ -15,7 +15,7 @@ import
 import
   litestorepkg/lib/types,
   litestorepkg/lib/logger,
-  litestorepkg/lib/utils, 
+  litestorepkg/lib/utils,
   litestorepkg/lib/core,
   litestorepkg/lib/cli,
   litestorepkg/lib/server
@@ -37,7 +37,7 @@ proc executeOperation*() =
   let ctype = LS.execution.ctype
   let uri = LS.execution.uri
   let operation = LS.execution.operation
-  var req:LSRequest 
+  var req:LSRequest
   case operation.toUpperAscii:
     of "GET":
       req.reqMethod = HttpGet
@@ -98,7 +98,7 @@ when isMainModule:
     setup(false)
     vacuum LS.file
   else:
-    # Open Datastore 
+    # Open Datastore
     setup(true)
 
   case LS.operation:
@@ -127,13 +127,13 @@ else:
       let data = pair.split("=")
       result[data[0]] = data[1]
 
-  proc query*(table: StringTableRef): string = 
+  proc query*(table: StringTableRef): string =
     var params = newSeq[string](0)
     for key, value in pairs(table):
       params.add("$1=$2" % @[key, value])
     return params.join("&")
 
-  proc newLSRequest(meth: HttpMethod, resource, id,  body = "", params = newStringTable(), headers = newHttpHeaders()): LSRequest = 
+  proc newLSRequest(meth: HttpMethod, resource, id,  body = "", params = newStringTable(), headers = newHttpHeaders()): LSRequest =
     result.reqMethod = meth
     result.body = body
     result.headers = headers

@@ -133,7 +133,7 @@ suite "LiteStore HTTP API":
       {"op": "remove", "path": "/data/name/first"},
       {"op": "add", "path": "/data/test", "value": 111},
       {"op": "replace", "path": "/data/friends/0", "value": {"id": 11, "name": "Tom Paris"}}
-    ] 
+    ]
     var rpatch = jpatch("docs/" & ids[0], ops)
     var data = rpatch.body.parseJson["data"]
     check(data["name"] == %*{"last": "Walters"})
@@ -143,7 +143,7 @@ suite "LiteStore HTTP API":
       {"op": "add", "path": "/data/not_added", "value": "!!!"},
       {"op": "test", "path": "/data/test", "value": 222},
       {"op": "replace", "path": "/data/test", "value": "!!!"}
-    ] 
+    ]
     rpatch = jpatch("docs/" & ids[0], ops)
     data = rpatch.body.parseJson["data"]
     check(data["test"] == %111)
@@ -152,7 +152,7 @@ suite "LiteStore HTTP API":
       {"op": "replace", "path": "/data/test", "value": 222},
       {"op": "test", "path": "/data/test", "value": 222},
       {"op": "add", "path": "/data/not_added", "value": "!!!"}
-    ] 
+    ]
     rpatch = jpatch("docs/" & ids[0], ops)
     data = rpatch.body.parseJson["data"]
     check(data["test"] == %111)

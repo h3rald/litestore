@@ -1,22 +1,22 @@
-import 
+import
   x_sqlite3,
-  x_db_sqlite, 
-  asynchttpserver, 
+  x_db_sqlite,
+  asynchttpserver,
   json,
-  strutils, 
-  pegs, 
-  asyncdispatch, 
-  math, 
+  strutils,
+  pegs,
+  asyncdispatch,
+  math,
   sequtils,
   strtabs
 
-import 
-  types, 
-  queries, 
-  contenttypes, 
+import
+  types,
+  queries,
+  contenttypes,
   logger
 
-proc setOrigin*(LS: LiteStore, req: LSRequest, headers: var HttpHeaders) = 
+proc setOrigin*(LS: LiteStore, req: LSRequest, headers: var HttpHeaders) =
   var host = ""
   var port = ""
   var protocol = "http"
@@ -56,7 +56,7 @@ proc selectDocumentsByTags(tags: string, doc_id_col = "id"): string =
     if not tag.match(PEG_TAG):
       raise newException(EInvalidTag, "Invalid Tag '$1'" % tag)
     result = result & "AND " & doc_id_col & " IN (" & select_tagged & tag & "') "
-   
+
 proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
   var tables = options.tables
   result = "SELECT "
@@ -68,11 +68,11 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
   if options.search.len > 0:
     if options.select[0] != "COUNT(docid)":
       let rank = "rank(matchinfo(searchdata, 'pcxnal'), 1.20, 0.75, 5.0, 0.5) AS rank"
-      let snippet = "snippet(searchdata, \"<strong>\", \"</strong>\", \"<strong>&hellip;</strong>\", -1, 30) as highlight" 
+      let snippet = "snippet(searchdata, \"<strong>\", \"</strong>\", \"<strong>&hellip;</strong>\", -1, 30) as highlight"
       options.select.add(snippet)
       options.select.add("ranktable.rank AS rank")
       options.orderby = "rank DESC"
-      # Create inner select 
+      # Create inner select
       var innerSelect = "SELECT docid, " & rank & " FROM searchdata WHERE searchdata MATCH '" & options.search.replace("'", "''") & "' "
       if options.tags.len > 0:
         innerSelect = innerSelect & options.tags.selectDocumentsByTags()
@@ -120,14 +120,14 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
   if options.search.len > 0:
     result = result & "AND searchdata MATCH '" & options.search.replace("'", "''") & "' "
   if options.orderby.len > 0 and options.select[0] != "COUNT(docid)":
-    result = result & "ORDER BY " & options.orderby & " " 
-  if options.limit > 0 and options.search.len == 0: 
+    result = result & "ORDER BY " & options.orderby & " "
+  if options.limit > 0 and options.search.len == 0:
     # If searching, do not add limit to the outer select, it's already in the nested select (ranktable)
     result = result & "LIMIT " & $options.limit & " "
     if options.offset > 0:
       result = result & "OFFSET " & $options.offset & " "
   LOG.debug(result.replace("$", "$$"))
- 
+
 proc prepareSelectTagsQuery*(options: QueryOptions): string =
   var group = true
   if options.select.len > 0 and options.select[0] == "COUNT(tag_id)":
@@ -141,9 +141,9 @@ proc prepareSelectTagsQuery*(options: QueryOptions): string =
     result = result & "WHERE tag_id = ?"
   elif options.like.len > 0:
     if options.like[options.like.len-1] == '*':
-      result = result & "WHERE tag_id BETWEEN ? AND ? " 
+      result = result & "WHERE tag_id BETWEEN ? AND ? "
     else:
-      result = result & "WHERE tag_id LIKE ? " 
+      result = result & "WHERE tag_id LIKE ? "
   if group:
     result = result & "GROUP BY tag_id "
   if options.limit > 0:
@@ -241,7 +241,7 @@ proc addDocumentSystemTags*(store: Datastore, docid, contenttype: string) =
   for tag in tags:
     store.db.exec(SQL_INSERT_TAG, tag, docid)
 
-proc destroyDocumentSystemTags*(store: Datastore, docid: string) = 
+proc destroyDocumentSystemTags*(store: Datastore, docid: string) =
   discard store.db.execAffectedRows(SQL_DELETE_DOCUMENT_SYSTEM_TAGS, docid)
 
 proc fail*(code: int, msg: string) =
@@ -253,7 +253,7 @@ proc ctHeader*(ct: string): HttpHeaders =
   h["Content-Type"] = ct
   return h
 
-proc ctJsonHeader*(): HttpHeaders = 
+proc ctJsonHeader*(): HttpHeaders =
   return ctHeader("application/json")
 
 proc resError*(code: HttpCode, message: string, trace = ""): LSResponse =
@@ -275,7 +275,7 @@ proc eWarn*() =
   LOG.warn(e.msg)
   LOG.debug(getStackTrace(e))
 
-proc validate*(req: Request, LS: LiteStore, resource: string, id: string, cb: proc(req: Request, LS: LiteStore, resource: string, id: string):LSResponse): LSResponse = 
+proc validate*(req: Request, LS: LiteStore, resource: string, id: string, cb: proc(req: Request, LS: LiteStore, resource: string, id: string):LSResponse): LSResponse =
   if req.reqMethod == HttpPost or req.reqMethod == HttpPut or req.reqMethod == HttpPatch:
     var ct =  ""
     let body = req.body.strip
@@ -308,7 +308,7 @@ proc okapi_bm25f_kb*(pCtx: Pcontext, nVal: int32, apVal: PValueArg) {.cdecl.} =
   # arguments can be the column weights instead.
   if nVal < 2:
     pCtx.result_error("wrong number of arguments to function okapi_bm25_kb(), expected k1 parameter", -1)
-  if nVal < 3: 
+  if nVal < 3:
     pCtx.result_error("wrong number of arguments to function okapi_bm25_kb(), expected b parameter", -1);
   let K1 = value_double(apVal[1]) # 1.2
   let B = value_double(apVal[2])  # 0.75
@@ -325,8 +325,8 @@ proc okapi_bm25f_kb*(pCtx: Pcontext, nVal: int32, apVal: PValueArg) {.cdecl.} =
   let A_OFFSET = N_OFFSET + 1
   let L_OFFSET = A_OFFSET + colCount
   let totalDocs = matchinfo[N_OFFSET].float
-  var avgLength:float = 0.0 
-  var docLength:float = 0.0 
+  var avgLength:float = 0.0
+  var docLength:float = 0.0
   for col in 0..colCount-1:
     avgLength = avgLength + matchinfo[A_OFFSET + col].float
     docLength = docLength + matchinfo[L_OFFSET + col].float

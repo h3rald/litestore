@@ -2,12 +2,12 @@
   'use strict';
   var app = window.LS || (window.LS = {});
   var u = app.utils;
-  
+
   app.doclist = {};
-  
+
   // Subcomponent
   app.doclist.panel = {
-  
+
     /**
      * @typedef {Object} DoclistPanelConfig
      * @prop {string} id
@@ -27,10 +27,10 @@
           return u.taglink({name: tag, key: u.guid()});
         }))
       ]);
-      return m(".row.search-result", m(".col-md-12", [u.panel(obj)])); 
+      return m(".row.search-result", m(".col-md-12", [u.panel(obj)]));
     }
   };
-  
+
   /**
    * @param {Function} ctrl
    * @param {Object} args
@@ -44,7 +44,7 @@
       item.key = u.guid();
       return m.component(app.doclist.panel, item);
     }))]);
-   
+
     return m("section", [
       m(".row", [args.title]),
       m(".row", [args.subtitle]),
@@ -53,5 +53,5 @@
       m(".row.text-center", [u.paginator(args.querydata)])
     ]);
   };
-  
+
 }());
