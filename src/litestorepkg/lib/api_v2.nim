@@ -1,4 +1,4 @@
-import 
+import
   asynchttpserver,
   asyncdispatch,
   strutils,
@@ -8,7 +8,7 @@ import
   json,
   os,
   times
-import 
+import
   types,
   contenttypes,
   core,
@@ -66,7 +66,7 @@ proc parseQueryOptions*(querystring: string, options: var QueryOptions) =
   for f in fragments:
     f.parseQueryOption(options)
 
-proc validate*(req: LSRequest, LS: LiteStore, resource: string, id: string, cb: proc(req: LSRequest, LS: LiteStore, resource: string, id: string):LSResponse): LSResponse = 
+proc validate*(req: LSRequest, LS: LiteStore, resource: string, id: string, cb: proc(req: LSRequest, LS: LiteStore, resource: string, id: string):LSResponse): LSResponse =
   if req.reqMethod == HttpPost or req.reqMethod == HttpPut or req.reqMethod == HttpPatch:
     var ct =  ""
     let body = req.body.strip
@@ -207,10 +207,10 @@ proc getInfo*(LS: LiteStore): LSResponse =
   content["size"] = %($((LS.file.getFileSize().float/(1024*1024)).formatFloat(ffDecimal, 2)) & " MB")
   content["read_only"] = %LS.readonly
   content["log_level"] = %LS.loglevel
-  if LS.directory.len == 0: 
+  if LS.directory.len == 0:
     content["directory"] = newJNull()
-  else: 
-    content["directory"] = %LS.directory 
+  else:
+    content["directory"] = %LS.directory
   content["mount"] = %LS.mount
   content["total_documents"] = %total_documents
   content["total_tags"] = %total_tags
@@ -221,7 +221,7 @@ proc getInfo*(LS: LiteStore): LSResponse =
 
 proc postDocument*(LS: LiteStore, body: string, ct: string, folder=""): LSResponse =
   if not folder.isFolder:
-    return resError(Http400, "Invalid folder specified when creating document: $1" % folder) 
+    return resError(Http400, "Invalid folder specified when creating document: $1" % folder)
   try:
     var doc = LS.store.createDocument(folder, body, ct)
     if doc != "":
@@ -402,13 +402,13 @@ proc get*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse 
       discard # never happens really.
 
 
-proc post*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse = 
+proc post*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse =
   var ct = "text/plain"
   if req.headers.hasKey("Content-Type"):
     ct = req.headers["Content-Type"]
   return LS.postDocument(req.body.strip, ct, id)
 
-proc put*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse = 
+proc put*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse =
   if id != "":
     var ct = "text/plain"
     if req.headers.hasKey("Content-Type"):
@@ -417,13 +417,13 @@ proc put*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse 
   else:
     return resError(Http400, "Bad request: document ID must be specified in PUT requests.")
 
-proc delete*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse = 
+proc delete*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse =
   if id != "":
     return LS.deleteDocument(id)
   else:
     return resError(Http400, "Bad request: document ID must be specified in DELETE requests.")
 
-proc patch*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse = 
+proc patch*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse =
   if id != "":
     return LS.patchDocument(id, req.body)
   else:
@@ -453,24 +453,24 @@ proc serveFile*(req: LSRequest, LS: LiteStore, id: string): LSResponse =
       else:
         return resError(Http404, "File '$1' not found." % path)
     else:
-      return resError(Http405, "Method not allowed: $1" % $req.reqMethod) 
+      return resError(Http405, "Method not allowed: $1" % $req.reqMethod)
 
-proc route*(req: LSRequest, LS: LiteStore, resource = "docs", id = ""): LSResponse = 
+proc route*(req: LSRequest, LS: LiteStore, resource = "docs", id = ""): LSResponse =
   var reqMethod = $req.reqMethod
   if req.headers.hasKey("X-HTTP-Method-Override"):
     reqMethod = req.headers["X-HTTP-Method-Override"]
   case reqMethod.toUpperAscii:
     of "POST":
       if LS.readonly:
-        return resError(Http405, "Method not allowed: $1" % $req.reqMethod) 
+        return resError(Http405, "Method not allowed: $1" % $req.reqMethod)
       return validate(req, LS, resource, id, post)
     of "PUT":
       if LS.readonly:
-        return resError(Http405, "Method not allowed: $1" % $req.reqMethod) 
+        return resError(Http405, "Method not allowed: $1" % $req.reqMethod)
       return validate(req, LS, resource, id, put)
     of "DELETE":
       if LS.readonly:
-        return resError(Http405, "Method not allowed: $1" % $req.reqMethod) 
+        return resError(Http405, "Method not allowed: $1" % $req.reqMethod)
       return validate(req, LS, resource, id, delete)
     of "HEAD":
       return validate(req, LS, resource, id, head)
@@ -480,7 +480,7 @@ proc route*(req: LSRequest, LS: LiteStore, resource = "docs", id = ""): LSRespon
       return validate(req, LS, resource, id, get)
     of "PATCH":
       if LS.readonly:
-        return resError(Http405, "Method not allowed: $1" % $req.reqMethod) 
+        return resError(Http405, "Method not allowed: $1" % $req.reqMethod)
       return validate(req, LS, resource, id, patch)
     else:
-      return resError(Http405, "Method not allowed: $1" % $req.reqMethod) 
+      return resError(Http405, "Method not allowed: $1" % $req.reqMethod)

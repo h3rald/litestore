@@ -1,5 +1,5 @@
 (function(){
-  'use strict';  
+  'use strict';
   var app = window.LS || (window.LS = {});
   var u = app.utils;
 
@@ -10,7 +10,7 @@
       $(element).change(function(event){
         obj.file(element.files[0]);
         if (obj.reader.readyState != 1) {
-          obj.reader.readAsDataURL(obj.file()); 
+          obj.reader.readAsDataURL(obj.file());
         }
       });
     };
@@ -21,7 +21,7 @@
 
     vm.docid = m.prop(args.docid);
     vm.file = m.prop();
-    vm.id = args.id; 
+    vm.id = args.id;
     vm.btnId = "#upload-"+vm.id+"-btn";
     vm.modalId = "#upload-"+vm.id+"-modal";
     vm.reader = new FileReader();
@@ -46,14 +46,14 @@
       }
       return Doc.put(doc, vm.file().type).then(args.onSuccess, args.onFailure);
     };
-    
+
     vm.cancel = function(){
       $("input:file").val('');
     };
-    
+
     return vm;
   };
-    
+
   app.uploader.view = function(ctrl, args){
     var config = {
       title: "Upload Document",
@@ -78,7 +78,7 @@
         ]),
         m(".checkbox", [
           m("label", [
-            m("input", {type: "checkbox", value: ctrl.isText(), onchange: m.withAttr("value", ctrl.isText)}), 
+            m("input", {type: "checkbox", value: ctrl.isText(), onchange: m.withAttr("value", ctrl.isText)}),
             "Text File"
           ]),
           m("p.help-block", "Select if the file to upload contains textual content.")
@@ -87,5 +87,5 @@
     };
     return u.modal(config);
   };
-  
+
 }());

@@ -57,13 +57,13 @@ task windows_x64_build, "Build LiteStore for Windows (x64)":
 
 task linux_x64_build, "Build LiteStore for Linux (x64)":
   shell compile, linux_x64,  ls_file
-  
+
 task linux_x86_build, "Build LiteStore for Linux (x86)":
   shell compile, linux_x86,  ls_file
-  
+
 task linux_arm_build, "Build LiteStore for Linux (ARM)":
   shell compile, linux_arm,  ls_file
-  
+
 task macosx_x64_build, "Build LiteStore for Mac OS X (x64)":
   shell compile, macosx_x64, ls_file
 
@@ -86,17 +86,17 @@ task release, "Release LiteStore":
   echo "\n\n\n LINUX - x64:\n\n"
   linux_x64_buildTask()
   shell zip, "$1 $2 $3 $4" % [filename_for("linux", "x64"), ls, doc, db]
-  shell "rm", ls 
+  shell "rm", ls
   echo "\n\n\n LINUX - x86:\n\n"
   linux_x86_buildTask()
   shell zip, "$1 $2 $3 $4" % [filename_for("linux", "x86"), ls, doc, db]
-  shell "rm", ls 
+  shell "rm", ls
   echo "\n\n\n LINUX - ARM:\n\n"
   linux_arm_buildTask()
   shell zip, "$1 $2 $3 $4" % [filename_for("linux", "arm"), ls, doc, db]
-  shell "rm", ls 
+  shell "rm", ls
   echo "\n\n\n MAC OS X - x64:\n\n"
   macosx_x64_buildTask()
   shell zip, "$1 $2 $3 $4" % [filename_for("macosx", "x64"), ls, doc, db]
-  shell "rm", ls 
+  shell "rm", ls
   echo "\n\n\n ALL DONE!"

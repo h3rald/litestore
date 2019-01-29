@@ -19,7 +19,7 @@
       vm.total = docs.total;
       vm.execTime = (docs["execution_time"]*1000).toFixed(0);
       return docs;
-    }, vm.flashError); 
+    }, vm.flashError);
   };
   app.tags.main = function(){
     var vm = app.tags.vm;
@@ -29,7 +29,7 @@
     obj.title = m("h2", ["Tag: ", m("em", docs.tags)]);
     obj.subtitle = m("p", [m("strong",docs.total), " results, ("+vm.execTime+" ms)"]);
     obj.items = docs.results;
-    obj.items.forEach(function(item){ 
+    obj.items.forEach(function(item){
       item.content = m("ul", [
         m("li", [m("strong", "Created: "), u.date(item.created)]),
         m("li", [m("strong", "Modified: "), u.date(item.modified)]),

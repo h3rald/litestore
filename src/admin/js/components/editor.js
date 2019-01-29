@@ -1,5 +1,5 @@
 (function(){
-  'use strict';  
+  'use strict';
   var app = window.LS || (window.LS = {});
   app.editor = {};
 
@@ -61,5 +61,5 @@
     }
     return m(".editor.panel.panal-default", {config: app.editor.config(args)}, args.content);
   };
-  
+
 }());
