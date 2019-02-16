@@ -478,6 +478,7 @@ proc postDocument*(LS: LiteStore, body: string, ct: string, folder="", req: LSRe
     return resError(Http400, "Invalid folder specified when creating document: $1" % folder) 
   try:
     var doc = LS.store.createDocument(folder, body, ct)
+    echo doc
     if doc != "":
       result.headers = ctJsonHeader()
       setOrigin(LS, req, result.headers)
@@ -486,6 +487,7 @@ proc postDocument*(LS: LiteStore, body: string, ct: string, folder="", req: LSRe
     else:
       result = resError(Http500, "Unable to create document.")
   except:
+    eWarn()
     result = resError(Http500, "Unable to create document.")
 
 proc putDocument*(LS: LiteStore, id: string, body: string, ct: string, req: LSRequest): LSResponse =
