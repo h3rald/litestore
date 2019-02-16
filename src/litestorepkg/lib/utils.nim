@@ -27,7 +27,7 @@ proc setOrigin*(LS: LiteStore, req: LSRequest, headers: var HttpHeaders) =
     let parts = req.headers["origin"].split("://")
     protocol = parts[0]
     let server = parts[1].split(":")
-    if (parts.len >= 2):
+    if (server.len >= 2):
       host = server[0]
       port = server[1]
     else:
