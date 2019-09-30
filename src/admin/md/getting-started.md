@@ -7,10 +7,7 @@ The easiest way to get LiteStore is by downloading one of the prebuilt binaries 
 
   * [LiteStore for Mac OS X (x64)](https://github.com/h3rald/litestore/releases/download/{{$version}}litestore_{{$version}}_macosx_x64.zip) 
   * [LiteStore for Windows (x64)](https://github.com/h3rald/litestore/releases/download/{{$version}}/litestore_{{$version}}_windows_x64.zip)
-  * [LiteStore for Windows (x86)](https://github.com/h3rald/litestore/releases/download/{{$version}}/litestore_{{$version}}_windows_x86.zip)
   * [LiteStore for Linux (x64)](https://github.com/h3rald/litestore/releases/download/{{$version}}/litestore_{{$version}}_linux_x64.zip)
-  * [LiteStore for Linux (x86)](https://github.com/h3rald/litestore/releases/download/{{$version}}/litestore_{{$version}}_linux_x86.zip)
-  * [LiteStore for Linux (ARM)](https://github.com/h3rald/litestore/releases/download/{{$version}}/litestore_{{$version}}_linux_arm.zip)
 
 ### Installing using Nimble
 
