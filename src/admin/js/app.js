@@ -1,11 +1,11 @@
 (function(){
   'use strict';
   var app = window.LS || (window.LS = {});
-  
+
   app.flash = m.prop();
   app.system = {};
   m.route.mode = "hash";
-  
+
   app.init = function(info){
     app.system = info;
     app.system.v = app.system.version.match(/(v.+)$/)[1];
@@ -24,5 +24,5 @@
     });
   };
   Info.get().then(app.init);
-  
+
 }());

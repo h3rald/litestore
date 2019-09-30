@@ -1,7 +1,7 @@
 (function(){
   'use strict';
   var app = window.LS || (window.LS = {});
-  
+
   app.widgets = {};
 
   /* PANEL */
@@ -11,7 +11,7 @@
       var footer = "";
       if (args.title){
         title = m(".panel-heading", [
-          m("h2.panel-title", [args.title])  
+          m("h2.panel-title", [args.title])
         ]);
       }
       if (args.footer){
@@ -26,7 +26,7 @@
       ]);
     }
   };
-    
+
   /* PAGINATOR */
   app.widgets.paginator = {
     view: function(ctrl, args){
@@ -42,7 +42,7 @@
         var first = (n === 0);
         var last = (n == max_page);
         var offset = args.limit * n;
-        sign = sign || n+1;  
+        sign = sign || n+1;
         return m("li", {class: klass},
             [m("a", {
                       href: args.baseurl +(n+1), // assuming 10 elements per page //+"/"+obj.limit,
@@ -51,7 +51,7 @@
             )]
           );
       };
-      
+
       var pages = [];
       var prev;
       var next;
@@ -78,7 +78,7 @@
       return m("nav", [m("ul.pagination", pages)]);
      }
   };
-  
+
   /* DROPDOWN */
   app.widgets.dropdown = {
     view: function(ctrl, args){
@@ -90,9 +90,9 @@
       return m(el, [
         m("a.dropdown-toggle[href='#'][data-toggle='dropdown'][role='button'][aria-expanded='false']",
         [icon, m("span", " "+args.title+" "), m("span.caret")]),
-        m("ul.dropdown-menu[role='menu']", 
+        m("ul.dropdown-menu[role='menu']",
         args.links.map(function(e){
-          return m("li", 
+          return m("li",
         [m("a", {href: e.path, config: m.route}, m.trust(e.title))]);}))
       ]);
     }
@@ -102,18 +102,18 @@
   app.widgets.taglink = {
     view: function(ctrl, args) {
       var color = /^\$/.test(args.name) ? "warning" : "primary";
-      return m("span.tag-label.label.label-"+color, 
+      return m("span.tag-label.label.label-"+color,
         [m("i.fa.fa-tag"), " ", m("a", {href: "/tags/"+args.name, config:m.route}, args.name)]);
     }
   };
- 
+
   /* DOCLINK */
   app.widgets.doclink = {
     view: function(ctrl, args) {
       return m("a", {href: "/document/view/"+args.id, config: m.route}, id);
     }
   };
-  
+
   /* TAGBUTTON */
   app.widgets.tagbutton = {
     view: function(ctrl, args) {
@@ -121,20 +121,20 @@
         [m("i.fa.fa-tag"), " "+args.name+" ", m("span.badge", args.n)]);
     }
   };
-  
+
   /* TOOLBAR */
   app.widgets.toolbar = {
     view: function(ctrl, args){
-      return m("nav.toolbar.btn-group[role='group'][aria-label='...'].pull-right", 
+      return m("nav.toolbar.btn-group[role='group'][aria-label='...'].pull-right",
         args.links.map(function(l){
-          return m("a.btn.btn-default", 
-                    {onclick:l.action, config: l.config}, 
+          return m("a.btn.btn-default",
+                    {onclick:l.action, config: l.config},
                     [m("i.fa.fa-"+l.icon), " "+l.title]);
-        })  
+        })
       );
     }
   };
-  
+
   /* MODAL */
   app.widgets.modal = {
     view: function(ctrl, args){
@@ -144,13 +144,13 @@
       if (!args.dismissText) {
         args.dismissText = "Close";
       }
-      return m(".modal.fade", 
+      return m(".modal.fade",
         {id: args.id, tabindex: "-1", role: "dialog"},
         [
           m(".modal-dialog", [
             m(".modal-content", [
               m(".modal-header", [
-                m("button", {type: "button", class: "close", "data-dismiss": "modal"}, 
+                m("button", {type: "button", class: "close", "data-dismiss": "modal"},
                 [m.trust("&times;")]),
                 m("h4.modal-title", args.title)
               ]),

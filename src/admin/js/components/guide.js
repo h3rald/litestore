@@ -16,7 +16,7 @@
   };
   app.guide.main = function(){
     return m("article.row", [
-      u.toolbar({links: app.guide.vm.links()}), 
+      u.toolbar({links: app.guide.vm.links()}),
       m.trust(app.guide.vm.content())
     ]);
   };

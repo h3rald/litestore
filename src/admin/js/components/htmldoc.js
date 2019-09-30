@@ -18,7 +18,7 @@
   };
   app.htmldoc.main = function(){
     return m("article.row", [
-      u.toolbar({links: app.htmldoc.vm.links()}), 
+      u.toolbar({links: app.htmldoc.vm.links()}),
       m.trust(app.htmldoc.vm.content())
     ]);
   };

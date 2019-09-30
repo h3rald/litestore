@@ -1,11 +1,11 @@
-import 
-  x_db_sqlite, 
-  asynchttpserver, 
+import
+  x_db_sqlite,
+  asynchttpserver,
   pegs
 import
   config
 
-type 
+type
   EDatastoreExists* = object of Exception
   EDatastoreDoesNotExist* = object of Exception
   EDatastoreUnavailable* = object of Exception
@@ -14,7 +14,6 @@ type
   EFileNotFound* = object of Exception
   EFileExists* = object of Exception
   EInvalidRequest* = object of Exception
-  uarray* [T] = array[0..0, T] 
   ExecutionData* = object
     operation*: string
     file*: string
@@ -30,10 +29,10 @@ type
     jsonFilter*: string
     jsonSelect*: seq[tuple[path: string, alias: string]]
     select*: seq[string]
-    single*:bool         
-    limit*: int           
-    offset*: int           
-    orderby*: string      
+    single*:bool
+    limit*: int
+    offset*: int
+    orderby*: string
     tags*: string
     like*: string
     createdAfter*: string
@@ -47,10 +46,10 @@ type
     startswith*: bool
     endswith*: bool
     negated*: bool
-  Operation* = enum 
-    opRun, 
-    opImport, 
-    opExport, 
+  Operation* = enum
+    opRun,
+    opImport,
+    opExport,
     opDelete,
     opVacuum,
     opOptimize,
@@ -88,7 +87,7 @@ type
     version: string
   ]
 
-var 
+var
   PEG_TAG* {.threadvar.}: Peg
   PEG_USER_TAG* {.threadvar.}: Peg
   PEG_DEFAULT_URL* {.threadvar.}: Peg
@@ -113,6 +112,6 @@ TAB_HEADERS = {
 }
 
 proc newQueryOptions*(): QueryOptions =
-  return QueryOptions(select: @["documents.id AS id", "documents.data AS data", "content_type", "binary", "searchable", "created", "modified"], 
-    single: false, limit: 0, offset: 0, orderby: "", tags: "", search: "", folder: "", like: "", 
+  return QueryOptions(select: @["documents.id AS id", "documents.data AS data", "content_type", "binary", "searchable", "created", "modified"],
+    single: false, limit: 0, offset: 0, orderby: "", tags: "", search: "", folder: "", like: "",
     createdAfter: "", createdBefore: "", modifiedAfter: "", modifiedBefore: "", jsonFilter: "", jsonSelect: newSeq[tuple[path: string, alias: string]](), tables: newSeq[string]())
