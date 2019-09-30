@@ -1,5 +1,5 @@
 import
-  asynchttpserver
+  asynchttpserver,
   asyncdispatch,
   times,
   strutils,
