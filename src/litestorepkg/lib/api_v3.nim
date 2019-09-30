@@ -1,6 +1,5 @@
 import
   asynchttpserver,
-  asyncdispatch,
   strutils,
   sequtils,
   cgi,

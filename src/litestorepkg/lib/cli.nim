@@ -1,7 +1,6 @@
 import
   parseopt,
-  strutils,
-  strtabs
+  strutils
 import
   logger,
   config,

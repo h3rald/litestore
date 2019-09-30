@@ -1,14 +1,12 @@
 import
   x_sqlite3,
   x_db_sqlite,
-  asynchttpserver,
   json,
   strutils,
   pegs,
-  asyncdispatch,
+  asynchttpserver,
   math,
-  sequtils,
-  strtabs
+  sequtils
 
 import
   types,
@@ -27,7 +25,7 @@ proc setOrigin*(LS: LiteStore, req: LSRequest, headers: var HttpHeaders) =
     let parts = req.headers["origin"].split("://")
     protocol = parts[0]
     let server = parts[1].split(":")
-    if (parts.len >= 2):
+    if (server.len >= 2):
       host = server[0]
       port = server[1]
     else:
@@ -302,8 +300,8 @@ proc validate*(req: Request, LS: LiteStore, resource: string, id: string, cb: pr
 # which is covered by the MIT License
 # http://opensource.org/licenses/MIT
 # the following code shall also be covered by the same MIT License
-proc okapi_bm25f_kb*(pCtx: Pcontext, nVal: int32, apVal: PValueArg) {.cdecl.} =
-  var matchinfo = cast[ptr uarray[int32]](value_blob(apVal[0]))
+let okapi_bm25f_kb*: Create_function_func_func = proc (pCtx: Pcontext, nVal: int32, apVal: PValueArg) {.cdecl.} =
+  var matchinfo = cast[ptr UncheckedArray[int32]](value_blob(apVal[0]))
   # Setting the default values and ignoring argument based inputs so the extra
   # arguments can be the column weights instead.
   if nVal < 2:

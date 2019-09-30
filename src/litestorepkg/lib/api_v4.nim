@@ -1,6 +1,5 @@
 import
   asynchttpserver,
-  asyncdispatch,
   strutils,
   sequtils,
   cgi,
@@ -478,6 +477,7 @@ proc postDocument*(LS: LiteStore, body: string, ct: string, folder="", req: LSRe
     return resError(Http400, "Invalid folder specified when creating document: $1" % folder)
   try:
     var doc = LS.store.createDocument(folder, body, ct)
+    echo doc
     if doc != "":
       result.headers = ctJsonHeader()
       setOrigin(LS, req, result.headers)
@@ -486,6 +486,7 @@ proc postDocument*(LS: LiteStore, body: string, ct: string, folder="", req: LSRe
     else:
       result = resError(Http500, "Unable to create document.")
   except:
+    eWarn()
     result = resError(Http500, "Unable to create document.")
 
 proc putDocument*(LS: LiteStore, id: string, body: string, ct: string, req: LSRequest): LSResponse =
@@ -682,6 +683,9 @@ proc get*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse 
         else:
           return LS.getRawDocuments(options, req)
       except:
+        let e = getCurrentException()
+        let trace = e.getStackTrace()
+        echo trace
         return resError(Http400, "Bad Request - $1" % getCurrentExceptionMsg())
     of "tags":
       var options = newQueryOptions()

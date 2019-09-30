@@ -1,8 +1,7 @@
 import
   x_db_sqlite,
   asynchttpserver,
-  pegs,
-  strtabs
+  pegs
 import
   config
 
@@ -15,7 +14,6 @@ type
   EFileNotFound* = object of Exception
   EFileExists* = object of Exception
   EInvalidRequest* = object of Exception
-  uarray* {.unchecked.} [T] = array[0..0, T]
   ExecutionData* = object
     operation*: string
     file*: string
