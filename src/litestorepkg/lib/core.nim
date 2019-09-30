@@ -99,12 +99,14 @@ proc commit(store: Datastore) =
     LOG.debug("Committing transaction")
     LS_TRANSACTION = false
     store.db.exec("COMMIT".sql)
+    LOG.debug("Committed.")
 
 proc rollback(store: Datastore) =
   if LS_TRANSACTION:
     LOG.debug("Rolling back transaction")
     LS_TRANSACTION = false
     store.db.exec("ROLLBACK".sql)
+    LOG.debug("Rolled back.")
 
 # Manage Tags
 
