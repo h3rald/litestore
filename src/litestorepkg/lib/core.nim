@@ -69,7 +69,7 @@ proc openDatastore*(file:string): Datastore =
     result.db = db.open(file, "", "", "")
     # Register custom function & PRAGMAs
     LOG.debug("Registering custom functions...")
-    discard create_function(cast[PSqlite3](result.db), "rank".cstring, -1, SQLITE_ANY, cast[pointer](SQLITE_DETERMINISTIC), okapi_bm25f_kb, nil, nil)
+    discard create_function(cast[PSqlite3](result.db), "rank", -1, SQLITE_ANY, cast[pointer](SQLITE_DETERMINISTIC), okapi_bm25f_kb, nil, nil)
     LOG.debug("Executing PRAGMAs...")
     discard result.db.tryExec("PRAGMA locking_mode = exclusive".sql)
     discard result.db.tryExec("PRAGMA page_size = 4096".sql)

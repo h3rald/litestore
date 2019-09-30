@@ -1,17 +1,8 @@
 import 
-  litestorepkg/lib/x_sqlite3, 
-  litestorepkg/lib/x_db_sqlite as db, 
   strutils, 
   os,
-  oids,
-  times,
-  json,
-  pegs, 
   uri,
-  strtabs,
-  httpcore,
-  cgi,
-  base64
+  httpcore
 import
   litestorepkg/lib/types,
   litestorepkg/lib/logger,
@@ -28,7 +19,7 @@ export
 
 from asyncdispatch import runForever
 
-{.compile: "litestorepkg/vendor/sqlite/libsqlite3.c".}
+{.compile: "litestorepkg/vendor/sqlite/sqlite3.c".}
 {.passC: "-DSQLITE_ENABLE_FTS3=1 -DSQLITE_ENABLE_FTS3_PARENTHESIS -DSQLITE_ENABLE_JSON1".}
 
 proc executeOperation*() =

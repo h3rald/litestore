@@ -4,10 +4,8 @@ import
   times, 
   strutils, 
   pegs, 
-  strtabs, 
   logger,
-  cgi,
-  os
+  cgi
 import 
   types, 
   utils, 
