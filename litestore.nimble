@@ -52,7 +52,7 @@ task windows_x64_build, "Build LiteStore for Windows (x64)":
 
 task linux_x64_build, "Build LiteStore for Linux (x64)":
   shell compile, linux_x64,  ls_file
-  
+
 task macosx_x64_build, "Build LiteStore for Mac OS X (x64)":
   shell compile, macosx_x64, ls_file
 
@@ -72,8 +72,9 @@ task release, "Release LiteStore":
   linux_x64_buildTask()
   shell zip, "$1 $2 $3 $4" % [filename_for("linux", "x64"), ls, doc, db]
   shell "rm", ls 
+
   echo "\n\n\n MAC OS X - x64:\n\n"
   macosx_x64_buildTask()
   shell zip, "$1 $2 $3 $4" % [filename_for("macosx", "x64"), ls, doc, db]
-  shell "rm", ls 
+  shell "rm", ls
   echo "\n\n\n ALL DONE!"

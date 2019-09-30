@@ -1,20 +1,20 @@
-import 
+import
   asynchttpserver,
-  asyncdispatch, 
-  times, 
-  strutils, 
-  pegs, 
+  asyncdispatch,
+  times,
+  strutils,
+  pegs,
   logger,
   cgi
-import 
-  types, 
-  utils, 
+import
+  types,
+  utils,
   api_v1,
   api_v2,
   api_v3,
   api_v4
 
-export 
+export
   api_v4
 
 proc getReqInfo(req: LSRequest): string =
@@ -30,7 +30,7 @@ proc handleCtrlC() {.noconv.} =
   LOG.info("Exiting...")
   quit()
 
-proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSResponse = 
+proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSResponse =
   if info.version == "v4":
     if info.resource.match(peg"^docs / info / tags$"):
       return api_v4.route(req, LS, info.resource, info.id)
@@ -61,7 +61,7 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
         return resError(Http400, "Bad Request - Not serving any directory." % info.version)
     else:
       return resError(Http404, "Resource Not Found: $1" % info.resource)
-  elif info.version == "v1": 
+  elif info.version == "v1":
     if info.resource.match(peg"^docs / info$"):
       return api_v1.route(req, LS, info.resource, info.id)
     elif info.resource.match(peg"^dir$"):
@@ -85,7 +85,7 @@ proc process*(req: LSRequest, LS: LiteStore): LSResponse {.gcsafe.}=
   template route(req: LSRequest, peg: Peg, op: untyped): untyped =
     if req.url.path.find(peg, matches) != -1:
       op
-  try: 
+  try:
     var info: ResourceInfo
     req.route peg"^\/?$":
       info.version = "v4"
@@ -129,4 +129,3 @@ proc serve*(LS: LiteStore) =
   if LS.mount:
     echo("Mirroring datastore changes to: " & LS.directory)
   asyncCheck server.serve(LS.port.Port, handleHttpRequest, LS.address)
-

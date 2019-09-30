@@ -7,44 +7,44 @@
   app.host = ""; //'http://localhost:9500';
 
   var host = location.origin === app.host ? "" : app.host;
-  
+
   Page.get = function(id) {
     var content = m.prop("");
     return m.request({
-        method: "GET", 
+        method: "GET",
         url: host+"/docs/admin/md/"+id+".md",
         deserialize: function(value) {
           return value;
         }
-      }).then(function(content){ 
+      }).then(function(content){
         return u.markdown(content);
       });
   };
-  
+
   Info.get = function(){
     var content = m.prop("");
     return m.request({
-        method: "GET", 
+        method: "GET",
         url: host+"/info"
       }).then(content);
   };
-  
+
   Doc.getByTag = function(tag, offset, limit) {
     offset = offset || 0;
     limit = limit || 10;
     var docs = m.prop("");
     return m.request({
-        method: "GET", 
+        method: "GET",
         url: host+"/docs?contents=false&tags="+tag+"&limit="+limit+"&offset="+offset
       }).then(docs);
   };
-  
+
   Doc.search = function(search, offset, limit){
     offset = offset || 0;
     limit = limit || 10;
     var docs = m.prop("");
     return m.request({
-        method: "GET", 
+        method: "GET",
         url: host+"/docs?contents=false&search="+search+"&limit="+limit+"&offset="+offset,
       }).then(docs);
   };
@@ -52,23 +52,23 @@
   Doc.get = function(id) {
     var doc = m.prop("");
     return m.request({
-        method: "GET", 
+        method: "GET",
         url: host+"/docs/"+id+"?raw=true"
       }).then(doc);
   };
-  
+
   Doc.delete = function(id){
     return m.request({
-        method: "DELETE", 
+        method: "DELETE",
         url: host+"/docs/"+id
       });
   };
-  
+
   Doc.put = function(doc, contentType){
     xhrcfg = u.setContentType(doc, contentType);
     console.log("Doc.put - Saving Document:", doc);
     return m.request({
-        method: "PUT", 
+        method: "PUT",
         url: host+"/docs/"+doc.id,
         data: doc.data,
         serialize: function(data){
@@ -77,7 +77,7 @@
         config: xhrcfg
       });
   };
-  
+
   Doc.upload = function(doc) {
     console.log("Doc.put - Uploading Document:", doc);
     return m.request({
@@ -89,7 +89,7 @@
       }
     });
   };
-  
+
   Doc.patch = function(id, updatedTags){
     return Doc.get(id).then(function(doc){
       var tags = doc.tags;

@@ -9,7 +9,7 @@ import
 
 const favicon = "../../admin/favicon.ico".slurp
 
-var 
+var
   operation = opRun
   directory:string = ""
   readonly = false
@@ -20,10 +20,10 @@ var
   exBody:string = ""
   exType:string = ""
   exUri:string = ""
-  
+
 let
   usage* = appname & " v" & pkgVersion & " - Lightweight REST Document Store" & """
-  
+
 (c) 2015-2018 Fabio Cevasco
 
   Usage:

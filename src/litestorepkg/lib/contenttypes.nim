@@ -9,7 +9,7 @@ proc loadContentTypes(): StringTableRef =
     for pair in item.pairs:
       result[$pair.key] = $pair.val.getStr
 
-var CONTENT_TYPES* {.threadvar.}: StringTableRef 
+var CONTENT_TYPES* {.threadvar.}: StringTableRef
 
 CONTENT_TYPES = loadContentTypes()
 

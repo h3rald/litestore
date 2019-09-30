@@ -9,7 +9,7 @@
     var vm = this;
     vm.id = m.prop(m.route.param("id"));
     vm.action = m.route.param("action");
-    vm.readOnly = true; 
+    vm.readOnly = true;
     vm.contentType = m.prop("");
     vm.updatedTags = m.prop("");
     vm.content = "";
@@ -21,7 +21,7 @@
     } catch(e) {
       vm.ext = "";
     }
-    
+
     // Retrieve single document & update relevant variables
     vm.getDoc = function(cb){
       vm.doc = Doc.get(vm.id());
@@ -37,7 +37,7 @@
         }
       }, vm.flashError);
     };
-    
+
     // Reset some properties based on action
     switch (vm.action) {
       case 'create':
@@ -52,7 +52,7 @@
         vm.getDoc();
         break;
     }
-    
+
     // View document in editor
     vm.viewDocument = function(){
       if (vm.ext === "md" && vm.id().match(new RegExp("^admin\/md\/"))) {
@@ -62,14 +62,14 @@
         m.route("/document/view/"+vm.id());
       }
     };
-    
+
     // Set current document editable
     vm.edit = function(){
       vm.editor.setReadOnly(false);
       vm.action = "edit";
       vm.flash("");
     };
-    
+
     // Save document
     vm.save = function(){
       var doc = {};
@@ -95,7 +95,7 @@
         put();
       }
     };
-    
+
     // Delete Document
     vm.delete = function(){
       Doc.delete(vm.id()).then(function(){
@@ -107,7 +107,7 @@
         });
       }, vm.flashError);
     };
-    
+
     // Cancel editing
     vm.cancel = function(){
       if (vm.action === "create"){
@@ -116,7 +116,7 @@
         vm.viewDocument();
       }
     };
-    
+
     // Patch document (update tags)
     vm.patch = function(){
       var sysTags = vm.tags.filter(function(t){return /^\$/.test(t)});
@@ -129,7 +129,7 @@
         });
       }, vm.flashError);
     };
-    
+
     // File uploader callbacks.
     var onSuccess = function(data){
       vm.id(data.id);
@@ -139,13 +139,13 @@
         vm.viewDocument();
       });
     };
-    
+
     var onFailure = function(data) { vm.flashError(data); };
 
     var modalId = u.guid();
 
     vm.uploader = u.uploader({docid: vm.id() || "", onSuccess: onSuccess, onFailure: onFailure, id: modalId});
-    
+
     // Populate tools based on current action
     vm.tools = function(){
       if (app.system.read_only) {
@@ -174,7 +174,7 @@
       return tools;
     };
   };
-  
+
   // Module main view
   app.document.main = function(){
     var vm = app.document.vm;
@@ -196,8 +196,8 @@
       actionText: "Update",
       content: m("div", [
         m("input", {
-            type: "text", 
-            class:"form-control", 
+            type: "text",
+            class:"form-control",
             onchange: m.withAttr("value", vm.updatedTags),
             value: vm.updatedTags(),
             placeholder: "Enter comma-separated tags..."
@@ -235,7 +235,7 @@
       panelContent = m.component(app.editor, vm);
     }
     var title = m("span",[titleLeft, titleRight]);
-    
+
     return m("div", [
       vm.uploader,
       u.modal(deleteDialogCfg),
@@ -244,6 +244,6 @@
       m(".row", [u.panel({title: title, content:panelContent})])
     ]);
   };
-  
+
   u.layout(app.document);
 }());
