@@ -85,9 +85,14 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
       result = result & "WHERE 1=1 "
     else:
       tables = options.tables & @["searchdata"]
+      if options.jsonFilter != "":
+        options.select[0] = "COUNT(documents.docid)"
+        tables = tables & @["documents"]
       result = result & options.select.join(", ")
       result = result & " FROM "&tables.join(", ")&" "
       result = result & "WHERE 1=1 "
+      if options.jsonFilter != "":
+        result = result & "AND documents.id = searchdata.id "
       options.orderby = ""
   else:
     tables = options.tables & @["documents"]
