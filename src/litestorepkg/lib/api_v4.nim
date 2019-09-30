@@ -1,6 +1,5 @@
 import 
   asynchttpserver,
-  asyncdispatch,
   strutils,
   sequtils,
   cgi,
@@ -682,6 +681,9 @@ proc get*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse 
         else:
           return LS.getRawDocuments(options, req)
       except:
+        let e = getCurrentException()
+        let trace = e.getStackTrace()
+        echo trace
         return resError(Http400, "Bad Request - $1" % getCurrentExceptionMsg())
     of "tags":
       var options = newQueryOptions()
