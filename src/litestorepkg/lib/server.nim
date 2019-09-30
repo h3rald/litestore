@@ -1,13 +1,11 @@
 import
-  asynchttpserver,
+  asynchttpserver
   asyncdispatch,
   times,
   strutils,
   pegs,
-  strtabs,
   logger,
-  cgi,
-  os
+  cgi
 import
   types,
   utils,

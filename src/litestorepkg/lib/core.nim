@@ -69,7 +69,7 @@ proc openDatastore*(file:string): Datastore =
     result.db = db.open(file, "", "", "")
     # Register custom function & PRAGMAs
     LOG.debug("Registering custom functions...")
-    discard create_function(cast[PSqlite3](result.db), "rank".cstring, -1, SQLITE_ANY, cast[pointer](SQLITE_DETERMINISTIC), okapi_bm25f_kb, nil, nil)
+    discard create_function(cast[PSqlite3](result.db), "rank", -1, SQLITE_ANY, cast[pointer](SQLITE_DETERMINISTIC), okapi_bm25f_kb, nil, nil)
     LOG.debug("Executing PRAGMAs...")
     discard result.db.tryExec("PRAGMA locking_mode = exclusive".sql)
     discard result.db.tryExec("PRAGMA page_size = 4096".sql)
@@ -99,12 +99,14 @@ proc commit(store: Datastore) =
     LOG.debug("Committing transaction")
     LS_TRANSACTION = false
     store.db.exec("COMMIT".sql)
+    LOG.debug("Committed.")
 
 proc rollback(store: Datastore) =
   if LS_TRANSACTION:
     LOG.debug("Rolling back transaction")
     LS_TRANSACTION = false
     store.db.exec("ROLLBACK".sql)
+    LOG.debug("Rolled back.")
 
 # Manage Tags
 
