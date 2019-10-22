@@ -620,6 +620,7 @@ proc options*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSRespo
           result.headers["Allow"] = "HEAD, GET, OPTIONS, POST, PUT"
           result.headers["Access-Control-Allow-Methods"] = "HEAD, GET, OPTIONS, POST, PUT"
       elif id != "":
+        result.code = Http204
         result.content = ""
         if LS.readonly:
           result.headers = newHttpHeaders(TAB_HEADERS)
