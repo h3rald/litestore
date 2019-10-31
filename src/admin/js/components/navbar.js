@@ -25,7 +25,7 @@
         {path: "/guide/api_tags", title: caret+"tags (LiteStore Tags)"},
         {path: "/guide/credits", title: "Credits"}
       ];
-      vm.taglinks = function(info){ 
+      vm.taglinks = function(info){
         return info.tags.map(function(tag){
           var key = Object.keys(tag)[0];
           return {path: "/tags/"+key, title: key+" ("+tag[key]+")"};
@@ -35,19 +35,19 @@
     },
     view: function(ctrl){
       var links = [
-        m("li", {class: ctrl.activelink("info")}, [m("a", {href: "/info", config: m.route}, 
+        m("li", {class: ctrl.activelink("info")}, [m("a", {href: "/info", config: m.route},
             [m("i.fa.fa-info-circle"), " Info"])]),
         u.dropdown({title: "Guide", icon:"fa-book", links: ctrl.guidelinks, active: ctrl.activelink("guide")}),
         u.dropdown({title: "Tags", icon:"fa-tags", links: ctrl.taglinks(app.system), active: ctrl.activelink("tags")})];
       if (!app.system.read_only) {
-        links.push(m("li", 
-          {class: ctrl.activelink("new")}, [m("a", {href: "/document/create/", config: m.route}, 
+        links.push(m("li",
+          {class: ctrl.activelink("new")}, [m("a", {href: "/document/create/", config: m.route},
             [m("i.fa.fa-plus-circle"), " New"])]));
       }
       return m("ul.nav.navbar-nav", links);
     }
   };
-  
+
   app.navheader = {
     view: function(ctrl, args) {
       return m(".navbar-header", [
@@ -61,7 +61,7 @@
       ]);
     }
   };
-  
+
   app.searchbox = {
     controller: function() {
       var vm =  {};
@@ -86,25 +86,25 @@
       return m("form.navbar-form.navbar-right[role='search']", [
           m(".input-group", [
             m("input.form-control", {
-              type:"text", 
+              type:"text",
               placeholder:"Search...",
               onchange: m.withAttr("value", ctrl.query),
               config: ctrl.keySearch,
               value: ctrl.query()
             }),
-            m("span.input-group-btn", 
+            m("span.input-group-btn",
               m("button.btn.btn-default",
                 {
                   type: "button",
                   onclick: ctrl.search
-                }, 
+                },
                 [m("i.fa.fa-search")]))
           ])
         ]
       );
     }
   };
-  
+
   app.navbar = {
     view: function(ctrl, args) {
       return m("nav.navbar.navbar-inverse.navbar-fixed-top", [
@@ -114,7 +114,7 @@
             m.component(app.navlinks),
             m.component(app.searchbox)
           ])
-        ])  
+        ])
       ]);
     }
   };

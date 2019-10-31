@@ -20,21 +20,21 @@ const
   SQL_CREATE_INDEX_TAGS_DOCUMENT_ID* = sql"CREATE INDEX IF NOT EXISTS tags_document_id ON tags(document_id)"
   SQL_CREATE_INDEX_TAGS_TAG_ID* = sql"CREATE INDEX IF NOT EXISTS tags_tag_id ON tags(tag_id)"
 
-  SQL_DROP_INDEX_DOCUMENTS_DOCID* = sql"DROP INDEX IF EXISTS documents_docid" 
+  SQL_DROP_INDEX_DOCUMENTS_DOCID* = sql"DROP INDEX IF EXISTS documents_docid"
   SQL_DROP_INDEX_DOCUMENTS_ID* = sql"DROP INDEX IF EXISTS documents_id"
   SQL_DROP_INDEX_TAGS_DOCUMENT_ID* = sql"DROP INDEX IF EXISTS tags_document_id"
   SQL_DROP_INDEX_TAGS_TAG_ID* = sql"DROP INDEX IF EXISTS tags_tag_id"
-  
+
   SQL_REINDEX* = sql"REINDEX"
   SQL_OPTIMIZE* = sql"INSERT INTO searchdata(searchdata) VALUES('optimize')"
   SQL_REBUILD* = sql"INSERT INTO searchdata(searchdata) VALUES('rebuild')"
-  
+
   SQL_VACUUM* = sql"VACUUM"
 
 const SQL_CREATE_SEARCHDATA_TABLE* = sql"""
 CREATE VIRTUAL TABLE searchdata USING fts4(
 id TEXT UNIQUE NOT NULL,
-data TEXT, 
+data TEXT,
 tokenize=porter)
 """
 
@@ -102,7 +102,7 @@ WHERE id = ?
 
 const SQL_DELETE_DOCUMENT* = sql"""
 DELETE FROM documents
-WHERE id = ? 
+WHERE id = ?
 """
 
 const SQL_INSERT_TAG* = sql"""
@@ -161,32 +161,32 @@ tag_id = ?
 """
 
 const SQL_SELECT_TAGS_WITH_TOTALS* = sql"""
-SELECT DISTINCT tag_id, COUNT(document_id) 
+SELECT DISTINCT tag_id, COUNT(document_id)
 FROM tags GROUP BY tag_id ORDER BY tag_id ASC
 """
 
 const SQL_COUNT_TAGS* = sql"""
-SELECT COUNT(DISTINCT tag_id) FROM tags 
+SELECT COUNT(DISTINCT tag_id) FROM tags
 """
 
 const SQL_COUNT_DOCUMENTS* = sql"""
-SELECT COUNT(docid) FROM documents 
+SELECT COUNT(docid) FROM documents
 """
 
 const SQL_DELETE_DOCUMENTS_BY_TAG* = sql"""
 DELETE FROM documents
-WHERE documents.id IN 
+WHERE documents.id IN
 (SELECT document_id FROM tags WHERE tag_id = ?)
 """
 
 const SQL_DELETE_SEARCHDATA_BY_TAG* = sql"""
 DELETE FROM searchdata
-WHERE id IN 
+WHERE id IN
 (SELECT document_id FROM tags WHERE tag_id = ?)
 """
 
 const SQL_DELETE_TAGS_BY_TAG* = sql"""
 DELETE FROM tags
-WHERE document_id IN 
+WHERE document_id IN
 (SELECT document_id FROM tags WHERE tag_id = ?)
 """

@@ -1,11 +1,11 @@
-import 
-  x_sqlite3, 
+import
+  x_sqlite3,
   x_db_sqlite as db,
-  strutils, 
+  strutils,
   os,
   oids,
   json,
-  pegs, 
+  pegs,
   strtabs,
   strutils,
   base64,
@@ -27,13 +27,13 @@ proc createIndexes(db: DbConn) =
   db.exec SQL_CREATE_INDEX_TAGS_TAG_ID
   db.exec SQL_CREATE_INDEX_TAGS_DOCUMENT_ID
 
-proc dropIndexes(db: DbConn) = 
+proc dropIndexes(db: DbConn) =
   db.exec SQL_DROP_INDEX_DOCUMENTS_DOCID
   db.exec SQL_DROP_INDEX_DOCUMENTS_ID
   db.exec SQL_DROP_INDEX_TAGS_TAG_ID
   db.exec SQL_DROP_INDEX_TAGS_DOCUMENT_ID
 
-proc createDatastore*(file:string) = 
+proc createDatastore*(file:string) =
   if file.fileExists():
     raise newException(EDatastoreExists, "Datastore '$1' already exists." % file)
   LOG.debug("Creating datastore '$1'", file)
@@ -48,7 +48,7 @@ proc createDatastore*(file:string) =
   data.createIndexes()
   LOG.debug("Database created")
 
-proc closeDatastore*(store: Datastore) = 
+proc closeDatastore*(store: Datastore) =
   try:
     db.close(store.db)
   except:
@@ -69,7 +69,7 @@ proc openDatastore*(file:string): Datastore =
     result.db = db.open(file, "", "", "")
     # Register custom function & PRAGMAs
     LOG.debug("Registering custom functions...")
-    discard create_function(cast[PSqlite3](result.db), "rank".cstring, -1, SQLITE_ANY, cast[pointer](SQLITE_DETERMINISTIC), okapi_bm25f_kb, nil, nil)
+    discard create_function(cast[PSqlite3](result.db), "rank", -1, SQLITE_ANY, cast[pointer](SQLITE_DETERMINISTIC), okapi_bm25f_kb, nil, nil)
     LOG.debug("Executing PRAGMAs...")
     discard result.db.tryExec("PRAGMA locking_mode = exclusive".sql)
     discard result.db.tryExec("PRAGMA page_size = 4096".sql)
@@ -99,12 +99,14 @@ proc commit(store: Datastore) =
     LOG.debug("Committing transaction")
     LS_TRANSACTION = false
     store.db.exec("COMMIT".sql)
+    LOG.debug("Committed.")
 
 proc rollback(store: Datastore) =
   if LS_TRANSACTION:
     LOG.debug("Rolling back transaction")
     LS_TRANSACTION = false
     store.db.exec("ROLLBACK".sql)
+    LOG.debug("Rolled back.")
 
 # Manage Tags
 
@@ -194,7 +196,7 @@ proc createDocument*(store: Datastore,  id="", rawdata = "", contenttype = "text
   if contenttype == "application/json":
     # Validate JSON data
     try:
-      discard data.parseJson 
+      discard data.parseJson
     except:
       raise newException(JsonParsingError, "Invalid JSON content - " & getCurrentExceptionMsg())
   if id == "":
@@ -226,7 +228,7 @@ proc createDocument*(store: Datastore,  id="", rawdata = "", contenttype = "text
     return $store.retrieveRawDocument(id)
   except:
     store.rollback()
-    eWarn() 
+    eWarn()
     raise
 
 proc updateDocument*(store: Datastore, id: string, rawdata: string, contenttype = "text/plain", binary = -1, searchable = 1): string =
@@ -237,7 +239,7 @@ proc updateDocument*(store: Datastore, id: string, rawdata: string, contenttype 
   if contenttype == "application/json":
     # Validate JSON data
     try:
-      discard data.parseJson 
+      discard data.parseJson
     except:
       raise newException(JsonParsingError, "Invalid JSON content - " & getCurrentExceptionMsg())
   var searchable = searchable
@@ -382,7 +384,7 @@ proc importDir*(store: Datastore, dir: string) =
   for f in dir.walkDirRec():
     if f.existsDir:
       continue
-    if f.splitFile.name.startsWith("."):    
+    if f.splitFile.name.startsWith("."):
       # Ignore hidden files
       continue
     files.add(f)
@@ -395,7 +397,7 @@ proc importDir*(store: Datastore, dir: string) =
   LOG.info("Importing $1 files in $2 batches", files.len, nBatches)
   LOG.debug("Dropping column indexes...")
   store.db.dropIndexes()
-  for f in files: 
+  for f in files:
     try:
       store.importFile(f, dir)
       cFiles.inc

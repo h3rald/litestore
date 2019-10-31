@@ -1,4 +1,4 @@
-import 
+import
   strutils,
   times
 
@@ -18,19 +18,19 @@ proc msg(logger: Logger, kind, message: string, params: varargs[string, `$`]) =
   else:
     echo currentTime(true), " ", kind, ": ", s
 
-proc error*(logger: Logger, message: string, params: varargs[string, `$`]) = 
+proc error*(logger: Logger, message: string, params: varargs[string, `$`]) =
   if logger.level <= lvError:
     logger.msg("  ERROR", message, params)
 
-proc warn*(logger: Logger, message: string, params: varargs[string, `$`]) = 
+proc warn*(logger: Logger, message: string, params: varargs[string, `$`]) =
   if logger.level <= lvWarn:
     logger.msg("WARNING", message, params)
 
-proc info*(logger: Logger, message: string, params: varargs[string, `$`]) = 
+proc info*(logger: Logger, message: string, params: varargs[string, `$`]) =
   if logger.level <= lvInfo:
     logger.msg("   INFO", message, params)
 
-proc  debug*(logger: Logger, message: string, params: varargs[string, `$`]) = 
+proc  debug*(logger: Logger, message: string, params: varargs[string, `$`]) =
   if logger.level <= lvDebug:
     logger.msg("  DEBUG", message, params)
 
