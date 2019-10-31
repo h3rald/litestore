@@ -1,21 +1,12 @@
-import 
-  litestorepkg/lib/x_sqlite3, 
-  litestorepkg/lib/x_db_sqlite as db, 
-  strutils, 
+import
+  strutils,
   os,
-  oids,
-  times,
-  json,
-  pegs, 
   uri,
-  strtabs,
-  httpcore,
-  cgi,
-  base64
+  httpcore
 import
   litestorepkg/lib/types,
   litestorepkg/lib/logger,
-  litestorepkg/lib/utils, 
+  litestorepkg/lib/utils,
   litestorepkg/lib/core,
   litestorepkg/lib/cli,
   litestorepkg/lib/server
@@ -28,7 +19,7 @@ export
 
 from asyncdispatch import runForever
 
-{.compile: "litestorepkg/vendor/sqlite/libsqlite3.c".}
+{.compile: "litestorepkg/vendor/sqlite/sqlite3.c".}
 {.passC: "-DSQLITE_ENABLE_FTS3=1 -DSQLITE_ENABLE_FTS3_PARENTHESIS -DSQLITE_ENABLE_JSON1".}
 
 proc executeOperation*() =
@@ -37,7 +28,7 @@ proc executeOperation*() =
   let ctype = LS.execution.ctype
   let uri = LS.execution.uri
   let operation = LS.execution.operation
-  var req:LSRequest 
+  var req:LSRequest
   case operation.toUpperAscii:
     of "GET":
       req.reqMethod = HttpGet
@@ -98,7 +89,7 @@ when isMainModule:
     setup(false)
     vacuum LS.file
   else:
-    # Open Datastore 
+    # Open Datastore
     setup(true)
 
   case LS.operation:
@@ -127,13 +118,13 @@ else:
       let data = pair.split("=")
       result[data[0]] = data[1]
 
-  proc query*(table: StringTableRef): string = 
+  proc query*(table: StringTableRef): string =
     var params = newSeq[string](0)
     for key, value in pairs(table):
       params.add("$1=$2" % @[key, value])
     return params.join("&")
 
-  proc newLSRequest(meth: HttpMethod, resource, id,  body = "", params = newStringTable(), headers = newHttpHeaders()): LSRequest = 
+  proc newLSRequest(meth: HttpMethod, resource, id,  body = "", params = newStringTable(), headers = newHttpHeaders()): LSRequest =
     result.reqMethod = meth
     result.body = body
     result.headers = headers
@@ -142,28 +133,28 @@ else:
   # Public API: Low-level
 
   proc getInfo*(): LSResponse =
-    return LS.getInfo()
+    return LS.getInfo(newLSRequest("info"))
 
   proc getRawDocuments*(options = newQueryOptions()): LSResponse =
-    return LS.getRawDocuments(options)
+    return LS.getRawDocuments(options, newLSRequest("docs"))
 
   proc getDocument*(id: string, options = newQueryOptions()): LSResponse =
-    return LS.getDocument(id, options)
+    return LS.getDocument(id, options, newLSRequest("docs", id))
 
   proc getRawDocument*(id: string, options = newQueryOptions()): LSResponse =
-    return LS.getRawDocument(id, options)
+    return LS.getRawDocument(id, options, newLSRequest("docs", id))
 
   proc deleteDocument*(id: string): LSResponse =
-    return LS.deleteDocument(id)
+    return LS.deleteDocument(id, newLSRequest("docs", id))
 
   proc postDocument*(body, ct: string, folder=""): LSResponse =
-    return LS.postDocument(body, ct, folder)
+    return LS.postDocument(body, ct, folder, newLSRequest("docs", "", body))
 
   proc putDocument*(id, body, ct: string): LSResponse =
-    return LS.putDocument(id, body, ct)
+    return LS.putDocument(id, body, ct newLSRequest("docs", id, body))
 
   proc patchDocument*(id, body: string): LSResponse =
-    return LS.patchDocument(id, body)
+    return LS.patchDocument(id, body, newLSRequest("docs", id, body))
 
   # Public API: High-level
 

@@ -20,7 +20,7 @@
       vm.result(result);
       vm.total = result.total;
       vm.execTime = (result.execution_time*1000).toFixed(0);
-    }, vm.flashError); 
+    }, vm.flashError);
   };
   app.search.main = function(){
     var vm = app.search.vm;

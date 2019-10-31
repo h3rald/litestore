@@ -22,7 +22,7 @@ for page in ${pages[@]}
 do
   (cat "${page}"; printf "\n\n") >> LiteStore_UserGuide.md
 done
-hastyscribe --field/version:1.5.0 LiteStore_UserGuide.md
+hastyscribe --field/version:1.5.1 LiteStore_UserGuide.md
 rm LiteStore_UserGuide.md
 mv LiteStore_UserGuide.htm ..
 cd ../..

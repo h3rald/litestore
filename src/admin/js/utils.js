@@ -2,7 +2,7 @@
   'use strict';
   var app = window.LS || (window.LS = {});
   var u = app.utils = {};
-  
+
   // http://byronsalau.com/blog/how-to-create-a-guid-uuid-in-javascript/
   u.guid = function(){
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -10,7 +10,7 @@
       return v.toString(16);
     });
   };
-  
+
   u.fixHeadings = function(html, maxheading){
     var $content = $(html);
     var n = maxheading;
@@ -26,7 +26,7 @@
       return u.fixHeadings($content, maxheading);
     }
   };
-  
+
   u.setContentType = function(doc, contentType){
     var type = "";
     var subtype = "";
@@ -80,7 +80,7 @@
     var $html = $('<div>').append($(html).clone());
     return u.fixHeadings($html, 2);
   };
-  
+
   /**
    * mod object:
    * @param {Object} mod
@@ -129,7 +129,7 @@
     return (date) ? new Date(Date.parse(date)).toUTCString() : "n/a";
   };
 
-  
+
   u.showModal = function(sel){
     return function(){
       $(sel).modal();
@@ -165,7 +165,7 @@
   u.panel = function(obj){
     return m.component(app.widgets.panel, obj);
   };
-    
+
   /**
    * @typedef {Object} PaginatorConfig
    * @prop {string} baseurl
@@ -204,7 +204,7 @@
   u.taglink = function(obj){
     return m.component(app.widgets.taglink, obj);
   };
-  
+
   /**
    * Creates a DocLink component.
    * @param {Object} obj
