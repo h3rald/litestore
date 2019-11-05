@@ -34,7 +34,7 @@ proc handleCtrlC() {.noconv.} =
   LOG.info("Exiting...")
   quit()
 
-template auth(uri: string): typed =
+template auth(uri: string): void =
   let cfg = access[uri]
   if cfg.hasKey(reqMethod):
     LOG.debug("Authenticating: " & reqMethod & " " & uri)

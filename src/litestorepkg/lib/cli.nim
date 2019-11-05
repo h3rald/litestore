@@ -1,6 +1,7 @@
 import
   parseopt,
-  strutils
+  strutils,
+  json
 import
   logger,
   config,
