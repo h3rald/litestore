@@ -9,6 +9,7 @@ import
   os,
   json,
   tables,
+  base64,
   jwt
 import 
   types, 
@@ -20,6 +21,16 @@ import
 
 export
   api_v4
+
+
+proc decodeUrlSafeAsString*(s: string): string =
+  var s = s.replace('-', '+').replace('_', '/')
+  while s.len mod 4 > 0:
+    s &= "="
+  base64.decode(s)
+
+proc decodeUrlSafe*(s: string): seq[byte] =
+  cast[seq[byte]](decodeUrlSafeAsString(s))
 
 proc getReqInfo(req: LSRequest): string =
   var url = req.url.path
@@ -44,8 +55,9 @@ template auth(uri: string): void =
     # Validate token
     try:
       let jwt = token.toJwt()
+      let parts = token.split(".")
       var sig = LS.auth["signature"].getStr 
-      discard verify(jwt, sig) 
+      discard verifySignature(parts[0] & "." & parts[1], decodeUrlSafe(parts[2]), sig)
       verifyTimeClaims(jwt)
       let scopes = cfg[reqMethod]
       # Validate scope
@@ -62,6 +74,8 @@ template auth(uri: string): void =
         return resError(Http403, "Forbidden - You are not permitted to access this resource")
       LOG.debug("Authorization successful: " & authorized)
     except:
+      echo getCurrentExceptionMsg()
+      writeStackTrace()
       return resError(Http401, "Unauthorized - Invalid token")
 
 proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSResponse = 
