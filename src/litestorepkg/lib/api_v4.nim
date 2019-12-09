@@ -77,7 +77,7 @@ proc filterClauses*(str: string, options: var QueryOptions) =
   let tokens = """
     operator <- 'not eq' / 'eq' / 'gte' / 'gt' / 'lte' / 'lt' / 'contains'
     value <- string / number / 'null' / 'true' / 'false'
-    string <- '"' ('\"' . / [^"])* '"'
+    string <- '"' ('\\"' . / [^"])* '"'
     number <- '-'? '0' / [1-9] [0-9]* ('.' [0-9]+)? (( 'e' / 'E' ) ( '+' / '-' )? [0-9]+)?
     path <- '$' (objItem / objField)+
     ident <- [a-zA-Z0-9_]+
@@ -128,7 +128,7 @@ proc filterClauses*(str: string, options: var QueryOptions) =
         tables.add "json_each(documents.data, '$1') AS arr$2" % [x[0], $currentArr]
         return "arr$1.value == $2" % [$currentArr, x[2]]
       else:
-        return "json_extract(documents.data, '$1') $2 $3" % x
+        return "json_extract(documents.data, '$1') $2 $3 " % x
     return resAndClauses.join(" AND ")
   options.tables = options.tables & tables
   options.jsonFilter = resOrClauses.join(" OR ")
