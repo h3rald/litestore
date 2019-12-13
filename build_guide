@@ -6,6 +6,7 @@ pages=(
     md/architecture.md
   md/getting-started.md
   md/usage.md
+  md/auth.md
   md/admin_app.md
   md/api.md
     md/api_info.md
@@ -22,7 +23,7 @@ for page in ${pages[@]}
 do
   (cat "${page}"; printf "\n\n") >> LiteStore_UserGuide.md
 done
-hastyscribe --field/version:1.5.1 LiteStore_UserGuide.md
+hastyscribe --field/version:1.6.0 LiteStore_UserGuide.md
 rm LiteStore_UserGuide.md
 mv LiteStore_UserGuide.htm ..
 cd ../..
