@@ -17,6 +17,7 @@
 #### Options
 
 * **-a**, **-\-address** &mdash; Specify server address (default: 127.0.0.1).
+* **--auth** &mdash; Specify an authorization configuration file.
 * **-b**, **--body** &mdash; Specify a string containing input data for an operation to be executed.
 * **-d**, **-\-directory** &mdash; Specify a directory to serve, import, export, delete, or mount.
 * **-f**, **--file** &mdash; Specify a file containing input data for an operation to be executed.
