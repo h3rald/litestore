@@ -666,7 +666,6 @@ proc head*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse
     return resError(Http400, "Bad request - $1" % getCurrentExceptionMsg())
 
 proc get*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse =
-  let  id = id.decodeURL
   case resource:
     of "docs":
       var options = newQueryOptions()
