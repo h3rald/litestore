@@ -21,6 +21,8 @@ from asyncdispatch import runForever
 
 {.compile: "litestorepkg/vendor/sqlite/sqlite3.c".}
 {.passC: "-DSQLITE_ENABLE_FTS3=1 -DSQLITE_ENABLE_FTS3_PARENTHESIS -DSQLITE_ENABLE_JSON1".}
+when defined(linux):
+  {.passL:"-static".}
 
 proc executeOperation*() =
   let file = LS.execution.file
