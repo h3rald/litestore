@@ -112,7 +112,7 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
           auth(uri)
         break
   if info.version == "v5":
-    if info.resource.match(peg"^docs / info / tags$"):
+    if info.resource.match(peg"^docs / info / tags / indexes$"):
       return api_v5.route(req, LS, info.resource, info.id)
     elif info.resource.match(peg"^dir$"):
       if LS.directory.len > 0:
