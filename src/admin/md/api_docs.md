@@ -213,8 +213,13 @@ Retrieve only JSON documents matching the specified filter expression.
 Filter expressions can be composed by one or more clauses joined together through **or** or **and** operators. Each clause must be composed exactly by:
 
 * A path expression indicating a field or array item within the JSON document.
-* One operator among the following: eq, not eq, gt, gte, lt, lte, contains.
+* One operator among the following: eq, not eq, gt, gte, lt, lte, contains, and like.
 * A value that can be a number, string, **true**, **false** or **nil**
+
+> %note%
+> API v5 Required
+> 
+> Support for the **like** operator has been added in version 5 of the LiteStore API.
 
 > %warning%
 > Limitations
