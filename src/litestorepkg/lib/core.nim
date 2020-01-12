@@ -127,6 +127,14 @@ proc dropIndex*(store: Datastore, indexId: string) =
   store.db.exec(query)
   store.commit()
 
+proc retrieveIndexes*(store: Datastore): JsonNode =
+  let raw_indexes= store.db.getAllRows(SQL_GET_DOCUMENTS_INDEXES)
+  var indexes = newSeq[JsonNode](0)
+  for index in raw_indexes:
+    # TODO: parse field
+    indexes.add(%[("id", %index[0]), ("field", %(index[1]))])
+  return %indexes
+
 # Manage Tags
 
 proc createTag*(store: Datastore, tagid, documentid: string, system = false) =
