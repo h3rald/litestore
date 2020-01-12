@@ -478,7 +478,7 @@ proc putIndex*(LS: LiteStore, id, field: string, req: LSRequest): LSResponse =
     LS.store.createIndex(id, field)
     result.headers = ctJsonHeader()
     setOrigin(LS, req, result.headers)
-    result.content = "{\"index\": \"$1\"}" % id
+    result.content = "{\"id\": \"$1\", \"field\": \"$2\"}" % [id, field]
     result.code = Http200
   except:
     eWarn()

@@ -29,7 +29,7 @@ const
   SQL_OPTIMIZE* = sql"INSERT INTO searchdata(searchdata) VALUES('optimize')"
   SQL_REBUILD* = sql"INSERT INTO searchdata(searchdata) VALUES('rebuild')"
 
-  SQL_LIST_DOCUMENTS_INDEXES* = sql"select name, sql from sqlite_master where type = 'index' and tbl_name = 'documents' and name LIKE 'json_index_%'"
+  SQL_GET_DOCUMENTS_INDEXES* = sql"select name, sql from sqlite_master where type = 'index' and tbl_name = 'documents' and name LIKE 'json_index_%'"
 
   SQL_VACUUM* = sql"VACUUM"
 
