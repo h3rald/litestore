@@ -73,7 +73,8 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
       let snippet = "snippet(searchdata, \"<strong>\", \"</strong>\", \"<strong>&hellip;</strong>\", -1, 30) as highlight"
       options.select.add(snippet)
       options.select.add("ranktable.rank AS rank")
-      options.orderby = "rank DESC"
+      if (options.orderby == ""):
+        options.orderby = "rank DESC"
       # Create inner select
       var innerSelect = "SELECT docid, " & rank & " FROM searchdata WHERE searchdata MATCH '" & options.search.replace("'", "''") & "' "
       if options.tags.len > 0:
