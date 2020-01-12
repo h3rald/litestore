@@ -473,6 +473,29 @@ proc getInfo*(LS: LiteStore, req: LSRequest): LSResponse =
   result.content = content.pretty
   result.code = Http200
 
+proc putIndex*(LS: LiteStore, id, field: string, req: LSRequest): LSResponse =
+  try:
+    LS.store.createIndex(id, field)
+    result.headers = ctJsonHeader()
+    setOrigin(LS, req, result.headers)
+    result.content = "{\"index\": \"$1\"}" % id
+    result.code = Http200
+  except:
+    eWarn()
+    result = resError(Http500, "Unable to create index.")
+
+proc deleteIndex*(LS: LiteStore, id: string, req: LSRequest): LSResponse =
+  try:
+    LS.store.dropIndex(id)
+    result.headers = newHttpHeaders(TAB_HEADERS)
+    setOrigin(LS, req, result.headers)
+    result.headers["Content-Length"] = "0"
+    result.content = ""
+    result.code = Http204
+  except:
+    eWarn()
+    result = resError(Http500, "Unable to delete index.")
+
 proc postDocument*(LS: LiteStore, body: string, ct: string, folder="", req: LSRequest): LSResponse =
   if not folder.isFolder:
     return resError(Http400, "Invalid folder specified when creating document: $1" % folder)
@@ -712,16 +735,26 @@ proc post*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse
 
 proc put*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse =
   if id != "":
-    var ct = "text/plain"
-    if req.headers.hasKey("Content-Type"):
-      ct = req.headers["Content-Type"]
-    return LS.putDocument(id, req.body.strip, ct, req)
+    if resource == "indexes":
+      try:
+        let field = parseJson(req.body.strip)["field"].getStr
+        return LS.putIndex(id, field, req)
+      except:
+        return resError(Http400, "Bad Request - Invalid JSON body - $1" % getCurrentExceptionMsg())
+    else: # Assume docs
+      var ct = "text/plain"
+      if req.headers.hasKey("Content-Type"):
+        ct = req.headers["Content-Type"]
+      return LS.putDocument(id, req.body.strip, ct, req)
   else:
     return resError(Http400, "Bad request: document ID must be specified in PUT requests.")
 
 proc delete*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse =
   if id != "":
-    return LS.deleteDocument(id, req)
+    if resource == "indexes":
+      return LS.deleteIndex(id, req)
+    else: # Assume docs
+      return LS.deleteDocument(id, req)
   else:
     return resError(Http400, "Bad request: document ID must be specified in DELETE requests.")
 

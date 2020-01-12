@@ -1,0 +1,1 @@
+CREATE INDEX json_document_field_test ON documents(json_extract(documents.data, '$.id') COLLATE NOCASE);
