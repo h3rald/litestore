@@ -663,6 +663,33 @@ proc options*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSRespo
       setOrigin(LS, req, result.headers)
       result.headers["Allow"] = "GET, OPTIONS"
       result.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+    of "indexes":
+      result.code = Http204
+      result.content = ""
+      result.headers = newHttpHeaders(TAB_HEADERS)
+      setOrigin(LS, req, result.headers)
+      if id != "":
+        result.code = Http204
+        result.content = ""
+        if LS.readonly:
+          result.headers["Allow"] = "GET, OPTIONS"
+          result.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+        else:
+          result.headers["Allow"] = "GET, OPTIONS, PUT, DELETE"
+          result.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS, PUT, DELETE"
+      else:
+        result.code = Http204
+        result.content = ""
+        if LS.readonly:
+          result.headers = newHttpHeaders(TAB_HEADERS)
+          setOrigin(LS, req, result.headers)
+          result.headers["Allow"] = "GET, OPTIONS"
+          result.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+        else:
+          result.headers = newHttpHeaders(TAB_HEADERS)
+          setOrigin(LS, req, result.headers)
+          result.headers["Allow"] = "GET, OPTIONS"
+          result.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
     of "docs":
       var folder: string
       if id.isFolder:

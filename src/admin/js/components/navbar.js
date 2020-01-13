@@ -24,6 +24,7 @@
         {path: "/guide/api_dir", title: caret+"dir (LiteStore Directory)"},
         {path: "/guide/api_docs", title: caret+"docs (LiteStore Documents)"},
         {path: "/guide/api_tags", title: caret+"tags (LiteStore Tags)"},
+        {path: "/guide/api_indexes", title: caret+"indexes (LiteStore Indexes)"},
         {path: "/guide/credits", title: "Credits"}
       ];
       vm.taglinks = function(info){
