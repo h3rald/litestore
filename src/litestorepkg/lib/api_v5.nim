@@ -349,7 +349,7 @@ proc getTag*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequ
   let doc = LS.store.retrieveTag(id, options)
   result.headers = ctJsonHeader()
   setOrigin(LS, req, result.headers)
-  if doc == newJObject():
+  if doc == newJNull():
     result = resTagNotFound(id)
   else:
     result.content = $doc
@@ -359,7 +359,7 @@ proc getIndex*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRe
   let doc = LS.store.retrieveIndex(id, options)
   result.headers = ctJsonHeader()
   setOrigin(LS, req, result.headers)
-  if doc == newJObject():
+  if doc == newJNull():
     result = resIndexNotFound(id)
   else:
     result.content = $doc
@@ -513,6 +513,12 @@ proc getInfo*(LS: LiteStore, req: LSRequest): LSResponse =
 
 proc putIndex*(LS: LiteStore, id, field: string, req: LSRequest): LSResponse =
   try:
+    if (not id.match(PEG_INDEX)):
+      return resError(Http400, "invalid index ID: $1" % id)
+    if (not field.match(PEG_JSON_FIELD)):
+      return resError(Http400, "invalid field path: $1" % field)
+    if (LS.store.retrieveIndex(id) != newJNull()):
+      return resError(Http409, "Index already exists: $1" % id)
     LS.store.createIndex(id, field)
     result.headers = ctJsonHeader()
     setOrigin(LS, req, result.headers)
@@ -523,6 +529,10 @@ proc putIndex*(LS: LiteStore, id, field: string, req: LSRequest): LSResponse =
     result = resError(Http500, "Unable to create index.")
 
 proc deleteIndex*(LS: LiteStore, id: string, req: LSRequest): LSResponse =
+  if (not id.match(PEG_INDEX)):
+    return resError(Http400, "invalid index ID: $1" % id)
+  if (LS.store.retrieveIndex(id) == newJNull()):
+    return resError(Http404, "Index not found: $1" % id)
   try:
     LS.store.dropIndex(id)
     result.headers = newHttpHeaders(TAB_HEADERS)

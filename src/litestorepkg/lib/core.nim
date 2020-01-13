@@ -132,6 +132,8 @@ proc retrieveIndex*(store: Datastore, id: string, options: QueryOptions = newQue
   options.single = true
   let query = prepareSelectIndexesQuery(options)
   let raw_index = store.db.getRow(query.sql, "json_index_" & id)
+  if raw_index[0] == "":
+    return newJNull()
   var matches: array[0..0, string]
   let fieldPeg = peg"'CREATE INDEX json_index_test ON documents(json_extract(data, \'' {[^']+}"
   discard raw_index[1].match(fieldPeg, matches)
@@ -144,11 +146,9 @@ proc retrieveIndexes*(store: Datastore, options: QueryOptions = newQueryOptions(
     echo options.like
     if (options.like[options.like.len-1] == '*' and options.like[0] != '*'):
       let str = "json_index_" & options.like.substr(0, options.like.len-2)
-      echo str
       raw_indexes = store.db.getAllRows(query.sql, str, str & "{")
     else:
       let str =  "json_index_" & options.like.replace("*", "%")
-      echo str, "---"
       raw_indexes = store.db.getAllRows(query.sql, str)
   else:
     raw_indexes = store.db.getAllRows(query.sql)
@@ -157,7 +157,7 @@ proc retrieveIndexes*(store: Datastore, options: QueryOptions = newQueryOptions(
     var matches: array[0..0, string]
     let fieldPeg = peg"'CREATE INDEX json_index_test ON documents(json_extract(data, \'' {[^']+}"
     discard index[1].match(fieldPeg, matches)
-    indexes.add(%[("id", %index[0]), ("field", %matches[0])])
+    indexes.add(%[("id", %index[0].replace("json_index_", "")), ("field", %matches[0])])
   return %indexes
 
 proc countIndexes*(store: Datastore, q = "", like = ""): int64 =
@@ -199,6 +199,8 @@ proc retrieveTag*(store: Datastore, id: string,
   options.single = true
   var query = prepareSelectTagsQuery(options)
   var raw_tag = store.db.getRow(query.sql, id)
+  if raw_tag[0] == "":
+    return newJNull()
   return %[("id", %raw_tag[0]), ("documents", %(raw_tag[1].parseInt))]
 
 proc retrieveTags*(store: Datastore, options: QueryOptions = newQueryOptions()): JsonNode =
