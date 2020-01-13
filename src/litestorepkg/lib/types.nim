@@ -92,11 +92,15 @@ type
 var
   PEG_TAG* {.threadvar.}: Peg
   PEG_USER_TAG* {.threadvar.}: Peg
+  PEG_INDEX* {.threadvar}: Peg
+  PEG_JSON_FIELD* {.threadvar.}: Peg
   PEG_DEFAULT_URL* {.threadvar.}: Peg
   PEG_URL* {.threadvar.}: Peg
 
 PEG_TAG = peg"""^\$? [a-zA-Z0-9_\-?~:.@#^!+]+$"""
 PEG_USER_TAG = peg"""^[a-zA-Z0-9_\-?~:.@#^!+]+$"""
+PEG_INDEX = peg"""^[a-zA-Z0-9_]+$"""
+PEG_JSON_FIELD = peg"""'$' ('.' [a-z-A-Z0-9_]+)+"""
 PEG_DEFAULT_URL = peg"""^\/{(docs / info / dir / tags / indexes)} (\/ {(.+)} / \/?)$"""
 PEG_URL = peg"""^\/({(v\d+)} \/) {([^\/]+)} (\/ {(.+)} / \/?)$"""
 
