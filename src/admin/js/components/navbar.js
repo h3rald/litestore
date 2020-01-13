@@ -25,6 +25,9 @@
         {path: "/guide/api_docs", title: caret+"docs (LiteStore Documents)"},
         {path: "/guide/api_tags", title: caret+"tags (LiteStore Tags)"},
         {path: "/guide/api_indexes", title: caret+"indexes (LiteStore Indexes)"},
+        {path: "/guide/nim-api", title: "Nim API Reference"},
+        {path: "/guide/nim-api_high", title: caret+"High Level"},
+        {path: "/guide/nim-api_low", title: caret+"Low Level"},
         {path: "/guide/credits", title: "Credits"}
       ];
       vm.taglinks = function(info){

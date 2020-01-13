@@ -95,7 +95,7 @@ Content-Length: 244
 }
 ```
 
-#### GET index/:id
+#### GET indexes/:id
 
 Retrieves the specified index and corresponding JSON field.
 
@@ -117,6 +117,10 @@ Content-Length: 30
 #### PUT indexes/:id
 
 Creates a new index with the specified ID.
+
+Note that:
+* Index IDs can only contain letters, numbers, and underscores.
+* Index fields must be valid paths to JSON fields.
 
 > %warning%
 > No updates
