@@ -232,6 +232,7 @@ Examples:
 
 * http://127.0.0.1:9500/docs/?filter=$.age%20gte%2018%20or%20$.skills%20contains%20"maths"
 * http://127.0.0.1:9500/docs/?filter=$.name.first&20eq%20"Jack"%20or%20$.fav\_food[0]%20eq%20"pizza"
+* http://127.0.0.1:9500/docs/?filter=$.name.first&20like%20"J*"
 
 ##### `select` option
 

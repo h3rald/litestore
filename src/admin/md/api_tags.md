@@ -54,6 +54,13 @@ If this option is specified, retrieves all tags matching the specified string.
 >
 > You can use asterisks (\*) as wildcards.
 
+##### `limit` and `offset` options
+
+Provide a way to implement pagination:
+
+* **limit** causes the query to retrieve only the first _n_ results. 
+* **offset** causes the query to skip the first _n_ results. 
+
 ##### Example
 
 ```

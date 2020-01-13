@@ -27,7 +27,7 @@ LiteStore can be used to store documents in virtually any format, as long as you
 
 You can add custom tags to documents to easily categorize them and retrieve them. Some system tags are also added automatically to identify the document content type, format and collection.
 
-#### Enhanced Querying of JSON documents
+#### Enhanced Querying and Indexing of JSON documents
 
 By leveraging the [SQLite JSON1 extension](https://www.sqlite.org/json1.html) and implementing custom query string parsing, LiteStore provides enhanced filtering, ordering, and custom field selection of JSON documents.
 
@@ -38,6 +38,10 @@ By leveraging [SQLite FTS4 extension](http://www.sqlite.org/fts3.html) and imple
 #### RESTful HTTP API
 
 Every operation can be performed on the data store using a simple but powerful RESTful HTTP API, perfect for client-side, single-page applications.
+
+#### Authorization
+
+Optionally, you can configure per-resource authorization by validating [JWT](https://jwt.io/) tokens and checking [Oauth2 Scopes](https://oauth.net/2/scope/)
 
 #### Nim API
 
