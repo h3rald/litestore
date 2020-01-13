@@ -148,12 +148,37 @@ proc prepareSelectTagsQuery*(options: QueryOptions): string =
   if options.single:
     result = result & "WHERE tag_id = ?"
   elif options.like.len > 0:
-    if options.like[options.like.len-1] == '*':
+    if options.like[options.like.len-1] == '*' and options.like[0] != '*':
       result = result & "WHERE tag_id BETWEEN ? AND ? "
     else:
       result = result & "WHERE tag_id LIKE ? "
   if group:
     result = result & "GROUP BY tag_id "
+  if options.limit > 0:
+    result = result & "LIMIT " & $options.limit & " "
+  if options.offset > 0:
+    result = result & "OFFSET " & $options.offset & " "
+  LOG.debug(result.replace("$", "$$"))
+
+#  select name, sql from sqlite_master where type = 'index' and tbl_name = 'documents' and name LIKE 'json_index_%'
+proc prepareSelectIndexesQuery*(options: QueryOptions): string =
+  var group = true
+  if options.select.len > 0 and options.select[0] == "COUNT(name)":
+    result  = "SELECT COUNT(DISTINCT name) "
+    result = result & "FROM sqlite_master WHERE type = 'index' AND tbl_name = 'documents' "
+    group = false
+  else:
+    result = "SELECT name, sql "
+    result = result & "FROM sqlite_master WHERE type = 'index' AND tbl_name = 'documents' "
+  if options.single:
+    result = result & "AND name = ?"
+  if options.like.len > 0:
+    if options.like[options.like.len-1] == '*' and options.like[0] != '*':
+      result = result & "AND name BETWEEN ? AND ? "
+    else:
+      result = result & "AND name LIKE ? "
+  else:
+    result = result & "AND name LIKE 'json_index_%' "
   if options.limit > 0:
     result = result & "LIMIT " & $options.limit & " "
   if options.offset > 0:
@@ -277,6 +302,9 @@ proc resDocumentNotFound*(id: string): LSResponse =
 
 proc resTagNotFound*(id: string): LSResponse =
   resError(Http404, "Tag '$1' not found." % id)
+
+proc resIndexNotFound*(id: string): LSResponse =
+  resError(Http404, "Index '$1' not found." % id)
 
 proc eWarn*() =
   var e = getCurrentException()

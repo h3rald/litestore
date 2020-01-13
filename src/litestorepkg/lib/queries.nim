@@ -29,8 +29,6 @@ const
   SQL_OPTIMIZE* = sql"INSERT INTO searchdata(searchdata) VALUES('optimize')"
   SQL_REBUILD* = sql"INSERT INTO searchdata(searchdata) VALUES('rebuild')"
 
-  SQL_GET_DOCUMENTS_INDEXES* = sql"select name, sql from sqlite_master where type = 'index' and tbl_name = 'documents' and name LIKE 'json_index_%'"
-
   SQL_VACUUM* = sql"VACUUM"
 
 const SQL_CREATE_SEARCHDATA_TABLE* = sql"""
@@ -169,6 +167,10 @@ FROM tags GROUP BY tag_id ORDER BY tag_id ASC
 
 const SQL_COUNT_TAGS* = sql"""
 SELECT COUNT(DISTINCT tag_id) FROM tags
+"""
+
+const SQL_COUNT_INDEXES* = sql"""
+SELECT COUNT(DISTINCT name) FROM from sqlite_master WHERE type = 'index' AND tbl_name = 'documents' AND name LIKE 'json_index_%'
 """
 
 const SQL_COUNT_DOCUMENTS* = sql"""
