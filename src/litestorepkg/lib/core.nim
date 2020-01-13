@@ -127,13 +127,50 @@ proc dropIndex*(store: Datastore, indexId: string) =
   store.db.exec(query)
   store.commit()
 
-proc retrieveIndexes*(store: Datastore): JsonNode =
-  let raw_indexes= store.db.getAllRows(SQL_GET_DOCUMENTS_INDEXES)
+proc retrieveIndex*(store: Datastore, id: string, options: QueryOptions = newQueryOptions()): JsonNode =
+  var options = options
+  options.single = true
+  let query = prepareSelectIndexesQuery(options)
+  let raw_index = store.db.getRow(query.sql, "json_index_" & id)
+  var matches: array[0..0, string]
+  let fieldPeg = peg"'CREATE INDEX json_index_test ON documents(json_extract(data, \'' {[^']+}"
+  discard raw_index[1].match(fieldPeg, matches)
+  return %[("id", %raw_index[0].replace("json_index_", "")), ("field", %matches[0])]
+
+proc retrieveIndexes*(store: Datastore, options: QueryOptions = newQueryOptions()): JsonNode =
+  var query = prepareSelectIndexesQuery(options)
+  var raw_indexes: seq[Row]
+  if (options.like.len > 0):
+    echo options.like
+    if (options.like[options.like.len-1] == '*' and options.like[0] != '*'):
+      let str = "json_index_" & options.like.substr(0, options.like.len-2)
+      echo str
+      raw_indexes = store.db.getAllRows(query.sql, str, str & "{")
+    else:
+      let str =  "json_index_" & options.like.replace("*", "%")
+      echo str, "---"
+      raw_indexes = store.db.getAllRows(query.sql, str)
+  else:
+    raw_indexes = store.db.getAllRows(query.sql)
   var indexes = newSeq[JsonNode](0)
   for index in raw_indexes:
-    # TODO: parse field
-    indexes.add(%[("id", %index[0]), ("field", %(index[1]))])
+    var matches: array[0..0, string]
+    let fieldPeg = peg"'CREATE INDEX json_index_test ON documents(json_extract(data, \'' {[^']+}"
+    discard index[1].match(fieldPeg, matches)
+    indexes.add(%[("id", %index[0]), ("field", %matches[0])])
   return %indexes
+
+proc countIndexes*(store: Datastore, q = "", like = ""): int64 =
+  var query = SQL_COUNT_INDEXES
+  if q.len > 0:
+    query = q.sql
+  if like.len > 0:
+    if (like[like.len-1] == '%' or like[like.len-1] == '*'):
+      let str = like.substr(0, like.len-2)
+      return store.db.getRow(query, str, str & "{")[0].parseInt
+    else:
+      return store.db.getRow(query, like)[0].parseInt
+  return store.db.getRow(query)[0].parseInt
 
 # Manage Tags
 

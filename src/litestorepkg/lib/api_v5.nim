@@ -129,7 +129,10 @@ proc filterClauses*(str: string, options: var QueryOptions) =
         tables.add "json_each(documents.data, '$1') AS arr$2" % [x[0], $currentArr]
         return "arr$1.value == $2" % [$currentArr, x[2]]
       else:
-        return "json_extract(documents.data, '$1') $2 $3 " % x
+        var arr = @[x[0], x[1], x[2]]
+        if x[1] == "like":
+          arr[2] = x[2].replace('*', '%')
+        return "json_extract(documents.data, '$1') $2 $3 " % arr
     return resAndClauses.join(" AND ")
   options.tables = options.tables & tables
   options.jsonFilter = resOrClauses.join(" OR ")
@@ -352,6 +355,16 @@ proc getTag*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequ
     result.content = $doc
     result.code = Http200
 
+proc getIndex*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequest): LSResponse =
+  let doc = LS.store.retrieveIndex(id, options)
+  result.headers = ctJsonHeader()
+  setOrigin(LS, req, result.headers)
+  if doc == newJObject():
+    result = resIndexNotFound(id)
+  else:
+    result.content = $doc
+    result.code = Http200
+
 proc getRawDocument*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequest): LSResponse =
   let doc = LS.store.retrieveRawDocument(id, options)
   result.headers = ctJsonHeader()
@@ -400,6 +413,31 @@ proc getTags*(LS: LiteStore, options: QueryOptions = newQueryOptions(), req: LSR
   options.offset = 0
   options.select = @["COUNT(tag_id)"]
   let total = LS.store.countTags(prepareSelectTagsQuery(options), options.like.replace("*", "%"))
+  var content = newJObject()
+  if options.like != "":
+    content["like"] = %(options.like.decodeURL)
+  if orig_limit > 0:
+    content["limit"] = %orig_limit
+    if orig_offset > 0:
+      content["offset"] = %orig_offset
+  content["total"] = %total
+  content["execution_time"] = %(cputime()-t0)
+  content["results"] = docs
+  result.headers = ctJsonHeader()
+  setOrigin(LS, req, result.headers)
+  result.content = content.pretty
+  result.code = Http200
+
+proc getIndexes*(LS: LiteStore, options: QueryOptions = newQueryOptions(), req: LSRequest): LSResponse =
+  var options = options
+  let t0 = cpuTime()
+  let docs = LS.store.retrieveIndexes(options)
+  let orig_limit = options.limit
+  let orig_offset = options.offset
+  options.limit = 0
+  options.offset = 0
+  options.select = @["COUNT(name)"]
+  let total = LS.store.countIndexes(prepareSelectIndexesQuery(options), options.like.replace("*", "%"))
   var content = newJObject()
   if options.like != "":
     content["like"] = %(options.like.decodeURL)
@@ -720,6 +758,16 @@ proc get*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse 
           return LS.getTags(options, req)
       except:
         return resError(Http400, "Bad Request - $1" % getCurrentExceptionMsg())
+    of "indexes":
+      var options = newQueryOptions()
+      try:
+        parseQueryOptions(req.url.query, options);
+        if id != "":
+          return LS.getIndex(id, options, req)
+        else:
+          return LS.getIndexes(options, req)
+      except:
+        return resError(Http400, "Bad Request - $1" % getCurrentExceptionMsg())
     of "info":
       if id != "":
         return resError(Http404, "Info '$1' not found." % id)
@@ -736,11 +784,13 @@ proc post*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse
 proc put*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse =
   if id != "":
     if resource == "indexes":
+      var field = ""
       try:
-        let field = parseJson(req.body.strip)["field"].getStr
-        return LS.putIndex(id, field, req)
+        echo req.body
+        field = parseJson(req.body.strip)["field"].getStr
       except:
         return resError(Http400, "Bad Request - Invalid JSON body - $1" % getCurrentExceptionMsg())
+      return LS.putIndex(id, field, req)
     else: # Assume docs
       var ct = "text/plain"
       if req.headers.hasKey("Content-Type"):
