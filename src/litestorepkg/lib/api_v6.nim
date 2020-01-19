@@ -8,7 +8,7 @@ import
   json,
   os,
   times,
-  duktape/js
+  duktape
 import
   types,
   contenttypes,
@@ -933,7 +933,9 @@ proc execute*(req: LSRequest, LS:LiteStore, id: string): LSResponse =
     return resError(Http500, "An error occurred when executing custom resource code.")
   # Retrieve response
   ctx.duk_eval_string("JSON.stringify(ctx.response)")
+  echo "TEST!"
   let jResponse = parseJson($(ctx.duk_get_string(-1)))
+  echo jResponse
   ctx.duk_destroy_heap();
   result.code = HttpCode(jResponse["code"].getInt)
   result.content = jResponse["content"].getStr
