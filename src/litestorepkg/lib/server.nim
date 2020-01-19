@@ -9,6 +9,7 @@ import
   os,
   json,
   tables,
+  strtabs,
   base64,
   jwt
 import 
@@ -18,7 +19,8 @@ import
   api_v2,
   api_v3,
   api_v4,
-  api_v5
+  api_v5,
+  api_v6
 
 export
   api_v5
@@ -111,7 +113,22 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
         if access.hasKey(uri):
           auth(uri)
         break
-  if info.version == "v5":
+  if info.version == "v6":
+    if info.resource.match(peg"^docs / info / tags / indexes$"):
+      return api_v6.route(req, LS, info.resource, info.id)
+    elif info.resource.match(peg"^custom$"):
+      if LS.customResources.len > 0:
+        return api_v6.execute(req, LS, info.id)
+      else:
+        return resError(Http400, "Bad Request - Not custom resources available." % info.version)
+    elif info.resource.match(peg"^dir$"):
+      if LS.directory.len > 0:
+        return api_v6.serveFile(req, LS, info.id)
+      else:
+        return resError(Http400, "Bad Request - Not serving any directory." % info.version)
+    else:
+      return resError(Http404, "Resource Not Found: $1" % info.resource)
+  elif info.version == "v5":
     if info.resource.match(peg"^docs / info / tags / indexes$"):
       return api_v5.route(req, LS, info.resource, info.id)
     elif info.resource.match(peg"^dir$"):
@@ -178,7 +195,7 @@ proc process*(req: LSRequest, LS: LiteStore): LSResponse {.gcsafe.}=
   try:
     var info: ResourceInfo
     req.route peg"^\/?$":
-      info.version = "v5"
+      info.version = "v6"
       info.resource = "info"
       return req.processApiUrl(LS, info)
     req.route peg"^\/favicon.ico$":
@@ -187,7 +204,7 @@ proc process*(req: LSRequest, LS: LiteStore): LSResponse {.gcsafe.}=
       result.headers = ctHeader("image/x-icon")
       return result
     req.route PEG_DEFAULT_URL:
-      info.version = "v5"
+      info.version = "v6"
       info.resource = matches[0]
       info.id = matches[1]
       return req.processApiUrl(LS, info)

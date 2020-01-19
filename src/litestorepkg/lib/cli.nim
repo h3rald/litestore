@@ -1,7 +1,9 @@
 import
   parseopt,
   strutils,
-  json
+  json, 
+  os,
+  strtabs
 import
   logger,
   config,
@@ -18,6 +20,7 @@ var
   mount = false
   auth = newJNull()
   exOperation:string = ""
+  customResources = newStringTable()
   exFile:string = ""
   exBody:string = ""
   exType:string = ""
@@ -44,6 +47,7 @@ let
     -a, --address       Specify server address (default: 127.0.0.1).
     --auth              Specify an authentication/authorization configuration file.
     -b, --body          Specify a string containing input data for an operation to be executed.
+    -c, --custom        Specify a path containing custom resource definitions.
     -d, --directory     Specify a directory to serve, import, export, delete, or mount.
     -f, --file          Specify a file containing input data for an operation to be executed.
     -h, --help          Display this message.
@@ -111,6 +115,14 @@ for kind, key, val in getOpt():
           if val == "":
             fail(104, "Directory not specified.")
           directory = val
+        of "custom", "c":
+          if val == "":
+            fail(115, "Custom resources path not specified.")
+          if not val.existsDir():
+            fail(116, "Custom resources directory does not exist.")
+          for file in val.walkDir():
+            if file.kind == pcFile or file.kind == pcLinkToFile:
+              customResources[file.path.splitFile[1]] = file.path.readFile()
         of "operation", "o":
           if val == "":
             fail(106, "Operation not specified.")
@@ -173,6 +185,7 @@ LS.readonly = readonly
 LS.favicon = favicon
 LS.loglevel = loglevel
 LS.auth = auth
+LS.customResources = customResources
 LS.mount = mount
 LS.execution.file = exFile
 LS.execution.body = exBody
