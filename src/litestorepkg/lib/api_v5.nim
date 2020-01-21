@@ -46,9 +46,9 @@ proc orderByClauses*(str: string): string =
       if field[0] == '$':
         field = "json_extract(documents.data, '$1')" % matches[1]
       if matches[0] == "-":
-        clauses.add("$1 DESC" % field)
+        clauses.add("$1 COLLATE NOCASE DESC" % field)
       else:
-        clauses.add("$1 ASC" % field)
+        clauses.add("$1 COLLATE NOCASE ASC" % field)
   return clauses.join(", ")
 
 proc selectClause*(str: string, options: var QueryOptions) =
