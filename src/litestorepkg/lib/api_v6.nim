@@ -7,12 +7,12 @@ import
   pegs,
   json,
   os,
-  times,
-  duktape
+  times
 import
   types,
   contenttypes,
   core,
+  custom,
   utils,
   logger
 
@@ -912,30 +912,6 @@ proc route*(req: LSRequest, LS: LiteStore, resource = "docs", id = ""): LSRespon
   # Custom Resources support
 
 proc execute*(req: LSRequest, LS:LiteStore, id: string): LSResponse = 
-  var ctx = duk_create_heap_default()
-  var ctx_idx = ctx.duk_push_object()
-  var req_idx = ctx.duk_push_object()
   if not LS.customResources.hasKey(id):
     return resError(Http404, "Custom resource '$1' not found." % id)
-  # Create execution context
-  ctx.duk_push_int(200)
-  discard ctx.duk_put_prop_string(req_idx, "code")
-  discard ctx.duk_push_string("")
-  discard ctx.duk_put_prop_string(req_idx, "content")
-  # Todo: Add default headers
-  discard ctx.duk_put_prop_string(ctx_idx, "response")
-  # Todo: Add request object
-  discard ctx.duk_put_global_string("ctx")
-  # Evaluate custom resource 
-  try:
-    ctx.duk_eval_string(LS.customResources[id])
-  except:
-    return resError(Http500, "An error occurred when executing custom resource code.")
-  # Retrieve response
-  ctx.duk_eval_string("JSON.stringify(ctx.response)")
-  echo "TEST!"
-  let jResponse = parseJson($(ctx.duk_get_string(-1)))
-  echo jResponse
-  ctx.duk_destroy_heap();
-  result.code = HttpCode(jResponse["code"].getInt)
-  result.content = jResponse["content"].getStr
+  return custom.execute(req, LS, id)
