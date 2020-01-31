@@ -707,6 +707,8 @@ proc duk_pcompile_string*(ctx: DTContext, flags: duk_uint_t, s: cstring): duk_in
 proc duk_safe_to_string*(ctx: DTContext, idx: duk_idx_t): cstring {.header: headerduktape.}
 # proc duk_to_string*(ctx: DTContext, index: cint): cstring {.header: headerduktape.}
 
+proc duk_peval_string*(ctx: DTContext, s: cstring): duk_int_t {.header: headerduktape.}
+
 ## Extras
 
 proc duk_console_init*(ctx: DTContext, flags: duk_uint_t = 0) {.stdcall,

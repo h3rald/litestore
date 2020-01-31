@@ -1,1 +1,1 @@
-ctx.response.content = JSON.stringify(ctx.request);
+LiteStore.response.content = LiteStore.api.get('docs').content;
