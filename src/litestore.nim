@@ -1,5 +1,6 @@
 import
   strutils,
+  strtabs,
   os,
   uri,
   httpcore,

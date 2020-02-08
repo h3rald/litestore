@@ -29,7 +29,11 @@ import strutils
 const sourcePath = currentSourcePath().split({'\\', '/'})[0..^2].join("/")
 {.passC: "-I\"" & sourcePath & "/../vendor/duktape\"".}
 const headerduktape = sourcePath & "/../vendor/duktape/duktape.h"
+const headerconsole = sourcePath & "/../vendor/duktape/extras/console/duk_console.h"
+const headerprintalert = sourcePath & "/../vendor/duktape/extras/print-alert/duk_print_alert.h"
 {.compile: "../vendor/duktape/duktape.c".}
+{.compile: "../vendor/duktape/extras/console/duk_console.c".}
+{.compile: "../vendor/duktape/extras/print-alert/duk_print_alert.c".}
 const
   DUK_VERSION* = 20201
   DUK_DEBUG_PROTOCOL_VERSION* = 2
@@ -702,6 +706,15 @@ proc duk_eval_string*(ctx: DTContext, s: cstring) {.header: headerduktape.}
 proc duk_pcompile_string*(ctx: DTContext, flags: duk_uint_t, s: cstring): duk_int_t {.header: headerduktape.}
 proc duk_safe_to_string*(ctx: DTContext, idx: duk_idx_t): cstring {.header: headerduktape.}
 # proc duk_to_string*(ctx: DTContext, index: cint): cstring {.header: headerduktape.}
+
+proc duk_peval_string*(ctx: DTContext, s: cstring): duk_int_t {.header: headerduktape.}
+
+## Extras
+
+proc duk_console_init*(ctx: DTContext, flags: duk_uint_t = 0) {.stdcall,
+importc: "duk_console_init", header: headerconsole.}
+proc duk_print_alert_init*(ctx: DTContext, flags: duk_uint_t = 0) {.stdcall,
+importc: "duk_print_alert_init", header: headerprintalert.}
 
 type
   DTCFunction* = duk_c_function
