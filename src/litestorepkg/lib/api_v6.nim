@@ -915,8 +915,16 @@ proc execute*(req: LSRequest, LS:LiteStore, id: string): LSResponse =
   var ctx = duk_create_heap_default()
   var ctx_idx = ctx.duk_push_object()
   var req_idx = ctx.duk_push_object()
+  var resource: string
   if not LS.customResources.hasKey(id):
-    return resError(Http404, "Custom resource '$1' not found." % id)
+    # Attempt to retrieve resource from system documents
+    let options = newQueryOptions(true)
+    let doc = LS.store.retrieveDocument("custom/" & id, options)
+    if doc.data == "":
+      return resError(Http404, "Custom resource '$1' not found." % id)
+    resource = doc.data
+  else:
+    resource = LS.customResources[id]
   # Create execution context
   ctx.duk_push_int(200)
   discard ctx.duk_put_prop_string(req_idx, "code")
