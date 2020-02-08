@@ -32,6 +32,7 @@ type
     jsonSelect*: seq[tuple[path: string, alias: string]]
     select*: seq[string]
     single*:bool
+    system*:bool
     limit*: int
     offset*: int
     orderby*: string
@@ -71,6 +72,7 @@ type
     port*: int
     operation*: Operation
     directory*: string
+    manageSystemData*: bool
     file*: string
     mount*: bool
     readonly*: bool
