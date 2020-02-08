@@ -7,14 +7,15 @@ import
   pegs,
   json,
   os,
-  times,
-  duktape
+  uri,
+  times
 import
   types,
   contenttypes,
   core,
   utils,
-  logger
+  logger,
+  duktape
 
 # Helper procs
 
@@ -47,9 +48,9 @@ proc orderByClauses*(str: string): string =
       if field[0] == '$':
         field = "json_extract(documents.data, '$1')" % matches[1]
       if matches[0] == "-":
-        clauses.add("$1 DESC" % field)
+        clauses.add("$1 COLLATE NOCASE DESC" % field)
       else:
-        clauses.add("$1 ASC" % field)
+        clauses.add("$1 COLLATE NOCASE ASC" % field)
   return clauses.join(", ")
 
 proc selectClause*(str: string, options: var QueryOptions) =
@@ -824,7 +825,6 @@ proc put*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse 
     if resource == "indexes":
       var field = ""
       try:
-        echo req.body
         field = parseJson(req.body.strip)["field"].getStr
       except:
         return resError(Http400, "Bad Request - Invalid JSON body - $1" % getCurrentExceptionMsg())
@@ -909,12 +909,178 @@ proc route*(req: LSRequest, LS: LiteStore, resource = "docs", id = ""): LSRespon
     else:
       return resError(Http405, "Method not allowed: $1" % $req.reqMethod)
 
-  # Custom Resources support
+# Custom Resources support
 
-proc execute*(req: LSRequest, LS:LiteStore, id: string): LSResponse = 
-  var ctx = duk_create_heap_default()
-  var ctx_idx = ctx.duk_push_object()
+proc createRequest(LS: LiteStore, ctx: DTContext, obj: duk_idx_t, req: LSRequest) =
   var req_idx = ctx.duk_push_object()
+  discard ctx.duk_push_string($req.reqMethod)
+  discard ctx.duk_put_prop_string(req_idx, "method")
+  # url
+  var uri_idx = ctx.duk_push_object()
+  discard ctx.duk_push_string(LS.address)
+  discard ctx.duk_put_prop_string(uri_idx, "hostname")
+  ctx.duk_push_int(cast[cint](LS.port))
+  discard ctx.duk_put_prop_string(uri_idx, "port")
+  discard ctx.duk_push_string(req.url.query)
+  discard ctx.duk_put_prop_string(uri_idx, "search")
+  discard ctx.duk_push_string(req.url.path)
+  discard ctx.duk_put_prop_string(uri_idx, "path")
+  discard ctx.duk_put_prop_string(req_idx, "url")
+  discard ctx.duk_push_string(req.body)
+  discard ctx.duk_put_prop_string(req_idx, "body")
+  var hd_idx = ctx.duk_push_object()
+  for k, v in pairs(req.headers):
+    discard ctx.duk_push_string(v)
+    discard ctx.duk_put_prop_string(hd_idx, k)
+  discard ctx.duk_put_prop_string(req_idx, "headers")
+  discard ctx.duk_put_prop_string(obj, "request")
+
+proc createResponse(LS: LiteStore, ctx: DTContext, obj: duk_idx_t) =
+  var res_idx = ctx.duk_push_object()
+  ctx.duk_push_int(200)
+  discard ctx.duk_put_prop_string(res_idx, "code")
+  discard ctx.duk_push_string("")
+  discard ctx.duk_put_prop_string(res_idx, "content")
+  var hd_idx = ctx.duk_push_object()
+  discard ctx.duk_push_string("*")
+  discard ctx.duk_put_prop_string(hd_idx, "Access-Control-Allow-Origin")
+  discard ctx.duk_push_string("Authorization, Content-Type")
+  discard ctx.duk_put_prop_string(hd_idx, "Access-Control-Allow-Headers")
+  discard ctx.duk_push_string(LS.appname & "/" & LS.appversion)
+  discard ctx.duk_put_prop_string(hd_idx, "Server")
+  discard ctx.duk_push_string("application/json")
+  discard ctx.duk_put_prop_string(hd_idx, "Content-Type")
+  discard ctx.duk_put_prop_string(res_idx, "headers")
+  discard ctx.duk_put_prop_string(obj, "response")
+
+proc newSimpleLSRequest(meth: HttpMethod, resource, id,  body = "", params = "", headers = newHttpHeaders()): LSRequest =
+  result.reqMethod = meth
+  result.body = body
+  result.headers = headers
+  result.url = parseUri("$1://$2:$3/$4/$5?$6" % @["http", "localhost", "9500", resource, id, params])
+  
+
+proc get(resource, id: string, params = ""): LSResponse =
+  return newSimpleLSRequest(HttpGet, resource, id, "", params).get(LS, resource, id)
+
+proc post(resource, folder, body: string, ct = ""): LSResponse =
+  var headers = newHttpHeaders()
+  if ct != "":
+    headers["Content-Type"] = ct
+  return newSimpleLSRequest(HttpPost, resource, "", body, "", headers).post(LS, resource, folder & "/")
+
+proc put(resource, id, body: string, ct = ""): LSResponse =
+  var headers = newHttpHeaders()
+  if ct != "":
+    headers["Content-Type"] = ct
+  return newSimpleLSRequest(HttpPut, resource, id, body, "", headers).put(LS, resource, id)
+
+proc patch(resource, id, body: string): LSResponse =
+  var headers = newHttpHeaders()
+  headers["Content-Type"] = "application/json"
+  return newSimpleLSRequest(HttpPatch, resource, id, body, "", headers).patch(LS, resource, id)
+
+proc delete(resource, id: string): LSResponse =
+  return newSimpleLSRequest(HttpPatch, resource, id).delete(LS, resource, id)
+
+proc head(resource, id: string): LSResponse =
+  return newSimpleLSRequest(HttpHead, resource, id).head(LS, resource, id)
+
+proc registerApi(LS: LiteStore, ctx: DTContext, obj: duk_idx_t) =
+  var api_idx = ctx.duk_push_object()
+  # GET
+  var get: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
+    let resource = duk_get_string(ctx, 0)
+    let id = duk_get_string(ctx, 1)
+    let params = duk_get_string(ctx, 2)
+    let resp = get($resource, $id, $params)
+    var res_idx = ctx.duk_push_object()
+    ctx.duk_push_int(cast[cint](resp.code))
+    discard ctx.duk_put_prop_string(res_idx, "code")
+    discard ctx.duk_push_string(resp.content)
+    discard ctx.duk_put_prop_string(res_idx, "content")
+    return 1
+  )
+  discard duk_push_c_function(ctx, get, 3)
+  discard ctx.duk_put_prop_string(api_idx, "get")
+  # POST
+  var post: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
+    let resource = duk_get_string(ctx, 0)
+    let folder = duk_get_string(ctx, 1)
+    let body = duk_get_string(ctx, 2)
+    let ct = duk_get_string(ctx, 3)
+    let resp = post($resource, $folder, $body, $ct)
+    var res_idx = ctx.duk_push_object()
+    ctx.duk_push_int(cast[cint](resp.code))
+    discard ctx.duk_put_prop_string(res_idx, "code")
+    discard ctx.duk_push_string(resp.content)
+    discard ctx.duk_put_prop_string(res_idx, "content")
+    return 1
+  )
+  discard duk_push_c_function(ctx, post, 4)
+  discard ctx.duk_put_prop_string(api_idx, "post")
+  # PUT
+  var put: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
+    let resource = duk_get_string(ctx, 0)
+    let id = duk_get_string(ctx, 1)
+    let body = duk_get_string(ctx, 2)
+    let ct = duk_get_string(ctx, 3)
+    let resp = put($resource, $id, $body, $ct)
+    var res_idx = ctx.duk_push_object()
+    ctx.duk_push_int(cast[cint](resp.code))
+    discard ctx.duk_put_prop_string(res_idx, "code")
+    discard ctx.duk_push_string(resp.content)
+    discard ctx.duk_put_prop_string(res_idx, "content")
+    return 1
+  )
+  discard duk_push_c_function(ctx, put, 4)
+  discard ctx.duk_put_prop_string(api_idx, "put")
+  # PATCH
+  var patch: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
+    let resource = duk_get_string(ctx, 0)
+    let id = duk_get_string(ctx, 1)
+    let body = duk_get_string(ctx, 2)
+    let resp = patch($resource, $id, $body)
+    var res_idx = ctx.duk_push_object()
+    ctx.duk_push_int(cast[cint](resp.code))
+    discard ctx.duk_put_prop_string(res_idx, "code")
+    discard ctx.duk_push_string(resp.content)
+    discard ctx.duk_put_prop_string(res_idx, "content")
+    return 1
+  )
+  discard duk_push_c_function(ctx, patch, 3)
+  discard ctx.duk_put_prop_string(api_idx, "patch")
+  # DELETE
+  var delete: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
+    let resource = duk_get_string(ctx, 0)
+    let id = duk_get_string(ctx, 1)
+    let resp = delete($resource, $id)
+    var res_idx = ctx.duk_push_object()
+    ctx.duk_push_int(cast[cint](resp.code))
+    discard ctx.duk_put_prop_string(res_idx, "code")
+    discard ctx.duk_push_string(resp.content)
+    discard ctx.duk_put_prop_string(res_idx, "content")
+    return 1
+  )
+  discard duk_push_c_function(ctx, delete, 2)
+  discard ctx.duk_put_prop_string(api_idx, "delete")
+  # HEAD
+  var head: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
+    let resource = duk_get_string(ctx, 0)
+    let id = duk_get_string(ctx, 1)
+    let resp = head($resource, $id)
+    var res_idx = ctx.duk_push_object()
+    ctx.duk_push_int(cast[cint](resp.code))
+    discard ctx.duk_put_prop_string(res_idx, "code")
+    discard ctx.duk_push_string(resp.content)
+    discard ctx.duk_put_prop_string(res_idx, "content")
+    return 1
+  )
+  discard duk_push_c_function(ctx, head, 2)
+  discard ctx.duk_put_prop_string(api_idx, "head")
+  discard ctx.duk_put_prop_string(obj, "api")
+      
+proc execute*(req: LSRequest, LS:LiteStore, id: string): LSResponse =
   var resource: string
   if not LS.customResources.hasKey(id):
     # Attempt to retrieve resource from system documents
@@ -926,24 +1092,26 @@ proc execute*(req: LSRequest, LS:LiteStore, id: string): LSResponse =
   else:
     resource = LS.customResources[id]
   # Create execution context
-  ctx.duk_push_int(200)
-  discard ctx.duk_put_prop_string(req_idx, "code")
-  discard ctx.duk_push_string("")
-  discard ctx.duk_put_prop_string(req_idx, "content")
-  # Todo: Add default headers
-  discard ctx.duk_put_prop_string(ctx_idx, "response")
-  # Todo: Add request object
-  discard ctx.duk_put_global_string("ctx")
+  var ctx = duk_create_heap_default()
+  duk_console_init(ctx)
+  duk_print_alert_init(ctx)
+  var ctx_idx = ctx.duk_push_object()
+  LS.registerApi(ctx, ctx_idx)
+  LS.createRequest(ctx, ctx_idx, req)
+  LS.createResponse(ctx, ctx_idx)
+  discard ctx.duk_put_global_string("LiteStore")
   # Evaluate custom resource 
-  try:
-    ctx.duk_eval_string(LS.customResources[id])
-  except:
-    return resError(Http500, "An error occurred when executing custom resource code.")
+  if ctx.duk_peval_string(LS.customResources[id]) != 0:
+    return resError(Http500, $ctx.duk_safe_to_string(-1))
   # Retrieve response
-  ctx.duk_eval_string("JSON.stringify(ctx.response)")
-  echo "TEST!"
+  discard 
+  if ctx.duk_peval_string("JSON.stringify(LiteStore.response);") != 0:
+    return resError(Http500, $ctx.duk_safe_to_string(-1))
   let jResponse = parseJson($(ctx.duk_get_string(-1)))
-  echo jResponse
   ctx.duk_destroy_heap();
   result.code = HttpCode(jResponse["code"].getInt)
   result.content = jResponse["content"].getStr
+  result.headers = newHttpHeaders()
+  for k, v in pairs(jResponse["headers"]):
+    result.headers[k] = v.getStr
+  result.headers["Content-Length"] = $result.content.len
