@@ -323,6 +323,38 @@ proc createDocument*(store: Datastore, id = "", rawdata = "",
     eWarn()
     raise
 
+proc createSystemDocument*(store: Datastore, id = "", rawdata = "",
+    contenttype = "text/plain", binary = -1): string =
+  let singleOp = not LS_TRANSACTION
+  var id = id
+  var contenttype = contenttype.replace(peg"""\;(.+)$""", "") # Strip charset for now
+  var binary = checkIfBinary(binary, contenttype)
+  var data = rawdata
+  if contenttype == "application/json":
+    # Validate JSON data
+    try:
+      discard data.parseJson
+    except:
+      raise newException(JsonParsingError, "Invalid JSON content - " &
+          getCurrentExceptionMsg())
+  if id == "":
+    id = $genOid()
+  elif id.isFolder:
+    id = id & $genOid()
+  # Store document
+  try:
+    LOG.debug("Creating system document '$1'" % id)
+    store.begin()
+    discard store.db.insertID(SQL_INSERT_SYSTEM_DOCUMENT, id, data, contenttype,
+        binary, currentTime())
+    if singleOp:
+      store.commit()
+    return $store.retrieveRawDocument(id)
+  except:
+    store.rollback()
+    eWarn()
+    raise
+
 proc updateDocument*(store: Datastore, id: string, rawdata: string,
     contenttype = "text/plain", binary = -1, searchable = 1): string =
   let singleOp = not LS_TRANSACTION
@@ -424,7 +456,7 @@ proc retrieveRawDocuments*(store: Datastore,
 proc countDocuments*(store: Datastore): int64 =
   return store.db.getRow(SQL_COUNT_DOCUMENTS)[0].parseInt
 
-proc importFile*(store: Datastore, f: string, dir = "") =
+proc importFile*(store: Datastore, f: string, dir = "", system = false) =
   if not f.fileExists:
     raise newException(EFileNotFound, "File '$1' not found." % f)
   let ext = f.splitFile.ext
@@ -442,8 +474,11 @@ proc importFile*(store: Datastore, f: string, dir = "") =
   let singleOp = not LS_TRANSACTION
   store.begin()
   try:
-    discard store.createDocument(d_id, d_contents, d_ct, d_binary, d_searchable)
-    if dir != "":
+    if system:
+      discard store.createSystemDocument(d_id, d_contents, d_ct, d_binary)
+    else:
+      discard store.createDocument(d_id, d_contents, d_ct, d_binary, d_searchable)
+    if dir != "" and not system:
       store.db.exec(SQL_INSERT_TAG, "$dir:"&dir, d_id)
   except:
     store.rollback()
@@ -476,7 +511,7 @@ proc vacuum*(file: string) =
     quit(203)
   quit(0)
 
-proc importDir*(store: Datastore, dir: string) =
+proc importDir*(store: Datastore, dir: string, system = false) =
   var files = newSeq[string]()
   if not dir.dirExists:
     raise newException(EDirectoryNotFound, "Directory '$1' not found." % dir)
@@ -498,7 +533,7 @@ proc importDir*(store: Datastore, dir: string) =
   store.db.dropIndexes()
   for f in files:
     try:
-      store.importFile(f, dir)
+      store.importFile(f, dir, system)
       cFiles.inc
       if (cFiles-1) mod batchSize == 0:
         cBatches.inc
@@ -514,8 +549,12 @@ proc importDir*(store: Datastore, dir: string) =
   store.commit()
   LOG.info("Imported $1/$2 files", cFiles, files.len)
 
-proc exportDir*(store: Datastore, dir: string) =
-  let docs = store.db.getAllRows(SQL_SELECT_DOCUMENTS_BY_TAG, "$dir:"&dir)
+proc exportDir*(store: Datastore, dir: string, system = false) =
+  var docs: seq[Row]
+  if system:
+    docs = store.db.getAllRows(SQL_SELECT_SYSTEM_DOCUMENTS)
+  else:
+    docs = store.db.getAllRows(SQL_SELECT_DOCUMENTS_BY_TAG, "$dir:"&dir)
   LOG.info("Exporting $1 files...", docs.len)
   for doc in docs:
     LOG.debug("Exporting: $1", doc[1])
@@ -529,12 +568,15 @@ proc exportDir*(store: Datastore, dir: string) =
     file.writeFile(data)
   LOG.info("Done.");
 
-proc deleteDir*(store: Datastore, dir: string) =
-  store.db.exec(SQL_DELETE_SEARCHDATA_BY_TAG, "$dir:"&dir)
-  store.db.exec(SQL_DELETE_DOCUMENTS_BY_TAG, "$dir:"&dir)
-  store.db.exec(SQL_DELETE_TAGS_BY_TAG, "$dir:"&dir)
-  let total = store.db.getRow(SQL_COUNT_DOCUMENTS)[0].parseInt
-  store.db.exec(SQL_SET_TOTAL_DOCS, total)
+proc deleteDir*(store: Datastore, dir: string, system = false) =
+  if system:
+    store.db.exec(SQL_DELETE_SYSTEM_DOCUMENTS)
+  else:
+    store.db.exec(SQL_DELETE_SEARCHDATA_BY_TAG, "$dir:"&dir)
+    store.db.exec(SQL_DELETE_DOCUMENTS_BY_TAG, "$dir:"&dir)
+    store.db.exec(SQL_DELETE_TAGS_BY_TAG, "$dir:"&dir)
+    let total = store.db.getRow(SQL_COUNT_DOCUMENTS)[0].parseInt
+    store.db.exec(SQL_SET_TOTAL_DOCS, total)
 
 proc mountDir*(store: var Datastore, dir: string) =
   if not dir.dirExists:

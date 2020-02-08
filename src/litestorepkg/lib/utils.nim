@@ -60,6 +60,9 @@ proc selectDocumentsByTags(tags: string, doc_id_col = "id"): string =
     result = result & "AND " & doc_id_col & " IN (" & select_tagged & tag & "') "
 
 proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
+  var documents_table = "documents"
+  if options.system:
+    documents_table = "system_documents"
   var tables = options.tables
   result = "SELECT "
   if options.jsonFilter.len > 0 or options.jsonSelect.len > 0:
@@ -84,23 +87,23 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
         innerSelect = innerSelect & "LIMIT " & $options.limit
         if options.offset > 0:
           innerSelect = innerSelect & " OFFSET " & $options.offset
-      tables = options.tables & @["documents"]
+      tables = options.tables & @[documents_table]
       result = result & options.select.join(", ")
       result = result & " FROM " & tables.join(", ") & " JOIN (" & innerSelect & ") as ranktable USING(docid) JOIN searchdata USING(docid) "
       result = result & "WHERE 1=1 "
     else:
       tables = options.tables & @["searchdata"]
       if options.jsonFilter != "":
-        options.select[0] = "COUNT(documents.docid)"
-        tables = tables & @["documents"]
+        options.select[0] = "COUNT($1.docid)" % documents_table
+        tables = tables & @[documents_table]
       result = result & options.select.join(", ")
       result = result & " FROM "&tables.join(", ")&" "
       result = result & "WHERE 1=1 "
       if options.jsonFilter != "":
-        result = result & "AND documents.id = searchdata.id "
+        result = result & "AND $1.id = searchdata.id " % documents_table
       options.orderby = ""
   else:
-    tables = options.tables & @["documents"]
+    tables = options.tables & @[documents_table]
     result = result & options.select.join(", ")
     result = result & " FROM "&tables.join(", ")&" WHERE 1=1 "
   if options.single:
@@ -108,7 +111,7 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
   var doc_id_col: string
   if options.tags.len > 0 or options.folder.len > 0:
     if options.jsonFilter.len > 0 or (options.search.len > 0 and options.select[0] != "COUNT(docid)"):
-      doc_id_col = "documents.id"
+      doc_id_col = "$1.id" % documents_table
     else:
       doc_id_col = "id"
   if options.createdAfter != "":

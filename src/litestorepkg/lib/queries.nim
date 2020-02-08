@@ -105,6 +105,12 @@ INSERT INTO documents
 VALUES (?, ?, ?, ?, ?, ?)
 """
 
+const SQL_INSERT_SYSTEM_DOCUMENT* = sql"""
+INSERT INTO system_documents
+(id, data, content_type, binary, created)
+VALUES (?, ?, ?, ?, ?)
+"""
+
 const SQL_UPDATE_DOCUMENT* = sql"""
 UPDATE documents
 SET data = ?,
@@ -175,6 +181,10 @@ WHERE documents.id = tags.document_id AND
 tag_id = ?
 """
 
+const SQL_SELECT_SYSTEM_DOCUMENTS* = sql"""
+SELECT * FROM system_documents
+"""
+
 const SQL_SELECT_DOCUMENT_IDS_BY_TAG* = sql"""
 SELECT id FROM documents, tags
 WHERE documents.id = tags.document_id AND
@@ -202,6 +212,10 @@ const SQL_DELETE_DOCUMENTS_BY_TAG* = sql"""
 DELETE FROM documents
 WHERE documents.id IN
 (SELECT document_id FROM tags WHERE tag_id = ?)
+"""
+
+const SQL_DELETE_SYSTEM_DOCUMENTS* = sql"""
+DELETE FROM system_documents
 """
 
 const SQL_DELETE_SEARCHDATA_BY_TAG* = sql"""
