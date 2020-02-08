@@ -75,6 +75,11 @@ proc setup*(open = true) =
   if (open):
     try:
       LS.store = LS.file.openDatastore()
+      try:
+        LS.store.upgradeDatastore()
+      except:
+        echo getCurrentExceptionMsg()
+        fail(203, "Unable to upgrade datastore '$1'" % [LS.file])
       if LS.mount:
         try:
           LS.store.mountDir(LS.directory)

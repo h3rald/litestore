@@ -41,9 +41,10 @@ proc createDatastore*(file: string) =
   LOG.debug("Creating tables")
   data.exec(SQL_CREATE_DOCUMENTS_TABLE)
   data.exec(SQL_CREATE_SEARCHDATA_TABLE)
+  data.exec(SQL_CREATE_SYSTEM_DOCUMENTS_TABLE)
   data.exec(SQL_CREATE_TAGS_TABLE)
   data.exec(SQL_CREATE_INFO_TABLE)
-  data.exec(SQL_INSERT_INFO, 1, 0, 0)
+  data.exec(SQL_INSERT_INFO, 2, 0)
   LOG.debug("Creating indexes")
   data.createIndexes()
   LOG.debug("Database created")
@@ -63,6 +64,29 @@ proc destroyDatastore*(store: Datastore) =
   except:
     raise newException(EDatastoreUnavailable,
         "Datastore '$1' cannot destroyed." % store.path)
+
+proc retrieveInfo*(store: Datastore): array[0..1, int] =
+  var data = store.db.getRow(SQL_SELECT_INFO)
+  return [data[0].parseInt, data[1].parseInt]
+
+proc upgradeDatastore*(store: Datastore) =
+  let info = store.retrieveInfo()
+  if info[0] == 1:
+    LOG.debug("Upgrading datastore to version 2...")
+    let bkp_path = store.path & "__v1_backup"
+    copyFile(store.path, bkp_path)
+    try:
+      store.db.exec(SQL_CREATE_SYSTEM_DOCUMENTS_TABLE)
+      store.db.exec(SQL_UPDATE_VERSION, 2)
+      LOG.debug("Done.")
+    except:
+      store.closeDatastore()
+      store.path.removeFile()
+      copyFile(bkp_path, store.path)
+      let e = getCurrentException()
+      LOG.error(getCurrentExceptionMsg())
+      LOG.debug(e.getStackTrace())
+      LOG.error("Unable to upgrade datastore '$1'." % store.path)
 
 proc openDatastore*(file: string): Datastore =
   if not file.fileExists:
@@ -85,10 +109,6 @@ proc openDatastore*(file: string): Datastore =
   except:
     raise newException(EDatastoreUnavailable,
         "Datastore '$1' cannot be opened." % file)
-
-proc retrieveInfo*(store: Datastore): array[0..1, int] =
-  var data = store.db.getRow(SQL_SELECT_INFO)
-  return [data[0].parseInt, data[1].parseInt]
 
 proc hasMirror(store: Datastore): bool =
   return store.mount.len > 0
