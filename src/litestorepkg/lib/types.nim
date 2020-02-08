@@ -121,7 +121,10 @@ TAB_HEADERS = {
   "Server": LS.appname & "/" & LS.appversion
 }
 
-proc newQueryOptions*(): QueryOptions =
-  return QueryOptions(select: @["documents.id AS id", "documents.data AS data", "content_type", "binary", "searchable", "created", "modified"],
-    single: false, limit: 0, offset: 0, orderby: "", tags: "", search: "", folder: "", like: "",
+proc newQueryOptions*(system = false): QueryOptions =
+  var select = @["documents.id AS id", "documents.data AS data", "content_type", "binary", "searchable", "created", "modified"]
+  if system:
+    select = @["system_documents.id AS id", "system_documents.data AS data", "content_type", "binary", "created", "modified"]
+  return QueryOptions(select: select,
+    single: false, limit: 0, offset: 0, orderby: "", tags: "", search: "", folder: "", like: "", system: system,
     createdAfter: "", createdBefore: "", modifiedAfter: "", modifiedBefore: "", jsonFilter: "", jsonSelect: newSeq[tuple[path: string, alias: string]](), tables: newSeq[string]())
