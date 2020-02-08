@@ -2,7 +2,8 @@ import
   strutils,
   os,
   uri,
-  httpcore
+  httpcore,
+  json
 import
   litestorepkg/lib/types,
   litestorepkg/lib/logger,
@@ -98,6 +99,13 @@ when isMainModule:
   else:
     # Open Datastore
     setup(true)
+
+if LS.auth == newJNull():
+  # Attempt to retrieve auth.json from system documents
+  let options = newQueryOptions(true)
+  let rawDoc = LS.store.retrieveRawDocument("auth.json", options)
+  if rawDoc != "":
+    LS.auth = rawDoc.parseJson()
 
   case LS.operation:
     of opRun:
