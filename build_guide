@@ -7,6 +7,8 @@ pages=(
   md/getting-started.md
   md/usage.md
   md/auth.md
+  md/custom_resources.md
+    md/litestore_js_object.md
   md/admin_app.md
   md/api.md
     md/api_info.md
@@ -14,6 +16,7 @@ pages=(
     md/api_docs.md
     md/api_tags.md
     md/api_indexes.md
+    md/api_custom.md
   md/nim-api.md
     md/nim-api_high.md
     md/nim-api_low.md
