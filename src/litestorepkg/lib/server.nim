@@ -216,6 +216,16 @@ proc serve*(LS: LiteStore) =
     let areq = asynchttpserver.Request(req)
     await areq.respond(res.code, res.content, res.headers)
   echo(LS.appname & " v" & LS.appversion & " started on " & LS.address & ":" & $LS.port & ".")
+  if LS.configFile != "":
+    echo "- Configuration File: " & LS.configFile
+  if LS.authFile != "":
+    echo "- Auth File: " & LS.authFile
   if LS.mount:
-    echo("Mirroring datastore changes to: " & LS.directory)
+    echo "- Mirroring datastore changes to: " & LS.directory
+  if LS.readonly:
+    echo "- Read-only mode"
+  echo "- Log Level: " & LS.loglevel
+  echo "- Store: " & LS.file
+  if LS.auth != newJNull():
+    echo "- Authorization configured"
   asyncCheck server.serve(LS.port.Port, handleHttpRequest, LS.address)

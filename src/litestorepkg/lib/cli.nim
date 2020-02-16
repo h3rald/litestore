@@ -17,22 +17,25 @@ var
   logLevel = "warn"
   mount = false
   auth = newJNull()
-  exOperation:string = ""
-  exFile:string = ""
-  exBody:string = ""
-  exType:string = ""
-  exUri:string = ""
+  configuration = newJNull()
+  authFile = ""
+  configFile = ""
+  exOperation = ""
+  exFile = ""
+  exBody = ""
+  exType = ""
+  exUri = ""
+  cliSettings = newJObject()
 
 let
   usage* = appname & " v" & pkgVersion & " - Lightweight REST Document Store" & """
 
-(c) 2015-2018 Fabio Cevasco
+(c) 2015-2020 Fabio Cevasco
 
   Usage:
     litestore [command] [option1 option2 ...]
 
   Commands:
-    run                 Start LiteStore server (default if no command specified).
     delete              Delete a previously-imported specified directory (requires -d).
     execute             Execute an operation on data stored in the datastore (requires -o, -u, and in certain cases -f or -b and -t).
     import              Import the specified directory into the datastore (requires -d).
@@ -45,6 +48,7 @@ let
     --auth              Specify an authentication/authorization configuration file.
     -b, --body          Specify a string containing input data for an operation to be executed.
     -d, --directory     Specify a directory to serve, import, export, delete, or mount.
+    -c, --config        Specify a configuration file.
     -f, --file          Specify a file containing input data for an operation to be executed.
     -h, --help          Display this message.
     -l, --log           Specify the log level: debug, info, warn, error, none (default: info)
@@ -84,12 +88,15 @@ for kind, key, val in getOpt():
           if val == "":
             fail(100, "Address not specified.")
           address = val
+          cliSettings["address"] = %address
         of "port", "p":
           if val == "":
             fail(101, "Port not specified.")
           port = val.parseInt
+          cliSettings["port"] = %port
         of "store", "s":
           file = val
+          cliSettings["store"]  = %file
         of "log", "l":
           if val == "":
             fail(102, "Log level not specified.")
@@ -107,10 +114,12 @@ for kind, key, val in getOpt():
             else:
               fail(103, "Invalid log level '$1'" % val)
           loglevel = val
+          cliSettings["log"] = %logLevel
         of "directory", "d":
           if val == "":
             fail(104, "Directory not specified.")
           directory = val
+          cliSettings["directory"] = %directory
         of "operation", "o":
           if val == "":
             fail(106, "Operation not specified.")
@@ -134,9 +143,15 @@ for kind, key, val in getOpt():
         of "auth":
           if val == "":
             fail(114, "Authentication/Authorization configuration file not specified.")
-          auth = val.parseFile
+          authFile = val
+        of "config", "c":
+          if val == "":
+            fail(115, "Configuration file not specified.")
+          configuration = val.parseFile
+          configFile = val
         of "mount", "m":
           mount = true
+          cliSettings["mounnt"] = %mount
         of "version", "v":
           echo pkgVersion
           quit(0)
@@ -145,10 +160,38 @@ for kind, key, val in getOpt():
           quit(0)
         of "readonly", "r":
           readonly = true
+          cliSettings["readonly"] = %readonly
         else:
           discard
     else:
       discard
+
+# Process auth configuration if present
+
+if auth == newJNull() and configuration != newJNull() and configuration.hasKey("signature"):
+  auth = newJObject();
+  auth["access"] = newJObject();
+  auth["signature"] = configuration["signature"]
+  for k, v in configuration["resources"].pairs:
+    if v.hasKey("auth"):
+      auth["access"][k] = v["auth"]
+
+# Process config settings if present and if no cli settings are set
+
+if configuration != newJNull() and configuration.hasKey("settings"):
+  let settings = configuration["settings"]
+  if not cliSettings.hasKey("address") and settings.hasKey("address"):
+    address = settings["address"].getStr
+  if not cliSettings.hasKey("port") and settings.hasKey("port"):
+    port = settings["port"].getInt
+  if not cliSettings.hasKey("store") and settings.hasKey("store"):
+    file = settings["store"].getStr
+  if not cliSettings.hasKey("directory") and settings.hasKey("directory"):
+    directory = settings["directory"].getStr
+  if not cliSettings.hasKey("mount") and settings.hasKey("mount"):
+    mount = settings["mount"].getBool
+  if not cliSettings.hasKey("readonly") and settings.hasKey("readonly"):
+    readonly = settings["readonly"].getBool
 
 # Validation
 
@@ -164,6 +207,8 @@ if exUri == "" and operation == opExecute:
 if exOperation == "" and operation == opExecute:
   fail(111, "--operation option not specified")
 
+
+
 LS.operation = operation
 LS.address = address
 LS.port = port
@@ -173,6 +218,9 @@ LS.readonly = readonly
 LS.favicon = favicon
 LS.loglevel = loglevel
 LS.auth = auth
+LS.authFile = authFile
+LS.config = configuration
+LS.configFile = configFile
 LS.mount = mount
 LS.execution.file = exFile
 LS.execution.body = exBody
