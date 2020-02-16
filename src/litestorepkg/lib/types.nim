@@ -16,6 +16,9 @@ type
   EFileNotFound* = object of Exception
   EFileExists* = object of Exception
   EInvalidRequest* = object of Exception
+  ConfigFiles* = object
+    auth*: string
+    config*: string
   ExecutionData* = object
     operation*: string
     file*: string
@@ -71,6 +74,8 @@ type
     address*: string
     port*: int
     operation*: Operation
+    config*: JsonNode
+    configFile*: string
     directory*: string
     manageSystemData*: bool
     file*: string
@@ -80,6 +85,7 @@ type
     customResources*: StringTableRef
     appversion*: string
     auth*: JsonNode
+    authFile*: string
     favicon*:string
     loglevel*:string
   LSRequest* = asynchttpserver.Request
