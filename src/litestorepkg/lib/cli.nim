@@ -48,7 +48,7 @@ let
     -a, --address       Specify server address (default: 127.0.0.1).
     --auth              Specify an authentication/authorization configuration file.
     -b, --body          Specify a string containing input data for an operation to be executed.
-    -c, --custom        Specify a path to a folder containing custom resource definitions.
+    -w, --middleware    Specify a path to a folder containing middleware definitions.
     -d, --directory     Specify a directory to serve, import, export, delete, or mount.
     -f, --file          Specify a file containing input data for an operation to be executed.
     -h, --help          Display this message.
@@ -62,6 +62,7 @@ let
     -t, --type          Specify a content type for the body an operation to be executed via the execute command.
     -u, --uri           Specify an uri to execute an operation through the execute command.
     -v, --version       Display the program version.
+    -w, --middleware    Specify a path to a folder containing middleware definitions.
 """
 
 for kind, key, val in getOpt():
@@ -117,11 +118,11 @@ for kind, key, val in getOpt():
           if val == "":
             fail(104, "Directory not specified.")
           directory = val
-        of "custom", "c":
+        of "middleware", "w":
           if val == "":
-            fail(115, "Custom resources path not specified.")
+            fail(115, "Middleware path not specified.")
           if not val.existsDir():
-            fail(116, "Custom resources directory does not exist.")
+            fail(116, "Middleware directory does not exist.")
           for file in val.walkDir():
             if file.kind == pcFile or file.kind == pcLinkToFile:
               customResources[file.path.splitFile[1]] = file.path.readFile()
