@@ -15,6 +15,7 @@ import
 import 
   types, 
   utils, 
+  core,
   api_v1,
   api_v2,
   api_v3,
@@ -34,6 +35,15 @@ proc decodeUrlSafeAsString*(s: string): string =
 
 proc decodeUrlSafe*(s: string): seq[byte] =
   cast[seq[byte]](decodeUrlSafeAsString(s))
+
+proc getCustomResource*(LS: LiteStore, id: string): string =
+  if not LS.customResources.hasKey(id):
+    # Attempt to retrieve resource from system documents
+    let options = newQueryOptions(true)
+    let doc = LS.store.retrieveDocument("custom/" & id, options)
+    result = doc.data
+  else:
+    result = LS.customResources[id]
 
 proc getReqInfo(req: LSRequest): string =
   var url = req.url.path
@@ -114,13 +124,14 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
           auth(uri)
         break
   if info.version == "v6":
-    if info.resource.match(peg"^docs / info / tags / indexes$"):
+    if info.resource.match(peg"^docs$"):
+      let parts = info.id.split("/")
+      let custom = LS.getCustomResource(parts[0])
+      if (custom != ""):
+        return api_v6.execute(req, LS, info.resource, info.id)
       return api_v6.route(req, LS, info.resource, info.id)
-    elif info.resource.match(peg"^custom$"):
-      if LS.customResources.len > 0:
-        return api_v6.execute(req, LS, info.id)
-      else:
-        return resError(Http400, "Bad Request - Not custom resources available." % info.version)
+    elif info.resource.match(peg"^info / tags / indexes$"):
+      return api_v6.route(req, LS, info.resource, info.id)
     elif info.resource.match(peg"^dir$"):
       if LS.directory.len > 0:
         return api_v6.serveFile(req, LS, info.id)

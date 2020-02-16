@@ -986,7 +986,7 @@ proc delete(resource, id: string): LSResponse =
 proc head(resource, id: string): LSResponse =
   return newSimpleLSRequest(HttpHead, resource, id).head(LS, resource, id)
 
-proc registerApi(LS: LiteStore, ctx: DTContext, obj: duk_idx_t) =
+proc registerApi(LS: LiteStore, ctx: DTContext, obj: duk_idx_t, req: LSRequest, origResource, origId: string) =
   var api_idx = ctx.duk_push_object()
   # GET
   var get: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
@@ -1078,9 +1078,21 @@ proc registerApi(LS: LiteStore, ctx: DTContext, obj: duk_idx_t) =
   )
   discard duk_push_c_function(ctx, head, 2)
   discard ctx.duk_put_prop_string(api_idx, "head")
+  # PASSTHROUGH
+  #var passthrough: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
+  #  let resp = route(req, LS, origResource, origId)
+  #  var res_idx = ctx.duk_push_object()
+  #  ctx.duk_push_int(cast[cint](resp.code))
+  #  discard ctx.duk_put_prop_string(res_idx, "code")
+  #  discard ctx.duk_push_string(resp.content)
+  #  discard ctx.duk_put_prop_string(res_idx, "content")
+  #  return 1
+  #)
+  #discard duk_push_c_function(ctx, passthrough, 0)
+  #discard ctx.duk_put_prop_string(api_idx, "passthrough")
   discard ctx.duk_put_prop_string(obj, "api")
-      
-proc execute*(req: LSRequest, LS:LiteStore, id: string): LSResponse =
+
+proc execute*(req: LSRequest, LS: LiteStore, resource, id: string): LSResponse =
   var resource: string
   if not LS.customResources.hasKey(id):
     # Attempt to retrieve resource from system documents
@@ -1096,7 +1108,7 @@ proc execute*(req: LSRequest, LS:LiteStore, id: string): LSResponse =
   duk_console_init(ctx)
   duk_print_alert_init(ctx)
   var ctx_idx = ctx.duk_push_object()
-  LS.registerApi(ctx, ctx_idx)
+  LS.registerApi(ctx, ctx_idx, req, resource, id)
   LS.createRequest(ctx, ctx_idx, req)
   LS.createResponse(ctx, ctx_idx)
   discard ctx.duk_put_global_string("LiteStore")
