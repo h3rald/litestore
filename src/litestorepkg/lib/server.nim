@@ -36,15 +36,6 @@ proc decodeUrlSafeAsString*(s: string): string =
 proc decodeUrlSafe*(s: string): seq[byte] =
   cast[seq[byte]](decodeUrlSafeAsString(s))
 
-proc getCustomResource*(LS: LiteStore, id: string): string =
-  if not LS.customResources.hasKey(id):
-    # Attempt to retrieve resource from system documents
-    let options = newQueryOptions(true)
-    let doc = LS.store.retrieveDocument("custom/" & id, options)
-    result = doc.data
-  else:
-    result = LS.customResources[id]
-
 proc getReqInfo(req: LSRequest): string =
   var url = req.url.path
   if req.url.anchor != "":
@@ -57,7 +48,7 @@ proc handleCtrlC() {.noconv.} =
   echo ""
   LOG.info("Exiting...")
   quit()
-
+  
 template auth(uri: string): void =
   let cfg = access[uri]
   if cfg.hasKey(reqMethod):
@@ -124,14 +115,9 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
           auth(uri)
         break
   if info.version == "v6":
-    if info.resource.match(peg"^docs$"):
-      let parts = info.id.split("/")
-      let custom = LS.getCustomResource(parts[0])
-      if (custom != ""):
-        return api_v6.execute(req, LS, info.resource, info.id)
-      return api_v6.route(req, LS, info.resource, info.id)
-    elif info.resource.match(peg"^info / tags / indexes$"):
-      return api_v6.route(req, LS, info.resource, info.id)
+    if info.resource.match(peg"^docs / info / tags / indexes$"):
+      var nReq = req
+      return api_v6.execute(nReq, LS, info.resource, info.id)
     elif info.resource.match(peg"^dir$"):
       if LS.directory.len > 0:
         return api_v6.serveFile(req, LS, info.id)
@@ -238,11 +224,13 @@ setControlCHook(handleCtrlC)
 
 proc serve*(LS: LiteStore) =
   var server = newAsyncHttpServer()
-  proc handleHttpRequest(req: LSRequest): Future[void] {.async, gcsafe, closure.} =
+  proc handleHttpRequest(origReq: Request): Future[void] {.async, gcsafe, closure.} =
+    var client = origReq.client
+    var req = newLSRequest(origReq)
     LOG.info(getReqInfo(req).replace("$", "$$"))
     let res = req.process(LS)
-    let areq = asynchttpserver.Request(req)
-    await areq.respond(res.code, res.content, res.headers)
+    var newReq = newRequest(req, client)
+    await newReq.respond(res.code, res.content, res.headers)
   echo(LS.appname & " v" & LS.appversion & " started on " & LS.address & ":" & $LS.port & ".")
   if LS.configFile != "":
     echo "- Configuration File: " & LS.configFile

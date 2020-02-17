@@ -20,7 +20,7 @@ var
   system = false
   mount = false
   auth = newJNull()
-  customResources = newStringTable()
+  middleware = newStringTable()
   configuration = newJNull()
   authFile = ""
   configFile = ""
@@ -134,7 +134,7 @@ for kind, key, val in getOpt():
             fail(116, "Middleware directory does not exist.")
           for file in val.walkDir():
             if file.kind == pcFile or file.kind == pcLinkToFile:
-              customResources[file.path.splitFile[1]] = file.path.readFile()
+              middleware[file.path.splitFile[1]] = file.path.readFile()
         of "operation", "o":
           if val == "":
             fail(106, "Operation not specified.")
@@ -234,7 +234,7 @@ LS.favicon = favicon
 LS.loglevel = loglevel
 LS.auth = auth
 LS.manageSystemData = system
-LS.customResources = customResources
+LS.middleware = middleware
 LS.authFile = authFile
 LS.config = configuration
 LS.configFile = configFile
