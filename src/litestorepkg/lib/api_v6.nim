@@ -909,57 +909,12 @@ proc route*(req: LSRequest, LS: LiteStore, resource = "docs", id = ""): LSRespon
     else:
       return resError(Http405, "Method not allowed: $1" % $req.reqMethod)
 
-# Custom Resources support
-
-proc createRequest(LS: LiteStore, ctx: DTContext, obj: duk_idx_t, req: LSRequest) =
-  var req_idx = ctx.duk_push_object()
-  discard ctx.duk_push_string($req.reqMethod)
-  discard ctx.duk_put_prop_string(req_idx, "method")
-  # url
-  var uri_idx = ctx.duk_push_object()
-  discard ctx.duk_push_string(LS.address)
-  discard ctx.duk_put_prop_string(uri_idx, "hostname")
-  ctx.duk_push_int(cast[cint](LS.port))
-  discard ctx.duk_put_prop_string(uri_idx, "port")
-  discard ctx.duk_push_string(req.url.query)
-  discard ctx.duk_put_prop_string(uri_idx, "search")
-  discard ctx.duk_push_string(req.url.path)
-  discard ctx.duk_put_prop_string(uri_idx, "path")
-  discard ctx.duk_put_prop_string(req_idx, "url")
-  discard ctx.duk_push_string(req.body)
-  discard ctx.duk_put_prop_string(req_idx, "body")
-  var hd_idx = ctx.duk_push_object()
-  for k, v in pairs(req.headers):
-    discard ctx.duk_push_string(v)
-    discard ctx.duk_put_prop_string(hd_idx, k)
-  discard ctx.duk_put_prop_string(req_idx, "headers")
-  discard ctx.duk_put_prop_string(obj, "request")
-
-proc createResponse(LS: LiteStore, ctx: DTContext, obj: duk_idx_t) =
-  var res_idx = ctx.duk_push_object()
-  ctx.duk_push_int(200)
-  discard ctx.duk_put_prop_string(res_idx, "code")
-  discard ctx.duk_push_string("")
-  discard ctx.duk_put_prop_string(res_idx, "content")
-  var hd_idx = ctx.duk_push_object()
-  discard ctx.duk_push_string("*")
-  discard ctx.duk_put_prop_string(hd_idx, "Access-Control-Allow-Origin")
-  discard ctx.duk_push_string("Authorization, Content-Type")
-  discard ctx.duk_put_prop_string(hd_idx, "Access-Control-Allow-Headers")
-  discard ctx.duk_push_string(LS.appname & "/" & LS.appversion)
-  discard ctx.duk_put_prop_string(hd_idx, "Server")
-  discard ctx.duk_push_string("application/json")
-  discard ctx.duk_put_prop_string(hd_idx, "Content-Type")
-  discard ctx.duk_put_prop_string(res_idx, "headers")
-  discard ctx.duk_put_prop_string(obj, "response")
-
 proc newSimpleLSRequest(meth: HttpMethod, resource, id,  body = "", params = "", headers = newHttpHeaders()): LSRequest =
   result.reqMethod = meth
   result.body = body
   result.headers = headers
   result.url = parseUri("$1://$2:$3/$4/$5?$6" % @["http", "localhost", "9500", resource, id, params])
   
-
 proc get(resource, id: string, params = ""): LSResponse =
   return newSimpleLSRequest(HttpGet, resource, id, "", params).get(LS, resource, id)
 
@@ -986,7 +941,7 @@ proc delete(resource, id: string): LSResponse =
 proc head(resource, id: string): LSResponse =
   return newSimpleLSRequest(HttpHead, resource, id).head(LS, resource, id)
 
-proc registerApi(LS: LiteStore, ctx: DTContext, obj: duk_idx_t, req: LSRequest, origResource, origId: string) =
+proc registerStoreApi(LS: LiteStore, ctx: DTContext, origResource, origId: string) =
   var api_idx = ctx.duk_push_object()
   # GET
   var get: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
@@ -1078,52 +1033,114 @@ proc registerApi(LS: LiteStore, ctx: DTContext, obj: duk_idx_t, req: LSRequest, 
   )
   discard duk_push_c_function(ctx, head, 2)
   discard ctx.duk_put_prop_string(api_idx, "head")
-  # PASSTHROUGH
-  #var passthrough: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
-  #  let resp = route(req, LS, origResource, origId)
-  #  var res_idx = ctx.duk_push_object()
-  #  ctx.duk_push_int(cast[cint](resp.code))
-  #  discard ctx.duk_put_prop_string(res_idx, "code")
-  #  discard ctx.duk_push_string(resp.content)
-  #  discard ctx.duk_put_prop_string(res_idx, "content")
-  #  return 1
-  #)
-  #discard duk_push_c_function(ctx, passthrough, 0)
-  #discard ctx.duk_put_prop_string(api_idx, "passthrough")
-  discard ctx.duk_put_prop_string(obj, "api")
+  discard ctx.duk_put_global_string("$store")
 
-proc execute*(req: LSRequest, LS: LiteStore, resource, id: string): LSResponse =
-  var resource: string
-  if not LS.customResources.hasKey(id):
+proc jError(ctx: DTContext): LSResponse  =
+  return resError(Http500, $ctx.duk_safe_to_string(-1))
+
+proc getMiddleware*(LS: LiteStore, id: string): string =
+  if not LS.middleware.hasKey(id):
     # Attempt to retrieve resource from system documents
     let options = newQueryOptions(true)
     let doc = LS.store.retrieveDocument("custom/" & id, options)
-    if doc.data == "":
-      return resError(Http404, "Custom resource '$1' not found." % id)
-    resource = doc.data
+    result = doc.data
   else:
-    resource = LS.customResources[id]
+    result = LS.middleware[id]
+
+proc getMiddlewareSeq(resource, id: string): seq[string] =
+  result = newSeq[string]() 
+  if LS.config.kind != JObject or not LS.config.hasKey("resources"):
+    return 
+  var reqUri = resource & "/" & id
+  if reqUri[^1] == '/':
+    reqUri.removeSuffix({'/'})
+  let parts = reqUri.split("/")
+  let ancestors = parts[0..parts.len-2]
+  var currentPath = "/"
+  for p in ancestors:
+    currentPath &= p & "/*"
+    if LS.config["resources"].hasKey(currentPath) and LS.config["resources"][currentPath].hasKey("middleware"):
+      let mw = LS.config["resources"][currentPath]["middleware"]
+      if (mw.kind == JArray):
+        for m in mw:
+          result.add m.getStr
+  if LS.config["resources"].hasKey(reqUri) and LS.config["resources"][reqUri].hasKey("middleware"):
+    let mw = LS.config["resources"][reqUri]["middleware"]
+    if (mw.kind == JArray):
+      for m in mw:
+        result.add m.getStr
+
+proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSResponse =
+  let middleware = getMiddlewareSeq(resource, id)
+  var jReq = $(%* req)
+  var jRes = """
+  {
+    "code": 200,
+    "content": "",
+    "final": false,
+    "headers": {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "Authorization, Content-Type",
+      "Server": "$1",
+      "Content-Type": "application/json"
+    }
+  }
+  """ % [LS.appname & "/" & LS.appversion]
+  var context = "{}"
+  ######
   # Create execution context
   var ctx = duk_create_heap_default()
   duk_console_init(ctx)
   duk_print_alert_init(ctx)
-  var ctx_idx = ctx.duk_push_object()
-  LS.registerApi(ctx, ctx_idx, req, resource, id)
-  LS.createRequest(ctx, ctx_idx, req)
-  LS.createResponse(ctx, ctx_idx)
-  discard ctx.duk_put_global_string("LiteStore")
-  # Evaluate custom resource 
-  if ctx.duk_peval_string(LS.customResources[id]) != 0:
-    return resError(Http500, $ctx.duk_safe_to_string(-1))
-  # Retrieve response
-  discard 
-  if ctx.duk_peval_string("JSON.stringify(LiteStore.response);") != 0:
-    return resError(Http500, $ctx.duk_safe_to_string(-1))
-  let jResponse = parseJson($(ctx.duk_get_string(-1)))
+  LS.registerStoreApi(ctx, resource, id)
+  if ctx.duk_peval_string("JSON.parse($1);" % jReq) != 0:
+    return jError(ctx)
+  discard ctx.duk_put_global_string("$req")
+  if ctx.duk_peval_string("JSON.parse($1);" % jRes) != 0:
+    return jError(ctx)
+  discard ctx.duk_put_global_string("$res")
+  if ctx.duk_peval_string("JSON.parse($1);" % context) != 0:
+    return jError(ctx)
+  discard ctx.duk_put_global_string("$ctx")
+  # Middleware-specific functions
+  let fNext: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
+    return ctx.duk_peval_string("__next__  = true;")
+  )
+  discard duk_push_c_function(ctx, fNext, 0)
+  discard ctx.duk_put_global_string("$next")
+  let fAbort: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
+    return ctx.duk_peval_string("__abort__  = true;")
+  )
+  discard duk_push_c_function(ctx, fAbort, 0)
+  discard ctx.duk_put_global_string("$abort")
+  var i = 0
+  ctx.duk_push_boolean(1)
+  discard ctx.duk_put_global_string("__next__")
+  ctx.duk_push_boolean(0)
+  discard ctx.duk_put_global_string("__abort__")
+  var next = 1
+  var abort = 0
+  while abort != 1 and i < middleware.len:
+    if ctx.duk_peval_string("__next__") != 0:
+      return jError(ctx) 
+    next = ctx.duk_get_boolean(-1)
+    if ctx.duk_peval_string("__abort__") != 0:
+      return jError(ctx) 
+    abort = ctx.duk_get_boolean(-1)
+    if next != 1:
+      return resError(Http500, "Middleware does not explicitly call $next().")
+    let code = LS.getMiddleware(middleware[i])
+    if ctx.duk_peval_string(code) != 0:
+      return jError(ctx)
+    i.inc
+  # Retrieve response, and request
+  if ctx.duk_peval_string("JSON.stringify($res);") != 0:
+    return jError(ctx)
+  let fRes = parseJson($(ctx.duk_get_string(-1))).newLSResponse
+  if ctx.duk_peval_string("JSON.stringify($req;") != 0:
+    return jError(ctx)
+  let fReq = parseJson($(ctx.duk_get_string(-1))).newLSRequest()
   ctx.duk_destroy_heap();
-  result.code = HttpCode(jResponse["code"].getInt)
-  result.content = jResponse["content"].getStr
-  result.headers = newHttpHeaders()
-  for k, v in pairs(jResponse["headers"]):
-    result.headers[k] = v.getStr
-  result.headers["Content-Length"] = $result.content.len
+  if abort != 1:
+    return fRes
+  return route(fReq, LS, resource, id)

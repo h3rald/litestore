@@ -314,7 +314,7 @@ proc eWarn*() =
   LOG.warn(e.msg)
   LOG.debug(getStackTrace(e))
 
-proc validate*(req: Request, LS: LiteStore, resource: string, id: string, cb: proc(req: Request, LS: LiteStore, resource: string, id: string):LSResponse): LSResponse =
+proc validate*(req: LSRequest, LS: LiteStore, resource: string, id: string, cb: proc(req: LSRequest, LS: LiteStore, resource: string, id: string):LSResponse): LSResponse =
   if req.reqMethod == HttpPost or req.reqMethod == HttpPut or req.reqMethod == HttpPatch:
     var ct =  ""
     let body = req.body.strip

@@ -1,9 +1,12 @@
 import 
   x_db_sqlite, 
   asynchttpserver, 
+  asyncnet,
+  uri,
   pegs, 
   json,
-  strtabs
+  strtabs,
+  tables
 import
   config
 
@@ -82,22 +85,109 @@ type
     mount*: bool
     readonly*: bool
     appname*: string
-    customResources*: StringTableRef
+    middleware*: StringTableRef
     appversion*: string
     auth*: JsonNode
     authFile*: string
     favicon*:string
     loglevel*:string
-  LSRequest* = asynchttpserver.Request
-  LSResponse* = tuple[
-    code: HttpCode,
-    content: string,
-    headers: HttpHeaders]
+  LSRequest* = object
+    reqMethod*: HttpMethod
+    headers*: HttpHeaders
+    protocol*: tuple[orig: string, major, minor: int]
+    url*: Uri
+    hostname*: string 
+    body*: string
+  LSResponse* = object
+    code*: HttpCode
+    content*: string
+    headers*: HttpHeaders
   ResourceInfo* = tuple[
     resource: string,
     id: string,
     version: string
   ]
+
+proc httpMethod*(meth: string): HttpMethod =
+  case meth:
+    of "GET":
+      return HttpGet
+    of "POST":
+      return HttpPost
+    of "PUT":
+      return HttpPut
+    of "HEAD":
+      return HttpHead
+    of "PATCH":
+      return HttpPatch
+    of "OPTIONS":
+      return HttpOptions
+    of "DELETE":
+      return HttpDelete
+    else:
+      return HttpGet
+  
+
+proc `%`*(protocol: tuple[orig: string, major: int, minor: int]): JsonNode =
+  result = newJObject()
+  result["orig"] = %protocol.orig
+  result["major"] = %protocol.major
+  result["minor"] = %protocol.minor
+
+proc `%`*(code: HttpCode): JsonNode =
+  return %(int(code))
+
+proc `%`*(table: Table[string, seq[string]]): JsonNode =
+  result = newJObject()
+  for k, v in table:
+    result[k] = %v
+
+proc `%`*(req: LSRequest): JsonNode =
+  result = newJObject()
+  result["method"] = %($req.reqMethod)
+  result["headers"] = %req.headers
+  result["protocol"] = %req.protocol
+  result["url"] = %req.url
+  result["hostname"] = %req.hostname
+  result["body"] = %req.body
+
+proc `%`*(res: LSResponse): JsonNode =
+  result = newJObject()
+  result["code"] = %($res.code)
+  result["headers"] = %res.headers
+  result["content"] = %res.content
+
+proc newLSResponse*(res: JsonNode): LSResponse =
+  result.code = HttpCode(res["code"].getInt)
+  result.content = res["content"].getStr
+  for k, v in res["headers"].pairs:
+    result.headers[k] = v.getStr
+
+proc newLSRequest*(req: JsonNode): LSRequest =
+  result.reqMethod = httpMethod(req["method"].getStr)
+  for k, v in req["headers"].pairs:
+    result.headers[k] = v.getStr
+  result.protocol = to(req["protocol"], tuple[orig: string, major, minor: int])
+  result.url = to(req["url"], Uri)
+  result.hostname = req["hostname"].getStr
+  result.body = req["body"].getStr
+
+proc newLSRequest*(req: Request): LSRequest =
+  result.reqMethod = req.reqMethod
+  result.headers = req.headers
+  result.protocol = req.protocol
+  result.url = req.url
+  result.hostname = req.hostname
+  result.body = req.body
+
+proc newRequest*(req: LSRequest, client: AsyncSocket): Request =
+  result.client = client
+  result.reqMethod = req.reqMethod
+  result.headers = req.headers
+  result.protocol = req.protocol
+  result.url = req.url
+  result.hostname = req.hostname
+  result.body = req.body
 
 var
   PEG_TAG* {.threadvar.}: Peg
