@@ -1141,6 +1141,6 @@ proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSRespon
     return jError(ctx)
   let fReq = parseJson($(ctx.duk_get_string(-1))).newLSRequest()
   ctx.duk_destroy_heap();
-  if abort != 1:
+  if abort == 1:
     return fRes
   return route(fReq, LS, resource, id)
