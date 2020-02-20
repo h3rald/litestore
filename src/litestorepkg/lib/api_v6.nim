@@ -1036,7 +1036,7 @@ proc registerStoreApi(LS: LiteStore, ctx: DTContext, origResource, origId: strin
   discard ctx.duk_put_global_string("$store")
 
 proc jError(ctx: DTContext): LSResponse  =
-  return resError(Http500, $ctx.duk_safe_to_string(-1))
+  return resError(Http500, "Middleware Error: " & $ctx.duk_safe_to_string(-1))
 
 proc getMiddleware*(LS: LiteStore, id: string): string =
   if not LS.middleware.hasKey(id):
@@ -1047,34 +1047,36 @@ proc getMiddleware*(LS: LiteStore, id: string): string =
   else:
     result = LS.middleware[id]
 
-proc getMiddlewareSeq(resource, id: string): seq[string] =
+proc getMiddlewareSeq(resource, id, meth: string): seq[string] =
   result = newSeq[string]() 
   if LS.config.kind != JObject or not LS.config.hasKey("resources"):
     return 
-  var reqUri = resource & "/" & id
+  var reqUri = "/" & resource & "/" & id
   if reqUri[^1] == '/':
     reqUri.removeSuffix({'/'})
   let parts = reqUri.split("/")
-  let ancestors = parts[0..parts.len-2]
+  let ancestors = parts[1..parts.len-2]
   var currentPath = "/"
+  var currentPaths = ""
   for p in ancestors:
-    currentPath &= p & "/*"
-    if LS.config["resources"].hasKey(currentPath) and LS.config["resources"][currentPath].hasKey("middleware"):
-      let mw = LS.config["resources"][currentPath]["middleware"]
+    currentPath &= p
+    currentPaths = currentPath & "/*"
+    if LS.config["resources"].hasKey(currentPaths) and LS.config["resources"][currentPaths].hasKey(meth) and LS.config["resources"][currentPaths][meth].hasKey("middleware"):
+      let mw = LS.config["resources"][currentPaths][meth]["middleware"]
       if (mw.kind == JArray):
         for m in mw:
           result.add m.getStr
-  if LS.config["resources"].hasKey(reqUri) and LS.config["resources"][reqUri].hasKey("middleware"):
-    let mw = LS.config["resources"][reqUri]["middleware"]
+  if LS.config["resources"].hasKey(reqUri) and LS.config["resources"][reqUri].hasKey(meth) and LS.config["resources"][reqUri][meth].hasKey("middleware"):
+    let mw = LS.config["resources"][reqUri][meth]["middleware"]
     if (mw.kind == JArray):
       for m in mw:
         result.add m.getStr
 
 proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSResponse =
-  let middleware = getMiddlewareSeq(resource, id)
+  let middleware = getMiddlewareSeq(resource, id, $req.reqMethod)
   var jReq = $(%* req)
-  var jRes = """
-  {
+  echo jReq
+  var jRes = """{
     "code": 200,
     "content": "",
     "final": false,
@@ -1084,22 +1086,20 @@ proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSRespon
       "Server": "$1",
       "Content-Type": "application/json"
     }
-  }
-  """ % [LS.appname & "/" & LS.appversion]
+  }""" % [LS.appname & "/" & LS.appversion]
   var context = "{}"
-  ######
   # Create execution context
   var ctx = duk_create_heap_default()
   duk_console_init(ctx)
   duk_print_alert_init(ctx)
   LS.registerStoreApi(ctx, resource, id)
-  if ctx.duk_peval_string("JSON.parse($1);" % jReq) != 0:
+  if ctx.duk_peval_string("JSON.parse('$1');" % jReq) != 0:
     return jError(ctx)
   discard ctx.duk_put_global_string("$req")
-  if ctx.duk_peval_string("JSON.parse($1);" % jRes) != 0:
+  if ctx.duk_peval_string("JSON.parse('$1');" % jRes.replace("\n", "")) != 0:
     return jError(ctx)
   discard ctx.duk_put_global_string("$res")
-  if ctx.duk_peval_string("JSON.parse($1);" % context) != 0:
+  if ctx.duk_peval_string("JSON.parse('$1');" % context) != 0:
     return jError(ctx)
   discard ctx.duk_put_global_string("$ctx")
   # Middleware-specific functions
@@ -1130,14 +1130,16 @@ proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSRespon
     if next != 1:
       return resError(Http500, "Middleware does not explicitly call $next().")
     let code = LS.getMiddleware(middleware[i])
+    echo "evaluating code"
     if ctx.duk_peval_string(code) != 0:
+      echo "error!"
       return jError(ctx)
     i.inc
   # Retrieve response, and request
   if ctx.duk_peval_string("JSON.stringify($res);") != 0:
     return jError(ctx)
   let fRes = parseJson($(ctx.duk_get_string(-1))).newLSResponse
-  if ctx.duk_peval_string("JSON.stringify($req;") != 0:
+  if ctx.duk_peval_string("JSON.stringify($req);") != 0:
     return jError(ctx)
   let fReq = parseJson($(ctx.duk_get_string(-1))).newLSRequest()
   ctx.duk_destroy_heap();
