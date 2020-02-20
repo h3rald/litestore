@@ -6,6 +6,7 @@ import
   pegs, 
   json,
   strtabs,
+  jwt,
   tables
 import
   config
@@ -96,6 +97,7 @@ type
     headers*: HttpHeaders
     protocol*: tuple[orig: string, major, minor: int]
     url*: Uri
+    jwt*: JWT
     hostname*: string 
     body*: string
   LSResponse* = object
@@ -160,11 +162,13 @@ proc `%`*(res: LSResponse): JsonNode =
 proc newLSResponse*(res: JsonNode): LSResponse =
   result.code = HttpCode(res["code"].getInt)
   result.content = res["content"].getStr
+  result.headers = newHttpHeaders()
   for k, v in res["headers"].pairs:
     result.headers[k] = v.getStr
 
 proc newLSRequest*(req: JsonNode): LSRequest =
   result.reqMethod = httpMethod(req["method"].getStr)
+  result.headers = newHttpHeaders()
   for k, v in req["headers"].pairs:
     result.headers[k] = v.getStr
   result.protocol = to(req["protocol"], tuple[orig: string, major, minor: int])

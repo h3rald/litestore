@@ -49,7 +49,7 @@ proc handleCtrlC() {.noconv.} =
   LOG.info("Exiting...")
   quit()
   
-template auth(uri: string): void =
+template auth(uri: string, jwt: JWT): void =
   let cfg = access[uri]
   if cfg.hasKey(reqMethod):
     LOG.debug("Authenticating: " & reqMethod & " " & uri)
@@ -58,7 +58,7 @@ template auth(uri: string): void =
     let token = req.headers["Authorization"].replace(peg"^ 'Bearer '", "")
     # Validate token
     try:
-      let jwt = token.toJwt()
+      jwt = token.toJwt()
       let parts = token.split(".")
       var sig = LS.auth["signature"].getStr 
       discard verifySignature(parts[0] & "." & parts[1], decodeUrlSafe(parts[2]), sig)
@@ -87,6 +87,7 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
   if reqUri[^1] == '/':
     reqUri.removeSuffix({'/'})
   let reqMethod = $req.reqMethod
+  var jwt: JWT
   # Authentication/Authorization
   if LS.auth != newJNull():
     var uri = reqUri
@@ -94,12 +95,12 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
     while true:
       # Match exact url
       if access.hasKey(uri):
-        auth(uri)
+        auth(uri, jwt)
         break
       # Match exact url adding /* (e.g. /docs would match also /docs/* in auth.json)
       elif uri[^1] != '*' and uri[^1] != '/':
         if access.hasKey(uri & "/*"):
-          auth(uri & "/*")
+          auth(uri & "/*", jwt)
           break
       var parts = uri.split("/")
       if parts[^1] == "*":
@@ -112,11 +113,13 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
         # If at the end of the URL, check generic URL
         uri = "/*"
         if access.hasKey(uri):
-          auth(uri)
+          auth(uri, jwt)
         break
   if info.version == "v6":
     if info.resource.match(peg"^docs / info / tags / indexes$"):
       var nReq = req
+      if jwt.signature.len != 0:
+        nReq.jwt = jwt
       return api_v6.execute(nReq, LS, info.resource, info.id)
     elif info.resource.match(peg"^dir$"):
       if LS.directory.len > 0:
