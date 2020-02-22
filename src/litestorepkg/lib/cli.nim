@@ -69,6 +69,21 @@ let
     -w, --middleware    Specify a path to a folder containing middleware definitions.
 """
 
+proc setLogLevel(val: string) =
+  case val:
+    of "info":
+      LOG.level = lvInfo
+    of "warn":
+      LOG.level = lvWarn
+    of "debug":
+      LOG.level = lvDebug
+    of "error":
+      LOG.level = lvError
+    of "none":
+      LOG.level = lvNone
+    else:
+      fail(103, "Invalid log level '$1'" % val)
+
 for kind, key, val in getOpt():
   case kind:
     of cmdArgument:
@@ -107,20 +122,8 @@ for kind, key, val in getOpt():
         of "log", "l":
           if val == "":
             fail(102, "Log level not specified.")
-          case val:
-            of "info":
-              LOG.level = lvInfo
-            of "warn":
-              LOG.level = lvWarn
-            of "debug":
-              LOG.level = lvDebug
-            of "error":
-              LOG.level = lvError
-            of "none":
-              LOG.level = lvNone
-            else:
-              fail(103, "Invalid log level '$1'" % val)
-          loglevel = val
+          setLogLevel(val)
+          logLevel = val
           cliSettings["log"] = %logLevel
         of "directory", "d":
           if val == "":
@@ -166,7 +169,7 @@ for kind, key, val in getOpt():
           configFile = val
         of "mount", "m":
           mount = true
-          cliSettings["mounnt"] = %mount
+          cliSettings["mount"] = %mount
         of "version", "v":
           echo pkgVersion
           quit(0)
@@ -188,8 +191,10 @@ if auth == newJNull() and configuration != newJNull() and configuration.hasKey("
   auth["access"] = newJObject();
   auth["signature"] = configuration["signature"]
   for k, v in configuration["resources"].pairs:
-    if v.hasKey("auth"):
-      auth["access"][k] = v["auth"]
+    auth["access"][k] = newJObject()
+    for meth, content in v.pairs:
+      if content.hasKey("auth"):
+        auth["access"][k][meth] = content["auth"]
 
 # Process config settings if present and if no cli settings are set
 
@@ -203,6 +208,9 @@ if configuration != newJNull() and configuration.hasKey("settings"):
     file = settings["store"].getStr
   if not cliSettings.hasKey("directory") and settings.hasKey("directory"):
     directory = settings["directory"].getStr
+  if not cliSettings.hasKey("log") and settings.hasKey("log"):
+    logLevel = settings["log"].getStr
+    setLogLevel(logLevel)
   if not cliSettings.hasKey("mount") and settings.hasKey("mount"):
     mount = settings["mount"].getBool
   if not cliSettings.hasKey("readonly") and settings.hasKey("readonly"):
@@ -231,7 +239,7 @@ LS.file = file
 LS.directory = directory
 LS.readonly = readonly
 LS.favicon = favicon
-LS.loglevel = loglevel
+LS.logLevel = logLevel
 LS.auth = auth
 LS.manageSystemData = system
 LS.middleware = middleware
