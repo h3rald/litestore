@@ -1108,29 +1108,20 @@ proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSRespon
   )
   discard duk_push_c_function(ctx, fNext, 0)
   discard ctx.duk_put_global_string("$next")
-  let fAbort: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
-    return ctx.duk_peval_string("__abort__  = true;")
-  )
-  discard duk_push_c_function(ctx, fAbort, 0)
-  discard ctx.duk_put_global_string("$abort")
   var i = 0
   ctx.duk_push_boolean(1)
   discard ctx.duk_put_global_string("__next__")
-  ctx.duk_push_boolean(0)
-  discard ctx.duk_put_global_string("__abort__")
-  var next = 1
   var abort = 0
+  var next = 0
   while abort != 1 and i < middleware.len:
     if ctx.duk_peval_string("__next__") != 0:
       return jError(ctx) 
     next = ctx.duk_get_boolean(-1)
-    if ctx.duk_peval_string("__abort__") != 0:
-      return jError(ctx) 
-    abort = ctx.duk_get_boolean(-1)
     if next != 1:
-      return resError(Http500, "Middleware does not explicitly call $next().")
+      abort = 1
+    LOG.debug("next: $1 | abort: $2", [next, abort])
     let code = LS.getMiddleware(middleware[i])
-    echo "evaluating code"
+    LOG.debug("Evaluating middleware '$1'" %  middleware[i])
     if ctx.duk_peval_string(code) != 0:
       echo "error!"
       return jError(ctx)

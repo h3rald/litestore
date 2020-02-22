@@ -1,3 +1,4 @@
-LiteStore.response.content = LiteStore.api.get('docs').content;
-
-console.log(LiteStore.api.passthrough());
+(function() {
+  $res.content = $req;
+  return;
+}())
