@@ -1074,6 +1074,8 @@ proc getMiddlewareSeq(resource, id, meth: string): seq[string] =
 
 proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSResponse =
   let middleware = getMiddlewareSeq(resource, id, $req.reqMethod)
+  if middleware.len == 0:
+    return route(req, LS, resource, id)
   var jReq = $(%* req)
   echo jReq
   var jRes = """{

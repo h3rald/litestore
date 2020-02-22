@@ -6,6 +6,8 @@ import
   pegs, 
   json,
   strtabs,
+  strutils,
+  sequtils,
   jwt,
   tables
 import
@@ -147,7 +149,15 @@ proc `%`*(table: Table[string, seq[string]]): JsonNode =
 proc `%`*(req: LSRequest): JsonNode =
   result = newJObject()
   result["method"] = %($req.reqMethod)
-  result["headers"] = %req.headers
+  result["jwt"] = newJObject();
+  if req.jwt.signature.len > 0:
+    result["jwt"]["header"] = %req.jwt.header
+    result["jwt"]["claims"] = %req.jwt.claims
+  result["headers"] = newJObject()
+  let headers = %req.headers
+  result["headers"] = newJObject()
+  for k, v in headers["table"].pairs:
+    result["headers"][k] = %join(v.mapIt(it.getStr), ", ")
   result["protocol"] = %req.protocol
   result["url"] = %req.url
   result["hostname"] = %req.hostname
