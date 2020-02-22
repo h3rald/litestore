@@ -1,13 +1,15 @@
 {
   "settings": {
-    "mount": true,
-    "directory": "admin"
+    "log": "debug"
   },
   "resources": {
     "/info": {
       "GET": { "auth": ["admin:server"] }
     },
     "/docs/*": {
+      "GET": {
+        "middleware": ["test"]
+      },
       "POST": { "auth": ["admin:server"] },
       "PATCH": { "auth": ["admin:server"] },
       "PUT": { "auth": ["admin:server"] },
