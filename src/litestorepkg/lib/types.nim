@@ -8,7 +8,9 @@ import
   strtabs,
   strutils,
   sequtils,
+  nativesockets,
   jwt,
+  uri,
   tables
 import
   config
@@ -158,9 +160,11 @@ proc `%`*(req: LSRequest): JsonNode =
   result["headers"] = newJObject()
   for k, v in headers["table"].pairs:
     result["headers"][k] = %join(v.mapIt(it.getStr), ", ")
-  result["protocol"] = %req.protocol
-  result["url"] = %req.url
-  result["hostname"] = %req.hostname
+  result["protocol"] = %req.protocol.orig
+  result["hostname"] = %req.url.hostname
+  result["port"] = %req.url.port.parseInt
+  result["path"] = %req.url.path
+  result["query"] = %req.url.query
   result["body"] = %req.body
 
 proc `%`*(res: LSResponse): JsonNode =
@@ -171,20 +175,27 @@ proc `%`*(res: LSResponse): JsonNode =
 
 proc newLSResponse*(res: JsonNode): LSResponse =
   result.code = HttpCode(res["code"].getInt)
-  result.content = res["content"].getStr
+  result.content = $res["content"]
   result.headers = newHttpHeaders()
   for k, v in res["headers"].pairs:
-    result.headers[k] = v.getStr
+    result.headers[k] = $v
 
 proc newLSRequest*(req: JsonNode): LSRequest =
   result.reqMethod = httpMethod(req["method"].getStr)
   result.headers = newHttpHeaders()
   for k, v in req["headers"].pairs:
-    result.headers[k] = v.getStr
-  result.protocol = to(req["protocol"], tuple[orig: string, major, minor: int])
-  result.url = to(req["url"], Uri)
-  result.hostname = req["hostname"].getStr
-  result.body = req["body"].getStr
+    result.headers[k] = $v
+  let protocol = req["protocol"].getStr
+  let  parts = protocol.split("/")
+  let version = parts[1].split(".")
+  result.protocol = (orig: parts[0], major: version[0].parseInt, minor: version[1].parseInt)
+  result.url = initUri()
+  result.url.hostname = $req["hostname"]
+  result.url.port = $req["port"]
+  result.url.path = $req["path"]
+  result.url.query = $req["query"]
+  result.hostname = $req["hostname"]
+  result.body = $req["body"]
 
 proc newLSRequest*(req: Request): LSRequest =
   result.reqMethod = req.reqMethod

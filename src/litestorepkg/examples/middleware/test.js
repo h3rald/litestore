@@ -1,4 +1,4 @@
 (function() {
-  $res.content = $req;
+  $res.content =  $req;
   return;
 }())

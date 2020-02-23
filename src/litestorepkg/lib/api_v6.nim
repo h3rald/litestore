@@ -1044,6 +1044,8 @@ proc getMiddleware*(LS: LiteStore, id: string): string =
     let options = newQueryOptions(true)
     let doc = LS.store.retrieveDocument("custom/" & id, options)
     result = doc.data
+    if result == "":
+      LOG.warn("Middleware '$1' not found" % id)
   else:
     result = LS.middleware[id]
 
@@ -1077,10 +1079,10 @@ proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSRespon
   if middleware.len == 0:
     return route(req, LS, resource, id)
   var jReq = $(%* req)
-  echo jReq
+  LOG.debug("Request: ", jReq)
   var jRes = """{
     "code": 200,
-    "content": "",
+    "content": {},
     "final": false,
     "headers": {
       "Access-Control-Allow-Origin": "*",
@@ -1111,7 +1113,7 @@ proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSRespon
   discard duk_push_c_function(ctx, fNext, 0)
   discard ctx.duk_put_global_string("$next")
   var i = 0
-  ctx.duk_push_boolean(1)
+  ctx.duk_push_boolean(0)
   discard ctx.duk_put_global_string("__next__")
   var abort = 0
   var next = 0
@@ -1119,13 +1121,11 @@ proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSRespon
     if ctx.duk_peval_string("__next__") != 0:
       return jError(ctx) 
     next = ctx.duk_get_boolean(-1)
-    if next != 1:
+    if next == 0:
       abort = 1
-    LOG.debug("next: $1 | abort: $2", [next, abort])
     let code = LS.getMiddleware(middleware[i])
     LOG.debug("Evaluating middleware '$1'" %  middleware[i])
     if ctx.duk_peval_string(code) != 0:
-      echo "error!"
       return jError(ctx)
     i.inc
   # Retrieve response, and request
@@ -1136,6 +1136,7 @@ proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSRespon
     return jError(ctx)
   let fReq = parseJson($(ctx.duk_get_string(-1))).newLSRequest()
   ctx.duk_destroy_heap();
+  LOG.debug("next: $1 | abort: $2", [$next, $abort])
   if abort == 1:
     return fRes
   return route(fReq, LS, resource, id)

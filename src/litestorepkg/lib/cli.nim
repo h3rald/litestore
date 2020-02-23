@@ -138,6 +138,7 @@ for kind, key, val in getOpt():
           for file in val.walkDir():
             if file.kind == pcFile or file.kind == pcLinkToFile:
               middleware[file.path.splitFile[1]] = file.path.readFile()
+          cliSettings["middleware"] = %val
         of "operation", "o":
           if val == "":
             fail(106, "Operation not specified.")
@@ -208,6 +209,11 @@ if configuration != newJNull() and configuration.hasKey("settings"):
     file = settings["store"].getStr
   if not cliSettings.hasKey("directory") and settings.hasKey("directory"):
     directory = settings["directory"].getStr
+  if not cliSettings.hasKey("middleware") and settings.hasKey("middleware"):
+    let val = settings["middleware"].getStr
+    for file in val.walkDir():
+      if file.kind == pcFile or file.kind == pcLinkToFile:
+        middleware[file.path.splitFile[1]] = file.path.readFile()
   if not cliSettings.hasKey("log") and settings.hasKey("log"):
     logLevel = settings["log"].getStr
     setLogLevel(logLevel)
