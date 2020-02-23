@@ -1,6 +1,7 @@
 {
   "settings": {
-    "log": "debug"
+    "log": "debug",
+    "middleware": "litestorepkg/examples/middleware"
   },
   "resources": {
     "/info": {

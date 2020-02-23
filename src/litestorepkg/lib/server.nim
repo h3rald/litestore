@@ -11,6 +11,7 @@ import
   tables,
   strtabs,
   base64,
+  asyncnet,
   jwt
 import 
   types, 
@@ -230,6 +231,9 @@ proc serve*(LS: LiteStore) =
   proc handleHttpRequest(origReq: Request): Future[void] {.async, gcsafe, closure.} =
     var client = origReq.client
     var req = newLSRequest(origReq)
+    let address = client.getLocalAddr()
+    req.url.hostname = address[0]
+    req.url.port = $int(address[1])
     LOG.info(getReqInfo(req).replace("$", "$$"))
     let res = req.process(LS)
     var newReq = newRequest(req, client)
