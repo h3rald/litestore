@@ -1107,26 +1107,27 @@ proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSRespon
     return jError(ctx)
   discard ctx.duk_put_global_string("$ctx")
   # Middleware-specific functions
-  let fNext: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
-    return ctx.duk_peval_string("__next__  = true;")
-  )
-  discard duk_push_c_function(ctx, fNext, 0)
-  discard ctx.duk_put_global_string("$next")
+  #let fNext: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
+  #  return ctx.duk_peval_string("__next__  = true;")
+  #)
+  #discard duk_push_c_function(ctx, fNext, 0)
+  #discard ctx.duk_put_global_string("$next")
   var i = 0
-  ctx.duk_push_boolean(0)
-  discard ctx.duk_put_global_string("__next__")
+  #ctx.duk_push_boolean(0)
+  #discard ctx.duk_put_global_string("__next__")
   var abort = 0
-  var next = 0
   while abort != 1 and i < middleware.len:
-    if ctx.duk_peval_string("__next__") != 0:
-      return jError(ctx) 
-    next = ctx.duk_get_boolean(-1)
-    if next == 0:
-      abort = 1
+    #if ctx.duk_peval_string("__next__") != 0:
+    #  return jError(ctx) 
+    #next = ctx.duk_get_boolean(-1)
+    #echo next
+    #if next == 0:
+    #  abort = 1
     let code = LS.getMiddleware(middleware[i])
     LOG.debug("Evaluating middleware '$1'" %  middleware[i])
     if ctx.duk_peval_string(code) != 0:
       return jError(ctx)
+    abort = ctx.duk_get_boolean(-1)
     i.inc
   # Retrieve response, and request
   if ctx.duk_peval_string("JSON.stringify($res);") != 0:
@@ -1136,7 +1137,7 @@ proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSRespon
     return jError(ctx)
   let fReq = parseJson($(ctx.duk_get_string(-1))).newLSRequest()
   ctx.duk_destroy_heap();
-  LOG.debug("next: $1 | abort: $2", [$next, $abort])
+  LOG.debug("abort: $1", [$abort])
   if abort == 1:
     return fRes
   return route(fReq, LS, resource, id)
