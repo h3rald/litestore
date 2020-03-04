@@ -1058,11 +1058,12 @@ proc getMiddlewareSeq(resource, id, meth: string): seq[string] =
     reqUri.removeSuffix({'/'})
   let parts = reqUri.split("/")
   let ancestors = parts[1..parts.len-2]
-  var currentPath = "/"
+  var currentPath = ""
   var currentPaths = ""
   for p in ancestors:
-    currentPath &= p
+    currentPath &= "/" & p
     currentPaths = currentPath & "/*"
+    echo currentPaths
     if LS.config["resources"].hasKey(currentPaths) and LS.config["resources"][currentPaths].hasKey(meth) and LS.config["resources"][currentPaths][meth].hasKey("middleware"):
       let mw = LS.config["resources"][currentPaths][meth]["middleware"]
       if (mw.kind == JArray):
@@ -1076,6 +1077,7 @@ proc getMiddlewareSeq(resource, id, meth: string): seq[string] =
 
 proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSResponse =
   let middleware = getMiddlewareSeq(resource, id, $req.reqMethod)
+  LOG.debug("Middleware: ", middleware);
   if middleware.len == 0:
     return route(req, LS, resource, id)
   var jReq = $(%* req)

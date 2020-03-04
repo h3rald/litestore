@@ -1,7 +1,8 @@
 {
   "settings": {
     "log": "debug",
-    "middleware": "litestorepkg/examples/middleware"
+    "middleware": "litestorepkg/examples/middleware",
+    "port": 9100
   },
   "resources": {
     "/info": {
@@ -9,7 +10,7 @@
     },
     "/docs/*": {
       "GET": {
-        "middleware": ["test"]
+        "middleware": ["validate", "log"]
       },
       "POST": { "auth": ["admin:server"] },
       "PATCH": { "auth": ["admin:server"] },

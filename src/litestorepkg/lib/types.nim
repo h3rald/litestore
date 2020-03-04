@@ -165,7 +165,7 @@ proc `%`*(req: LSRequest): JsonNode =
   result["port"] = %req.url.port.parseInt
   result["path"] = %req.url.path
   result["query"] = %req.url.query
-  result["body"] = %req.body
+  result["content"] = %req.body
 
 proc `%`*(res: LSResponse): JsonNode =
   result = newJObject()
@@ -178,7 +178,7 @@ proc newLSResponse*(res: JsonNode): LSResponse =
   result.content = $res["content"]
   result.headers = newHttpHeaders()
   for k, v in res["headers"].pairs:
-    result.headers[k] = $v
+    result.headers[k] = v.getStr
 
 proc newLSRequest*(req: JsonNode): LSRequest =
   result.reqMethod = httpMethod(req["method"].getStr)
@@ -190,12 +190,12 @@ proc newLSRequest*(req: JsonNode): LSRequest =
   let version = parts[1].split(".")
   result.protocol = (orig: parts[0], major: version[0].parseInt, minor: version[1].parseInt)
   result.url = initUri()
-  result.url.hostname = $req["hostname"]
-  result.url.port = $req["port"]
-  result.url.path = $req["path"]
-  result.url.query = $req["query"]
-  result.hostname = $req["hostname"]
-  result.body = $req["body"]
+  result.url.hostname = req["hostname"].getStr
+  result.url.port = req["port"].getStr
+  result.url.path = req["path"].getStr
+  result.url.query = req["query"].getStr
+  result.hostname = req["hostname"].getStr
+  result.body = $req["content"]
 
 proc newLSRequest*(req: Request): LSRequest =
   result.reqMethod = req.reqMethod
