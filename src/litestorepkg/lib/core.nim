@@ -163,7 +163,6 @@ proc retrieveIndexes*(store: Datastore, options: QueryOptions = newQueryOptions(
   var query = prepareSelectIndexesQuery(options)
   var raw_indexes: seq[Row]
   if (options.like.len > 0):
-    echo options.like
     if (options.like[options.like.len-1] == '*' and options.like[0] != '*'):
       let str = "json_index_" & options.like.substr(0, options.like.len-2)
       raw_indexes = store.db.getAllRows(query.sql, str, str & "{")

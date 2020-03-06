@@ -95,7 +95,6 @@ proc isAllowed(resource, id, meth: string): bool =
   for p in ancestors:
     currentPath &= "/" & p
     currentPaths = currentPath & "/*"
-    echo currentPaths
     if LS.config["resources"].hasKey(currentPaths) and LS.config["resources"][currentPaths].hasKey(meth) and LS.config["resources"][currentPaths][meth].hasKey("allowed"):
       let allowed = LS.config["resources"][currentPaths][meth]["allowed"]
       if (allowed == %false):
