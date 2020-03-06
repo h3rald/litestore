@@ -39,7 +39,7 @@ The HTTP response to return to the client.
 </code></pre></dd>
 </dl>
 
-### LiteStore.api
+### $store
 
 Simple synchronous API to access LiteStore resources in a RESTful way, mimicking HTTP methods. 
 
