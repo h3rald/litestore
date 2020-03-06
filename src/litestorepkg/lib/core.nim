@@ -456,11 +456,11 @@ proc retrieveRawDocuments*(store: Datastore,
 proc countDocuments*(store: Datastore): int64 =
   return store.db.getRow(SQL_COUNT_DOCUMENTS)[0].parseInt
 
-proc importFile*(store: Datastore, f: string, dir = "", system = false) =
+proc importFile*(store: Datastore, f: string, dir = "/", system = false) =
   if not f.fileExists:
     raise newException(EFileNotFound, "File '$1' not found." % f)
   let ext = f.splitFile.ext
-  var d_id = f.replace("\\", "/")
+  var d_id = f.replace("\\", "/")[dir.len+1..f.len-1];
   var d_contents = f.readFile
   var d_ct = "application/octet-stream"
   if CONTENT_TYPES.hasKey(ext):
@@ -478,7 +478,7 @@ proc importFile*(store: Datastore, f: string, dir = "", system = false) =
       discard store.createSystemDocument(d_id, d_contents, d_ct, d_binary)
     else:
       discard store.createDocument(d_id, d_contents, d_ct, d_binary, d_searchable)
-    if dir != "" and not system:
+    if dir != "/" and not system:
       store.db.exec(SQL_INSERT_TAG, "$dir:"&dir, d_id)
   except:
     store.rollback()

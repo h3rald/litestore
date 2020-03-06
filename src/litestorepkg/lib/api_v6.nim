@@ -1042,7 +1042,7 @@ proc getMiddleware*(LS: LiteStore, id: string): string =
   if not LS.middleware.hasKey(id):
     # Attempt to retrieve resource from system documents
     let options = newQueryOptions(true)
-    let doc = LS.store.retrieveDocument("custom/" & id, options)
+    let doc = LS.store.retrieveDocument("middleware/" & id & ".js", options)
     result = doc.data
     if result == "":
       LOG.warn("Middleware '$1' not found" % id)
