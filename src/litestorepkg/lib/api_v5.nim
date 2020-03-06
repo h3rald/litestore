@@ -823,7 +823,6 @@ proc put*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse 
     if resource == "indexes":
       var field = ""
       try:
-        echo req.body
         field = parseJson(req.body.strip)["field"].getStr
       except:
         return resError(Http400, "Bad Request - Invalid JSON body - $1" % getCurrentExceptionMsg())
