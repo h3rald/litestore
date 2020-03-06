@@ -1,4 +1,4 @@
-## Custom Resources
+## Middleware
 
 As of version 1.8.0, you can define your own custom resources using handlers coded in JavaScript.
 

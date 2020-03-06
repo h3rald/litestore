@@ -18,7 +18,7 @@
         {path: "/guide/getting-started", title: "Getting Started"},
         {path: "/guide/usage", title: "Usage"},
         {path: "/guide/auth", title: "Authorization"},
-        {path: "/guide/custom_resources", title: "Custom Resources"},
+        {path: "/guide/middleware", title: "Middleware"},
         {path: "/guide/litestore_js_object", title: caret+"LiteStore Global Object"},
         {path: "/guide/admin_app", title: "Administration App"},
         {path: "/guide/api", title: "HTTP API Reference"},
