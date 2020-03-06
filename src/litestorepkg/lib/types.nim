@@ -84,6 +84,7 @@ type
     operation*: Operation
     config*: JsonNode
     configFile*: string
+    cliSettings*: JsonNode
     directory*: string
     manageSystemData*: bool
     file*: string

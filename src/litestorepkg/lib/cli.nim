@@ -69,7 +69,7 @@ let
     -w, --middleware    Specify a path to a folder containing middleware definitions.
 """
 
-proc setLogLevel(val: string) =
+proc setLogLevel*(val: string) =
   case val:
     of "info":
       LOG.level = lvInfo
@@ -119,6 +119,8 @@ for kind, key, val in getOpt():
         of "store", "s":
           file = val
           cliSettings["store"]  = %file
+        of "system":
+          system =  true
         of "log", "l":
           if val == "":
             fail(102, "Log level not specified.")
@@ -185,59 +187,6 @@ for kind, key, val in getOpt():
     else:
       discard
 
-# Process auth configuration if present
-
-if auth == newJNull() and configuration != newJNull() and configuration.hasKey("signature"):
-  auth = newJObject();
-  auth["access"] = newJObject();
-  auth["signature"] = configuration["signature"]
-  for k, v in configuration["resources"].pairs:
-    auth["access"][k] = newJObject()
-    for meth, content in v.pairs:
-      if content.hasKey("auth"):
-        auth["access"][k][meth] = content["auth"]
-
-# Process config settings if present and if no cli settings are set
-
-if configuration != newJNull() and configuration.hasKey("settings"):
-  let settings = configuration["settings"]
-  if not cliSettings.hasKey("address") and settings.hasKey("address"):
-    address = settings["address"].getStr
-  if not cliSettings.hasKey("port") and settings.hasKey("port"):
-    port = settings["port"].getInt
-  if not cliSettings.hasKey("store") and settings.hasKey("store"):
-    file = settings["store"].getStr
-  if not cliSettings.hasKey("directory") and settings.hasKey("directory"):
-    directory = settings["directory"].getStr
-  if not cliSettings.hasKey("middleware") and settings.hasKey("middleware"):
-    let val = settings["middleware"].getStr
-    for file in val.walkDir():
-      if file.kind == pcFile or file.kind == pcLinkToFile:
-        middleware[file.path.splitFile[1]] = file.path.readFile()
-  if not cliSettings.hasKey("log") and settings.hasKey("log"):
-    logLevel = settings["log"].getStr
-    setLogLevel(logLevel)
-  if not cliSettings.hasKey("mount") and settings.hasKey("mount"):
-    mount = settings["mount"].getBool
-  if not cliSettings.hasKey("readonly") and settings.hasKey("readonly"):
-    readonly = settings["readonly"].getBool
-
-# Validation
-
-if directory == "" and (operation in [opDelete, opImport, opExport] or mount):
-  fail(105, "--directory option not specified.")
-
-if exFile == "" and (exOperation in ["put", "post", "patch"]):
-  fail(109, "--file option not specified")
-
-if exUri == "" and operation == opExecute:
-  fail(110, "--uri option not specified")
-
-if exOperation == "" and operation == opExecute:
-  fail(111, "--operation option not specified")
-
-
-
 LS.operation = operation
 LS.address = address
 LS.port = port
@@ -246,6 +195,7 @@ LS.directory = directory
 LS.readonly = readonly
 LS.favicon = favicon
 LS.logLevel = logLevel
+LS.cliSettings = cliSettings
 LS.auth = auth
 LS.manageSystemData = system
 LS.middleware = middleware
