@@ -19,6 +19,7 @@
 * **-a**, **-\-address** &mdash; Specify server address (default: 127.0.0.1).
 * **--auth** &mdash; Specify an authorization configuration file.
 * **-b**, **--body** &mdash; Specify a string containing input data for an operation to be executed.
+* **-c**, **--config** &mdash; Specify a configuration file.
 * **-d**, **-\-directory** &mdash; Specify a directory to serve, import, export, delete, or mount.
 * **-f**, **--file** &mdash; Specify a file containing input data for an operation to be executed.
 * **-h**, **-\-help** &mdash; Display program usage.
@@ -28,9 +29,11 @@
 * **-p**, **-\-port** &mdash;Specify server port number (default: 9500).
 * **-r**, **-\-readonly** &mdash; Allow only data retrieval operations.
 * **-s**, **-\-store** &mdash; Specify a datastore file (default: data.db)
+* **--system**  &mdash; Set the system flag for import, export, and delete operations
 * **-t**, **--type** &mdash; Specify a content type for the body an operation to be executed via the execute command.
 * **-u**, **--uri** &mdash; Specify an uri to execute an operation through the execute command.
 * **-v**, **-\-version** &mdash; Display the program version.
+* **-w**, **--middleware** &mdash; Specify a path to a folder containing middleware definitions
 
 ### Examples
 
@@ -39,6 +42,15 @@
 * with default settings:
   
   [litestore](class:cmd)
+
+* loading configuration from a configuration file called **config.json**:
+
+  [litestore -c:config.json](class:cmd)
+  
+* loading middleware definition files stored in a directory called **myMiddleware**:
+
+  [litestore -w:myMiddleware](class:cmd)
+
 * with custom port (**9700**) and address (**0.0.0.0**):
  
   [litestore -p:9700 -a:0.0.0.0](class:cmd)
@@ -60,6 +72,12 @@
 Import a directory called **admin**:
 
 [litestore import -d:admin](class:cmd)
+
+#### Importing system documents from a directory
+
+Import all documents stored in a directory called **system** as system documents:
+
+[litestore import -d:system --system](class:cmd)
 
 #### Exporting a directory
 

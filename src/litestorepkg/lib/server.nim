@@ -16,7 +16,6 @@ import
 import 
   types, 
   utils, 
-  core,
   api_v1,
   api_v2,
   api_v3,

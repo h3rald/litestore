@@ -2,6 +2,10 @@
 
 When creating JavaScript handlers for middleware, you can use some special $-prefixed global objects to access the HTTP request to the resource, the HTTP response, and also access other LiteStore resources.
 
+### $ctx
+
+An empty object that can be used to temporarily store data to pass across different middleware handlers.
+
 ### $req
 
 The current HTTP request sent to access the current resource.
@@ -11,10 +15,26 @@ The current HTTP request sent to access the current resource.
 <dl>
 <dt>method: string</dt>
 <dd>The HTTP method used by the request, all uppercase (GET, POST, DELETE, PUT, PATCH, OPTIOONS, or HEAD).</dd>
-<dt>url: object</dt>
-<dd>An object containing the requested URL, split into the following String properties: <b>hostname</b>, <b>port</b>, <b>search</b>, <b>path</b>.</dd>
+<dt>jwt: object</dt>
+<dd>An object containing a parsed JWT token, if present. It exposes two properties:
+<ul>
+<li><strong>headers</strong>, an object typically containing the <strong>alg</strong> (algorithm) and <strong>typ</strong> (type) keys.</li>
+<li><strong>claims</strong>, an object containing the claims included in the token (see the <a href="https://www.iana.org/assignments/jwt/jwt.xhtml#claims">IANA JSON Web Token Claims Registry</a> for a list of possible claims).</li>
+</ul></dd>
 <dt>headers: object</dt>
 <dd>An object containing the request headers, as keys and values.</dd>
+<dt>protocol: string</dt>
+<dd>The request protocol and version.</dd>
+<dt>hostname: string</dt>
+<dd>The hostname target of the request.</dd>
+<dt>port: number</dt>
+<dd>The port used for the request.</dd>
+<dt>path: string</dt>
+<dd>The path to the resource requested.</dd>
+<dt>query: string</dt>
+<dd>The contents of the request query string.</dd>
+<dt>content: string</dt>
+<dd>When applicable, the content that was sent as body of the request.</dd>
 </dl>
 
 ### $res
@@ -51,8 +71,8 @@ All methods return a response object containing two String properties, **code** 
 <p>
 Examples:
 <ul>
-<li><code>LiteStore.api.get('docs', 'test-folder/test.json')</code></li>
-<li><code>LiteStore.api.get('docs', '', 'search=test&limit=20&offset=0')</code></li>
+<li><code>$store.get('docs', 'test-folder/test.json')</code></li>
+<li><code>$store.get('docs', '', 'search=test&limit=20&offset=0')</code></li>
 </ul>
 </p>
 </dd>
@@ -61,8 +81,8 @@ Examples:
 <p>
 Examples:
 <ul>
-<li><code>LiteStore.api.post('docs', 'test-folder', 'test!', 'text/plain')</code></li>
-<li><code>LiteStore.api.post('docs', '', '{"a": 1}', ?application/json')</code></li>
+<li><code>$store.post('docs', 'test-folder', 'test!', 'text/plain')</code></li>
+<li><code>$store.post('docs', '', '{"a": 1}', ?application/json')</code></li>
 </ul>
 </p>
 </dd>
@@ -71,8 +91,8 @@ Examples:
 <p>
 Examples:
 <ul>
-<li><code>LiteStore.api.put('docs', 'test-folder/test1.txt', 'Another Test.', 'text/plain')</code></li>
-<li><code>LiteStore.api.put('docs', 'test.json', '{"a": 2}', 'application/json')</code></li>
+<li><code>$store.put('docs', 'test-folder/test1.txt', 'Another Test.', 'text/plain')</code></li>
+<li><code>$store.put('docs', 'test.json', '{"a": 2}', 'application/json')</code></li>
 </ul>
 </p>
 </dd>
@@ -81,7 +101,7 @@ Examples:
 <p>
 Examples:
 <ul>
-<li><code>LiteStore.api.patch('docs', 'test-folder/test1.txt', '{"op":"add", "path":"/tags/3", "value":"test1"}')</code></li>
+<li><code>$store.patch('docs', 'test-folder/test1.txt', '{"op":"add", "path":"/tags/3", "value":"test1"}')</code></li>
 </ul>
 </p>
 </dd>
@@ -90,8 +110,8 @@ Examples:
 <p>
 Examples:
 <ul>
-<li><code>LiteStore.api.delete('docs', 'test-folder/test1.txt')</code></li>
-<li><code>LiteStore.api.delete('docs', 'test.json')</code></li>
+<li><code>$store.delete('docs', 'test-folder/test1.txt')</code></li>
+<li><code>$store.delete('docs', 'test.json')</code></li>
 </ul>
 </p>
 </dd>
@@ -100,8 +120,8 @@ Examples:
 <p>
 Examples:
 <ul>
-<li><code>LiteStore.api.head('docs', 'test-folder/test1.txt')</code></li>
-<li><code>LiteStore.api.head('docs')</code></li>
+<li><code>$store.head('docs', 'test-folder/test1.txt')</code></li>
+<li><code>$store.head('docs')</code></li>
 </ul>
 </p>
 </dd>
