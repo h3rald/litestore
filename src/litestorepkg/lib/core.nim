@@ -460,7 +460,12 @@ proc importFile*(store: Datastore, f: string, dir = "/", system = false) =
   if not f.fileExists:
     raise newException(EFileNotFound, "File '$1' not found." % f)
   let ext = f.splitFile.ext
-  var d_id = f.replace("\\", "/")[dir.len+1..f.len-1];
+  var d_id: string
+  if system:
+    # Do not save original directory name
+    d_id = f.replace("\\", "/")[dir.len+1..f.len-1];
+  else:
+    d_id = f.replace("\\", "/");
   var d_contents = f.readFile
   var d_ct = "application/octet-stream"
   if CONTENT_TYPES.hasKey(ext):
