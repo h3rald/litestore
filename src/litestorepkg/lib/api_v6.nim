@@ -1063,7 +1063,6 @@ proc getMiddlewareSeq(resource, id, meth: string): seq[string] =
   for p in ancestors:
     currentPath &= "/" & p
     currentPaths = currentPath & "/*"
-    echo currentPaths
     if LS.config["resources"].hasKey(currentPaths) and LS.config["resources"][currentPaths].hasKey(meth) and LS.config["resources"][currentPaths][meth].hasKey("middleware"):
       let mw = LS.config["resources"][currentPaths][meth]["middleware"]
       if (mw.kind == JArray):
@@ -1077,11 +1076,11 @@ proc getMiddlewareSeq(resource, id, meth: string): seq[string] =
 
 proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSResponse =
   let middleware = getMiddlewareSeq(resource, id, $req.reqMethod)
-  LOG.debug("Middleware: ", middleware);
+  LOG.debug("Middleware: " & middleware.join(" -> "));
   if middleware.len == 0:
     return route(req, LS, resource, id)
   var jReq = $(%* req)
-  LOG.debug("Request: ", jReq)
+  LOG.debug("Request: " & jReq)
   var jRes = """{
     "code": 200,
     "content": {},
@@ -1099,32 +1098,19 @@ proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSRespon
   duk_console_init(ctx)
   duk_print_alert_init(ctx)
   LS.registerStoreApi(ctx, resource, id)
-  if ctx.duk_peval_string("JSON.parse('$1');" % jReq) != 0:
+  if ctx.duk_peval_string("($1)" % $jReq) != 0:
     return jError(ctx)
   discard ctx.duk_put_global_string("$req")
-  if ctx.duk_peval_string("JSON.parse('$1');" % jRes.replace("\n", "")) != 0:
+  if ctx.duk_peval_string("($1)" % $jRes) != 0:
     return jError(ctx)
   discard ctx.duk_put_global_string("$res")
-  if ctx.duk_peval_string("JSON.parse('$1');" % context) != 0:
+  if ctx.duk_peval_string("($1)" % $context) != 0:
     return jError(ctx)
   discard ctx.duk_put_global_string("$ctx")
   # Middleware-specific functions
-  #let fNext: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
-  #  return ctx.duk_peval_string("__next__  = true;")
-  #)
-  #discard duk_push_c_function(ctx, fNext, 0)
-  #discard ctx.duk_put_global_string("$next")
   var i = 0
-  #ctx.duk_push_boolean(0)
-  #discard ctx.duk_put_global_string("__next__")
   var abort = 0
   while abort != 1 and i < middleware.len:
-    #if ctx.duk_peval_string("__next__") != 0:
-    #  return jError(ctx) 
-    #next = ctx.duk_get_boolean(-1)
-    #echo next
-    #if next == 0:
-    #  abort = 1
     let code = LS.getMiddleware(middleware[i])
     LOG.debug("Evaluating middleware '$1'" %  middleware[i])
     if ctx.duk_peval_string(code) != 0:

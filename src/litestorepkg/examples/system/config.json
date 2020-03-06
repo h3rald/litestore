@@ -1,0 +1,48 @@
+{
+  "settings": {
+    "log": "warn",
+    "port": 9200
+  },
+  "resources": {
+    "/docs/vehicles/*": {
+      "GET": {
+        "middleware": ["validate", "log"]
+      },
+      "HEAD": {
+        "middleware": ["validate", "log"]
+      },
+      "POST": {
+        "allowed": false
+      },
+      "PATCH": {
+        "auth": ["admin:vehicles"],
+        "middleware": ["validate", "log"]
+      },
+      "PUT": {
+        "middleware": ["validate", "log"]
+      },
+      "DELETE": {
+        "auth": ["admin:vehicles"],
+        "middleware": ["validate", "log"]
+      }
+    },
+    "/docs/logs/*": {
+      "GET": {
+        "auth": ["admin:server"]
+      },
+      "POST": {
+        "allowed": false
+      },
+      "PUT": {
+        "allowed": false
+      },
+      "PATCH": {
+        "allowed": false
+      },
+      "DELETE": {
+        "allowed": false
+      }
+    }
+  },
+  "signature": "\n-----BEGIN CERTIFICATE-----\n<certificate text goes here>\n-----END CERTIFICATE-----\n"
+}
