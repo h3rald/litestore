@@ -83,12 +83,38 @@ template auth(uri: string, jwt: JWT): void =
       writeStackTrace()
       return resError(Http401, "Unauthorized - Invalid token")
 
+proc isAllowed(resource, id, meth: string): bool =
+  if LS.config.kind != JObject or not LS.config.hasKey("resources"):
+    return true
+  var reqUri = "/" & resource & "/" & id
+  if reqUri[^1] == '/':
+    reqUri.removeSuffix({'/'})
+  let parts = reqUri.split("/")
+  let ancestors = parts[1..parts.len-2]
+  var currentPath = ""
+  var currentPaths = ""
+  for p in ancestors:
+    currentPath &= "/" & p
+    currentPaths = currentPath & "/*"
+    echo currentPaths
+    if LS.config["resources"].hasKey(currentPaths) and LS.config["resources"][currentPaths].hasKey(meth) and LS.config["resources"][currentPaths][meth].hasKey("allowed"):
+      let allowed = LS.config["resources"][currentPaths][meth]["allowed"]
+      if (allowed == %false):
+        return false;
+  if LS.config["resources"].hasKey(reqUri) and LS.config["resources"][reqUri].hasKey(meth) and LS.config["resources"][reqUri][meth].hasKey("allowed"):
+    let allowed = LS.config["resources"][reqUri][meth]["allowed"]
+    if (allowed == %false):
+      return false
+  return true
+
 proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSResponse = 
   var reqUri = "/" & info.resource & "/" & info.id
   if reqUri[^1] == '/':
     reqUri.removeSuffix({'/'})
   let reqMethod = $req.reqMethod
   var jwt: JWT
+  if not isAllowed(info.resource, info.id, reqMethod):
+    return resError(Http405, "Method not allowed: $1" % reqMethod)
   # Authentication/Authorization
   if LS.auth != newJNull():
     var uri = reqUri
