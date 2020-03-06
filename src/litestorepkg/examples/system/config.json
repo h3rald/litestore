@@ -1,6 +1,6 @@
 {
   "settings": {
-    "log": "warn",
+    "log": "debug",
     "port": 9200
   },
   "resources": {
@@ -19,6 +19,7 @@
         "middleware": ["validate", "log"]
       },
       "PUT": {
+        "auth": ["admin:vehicles"],
         "middleware": ["validate", "log"]
       },
       "DELETE": {
