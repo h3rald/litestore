@@ -99,7 +99,7 @@ proc openDatastore*(file: string): Datastore =
     discard create_function(cast[PSqlite3](result.db), "rank", -1, SQLITE_ANY,
         cast[pointer](SQLITE_DETERMINISTIC), okapi_bm25f_kb, nil, nil)
     LOG.debug("Executing PRAGMAs...")
-    discard result.db.tryExec("PRAGMA locking_mode = exclusive".sql)
+    discard result.db.tryExec("PRAGMA journal_mode = WAL".sql)
     discard result.db.tryExec("PRAGMA page_size = 4096".sql)
     discard result.db.tryExec("PRAGMA cache_size = 10000".sql)
     discard result.db.tryExec("PRAGMA foreign_keys = ON".sql)

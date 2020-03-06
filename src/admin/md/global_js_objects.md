@@ -1,8 +1,8 @@
-## LiteStore Global Object
+## Global JavaScript Objects
 
-When creating JavaScript handlers for custom resources, you can use a special **LiteStore** global object to access the HTTP request to the resource, modify the HTTP response, and also access other LiteStore resources.
+When creating JavaScript handlers for middleware, you can use some special $-prefixed global objects to access the HTTP request to the resource, the HTTP response, and also access other LiteStore resources.
 
-### LiteStore.request
+### $req
 
 The current HTTP request sent to access the current resource.
 
@@ -17,7 +17,7 @@ The current HTTP request sent to access the current resource.
 <dd>An object containing the request headers, as keys and values.</dd>
 </dl>
 
-### LiteStore.response
+### $res
 
 The HTTP response to return to the client.
 

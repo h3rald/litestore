@@ -185,7 +185,7 @@ proc newLSRequest*(req: JsonNode): LSRequest =
   result.reqMethod = httpMethod(req["method"].getStr)
   result.headers = newHttpHeaders()
   for k, v in req["headers"].pairs:
-    result.headers[k] = $v
+    result.headers[k] = v.getStr
   let protocol = req["protocol"].getStr
   let  parts = protocol.split("/")
   let version = parts[1].split(".")
@@ -196,7 +196,7 @@ proc newLSRequest*(req: JsonNode): LSRequest =
   result.url.path = req["path"].getStr
   result.url.query = req["query"].getStr
   result.hostname = req["hostname"].getStr
-  result.body = $req["content"]
+  result.body = req["content"].getStr
 
 proc newLSRequest*(req: Request): LSRequest =
   result.reqMethod = req.reqMethod
