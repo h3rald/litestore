@@ -51,7 +51,6 @@ let
     -a, --address       Specify server address (default: 127.0.0.1).
     --auth              Specify an authentication/authorization configuration file.
     -b, --body          Specify a string containing input data for an operation to be executed.
-    -w, --middleware    Specify a path to a folder containing middleware definitions.
     -d, --directory     Specify a directory to serve, import, export, delete, or mount.
     -c, --config        Specify a configuration file.
     -f, --file          Specify a file containing input data for an operation to be executed.
