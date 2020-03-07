@@ -1,6 +1,6 @@
 ## Administration App
 
-A simple but fully-functional administration app can be used to manage LiteStore data stores. This app can simply be imported into a data store file and then run via LiteStore.
+A simple, *slightly* dated, but fully-functional administration app can be used to manage LiteStore data stores. This app can simply be imported into a data store file and then run via LiteStore.
 
 ### Obtaining and Running the Administration App
 
