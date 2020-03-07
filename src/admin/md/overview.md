@@ -29,7 +29,7 @@ You can add custom tags to documents to easily categorize them and retrieve them
 
 #### Enhanced Querying of JSON documents
 
-By leveraging the [SQLite JSON1 extension](https://www.sqlite.org/json1.html) and implementing custom query string parsing, LiteStore provides enhanced filtering, ordering, and custom field selection of JSON documents.
+By leveraging the [SQLite JSON1 extension](https://www.sqlite.org/json1.html) and implementing custom query string parsing, LiteStore provides enhanced filtering, ordering, and custom field selection of JSON documents. Additionally, you can also configure custom indexes specifying JSON fields for extra speed!
 
 #### Full-text Search
 
@@ -43,9 +43,9 @@ Every operation can be performed on the data store using a simple but powerful R
 
 LiteStore can be configure validate [JWT](https://jwt.io/) tokens and configure access to specific resources based on specific [OAuth2 scopes](https://oauth.net/2/scope/).
 
-#### Custom Resources
+#### Middleware
 
-By leveraging the [duktape](https://duktape.org/) library, LiteStore lets you create your own custom resources coding HTTP handlers in JavaScript.
+By leveraging the [duktape](https://duktape.org/) library, you can create your own middleware functions in JavaScript to perform additional tasks (validation, logging, data aggregation...) before accessing data.
 
 #### Nim API
 

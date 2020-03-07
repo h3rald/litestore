@@ -1,6 +1,6 @@
 const
   pkgName*        = "litestore"
-  pkgVersion*     = "1.7.0"
+  pkgVersion*     = "1.8.0"
   pkgAuthor*      = "Fabio Cevasco"
   pkgDescription* = "Self-contained, lightweight, RESTful document store."
   pkgLicense*     = "MIT"
