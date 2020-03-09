@@ -10,7 +10,7 @@ Sure, setting up a simple REST service using [Sinatra](http://www.sinatrarb.com)
 
 LiteStore aims to solve this problem. When you use LiteStore as the backend for your app, you only need to take _two files_ with you, at all times:
 
-* The [litestore](class:cmd) executable file for your platform of choice (that's about 2MB in size)
+* The [litestore](class:cmd) executable file for your platform of choice (just a few MBs in size)
 * A data store file
 
 And yes, you can even store the code of your client-side application inside the datastore itself, along with your application data.
@@ -41,7 +41,7 @@ Every operation can be performed on the data store using a simple but powerful R
 
 #### JWT-based Authorization
 
-LiteStore can be configure validate [JWT](https://jwt.io/) tokens and configure access to specific resources based on specific [OAuth2 scopes](https://oauth.net/2/scope/).
+LiteStore can be configured to validate [JWT](https://jwt.io/) tokens and configure access to specific resources based on specific [OAuth2 scopes](https://oauth.net/2/scope/).
 
 #### Middleware
 
