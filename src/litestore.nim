@@ -172,7 +172,6 @@ proc initStore(LS: var LiteStore) =
 #   }
 # }
 proc initStores() =
-  LSDICT["main"] = LS
   if LS.config.kind == JObject and LS.config.hasKey("stores"):
     for k, v in LS.config["stores"].pairs:
       # TODO error handling
@@ -182,8 +181,12 @@ proc initStores() =
         LSDICT[k].config = v["config"]
   for k in LSDICT.keys:
     LOG.info("Initializing store '$1'" % k)
-    LSDICT[k].setup()
+    LSDICT[k].setup(true)
     LSDICT[k].initStore()
+  LOG.info("Initializing main store")
+  LS.setup(true)
+  LS.initStore()
+  LSDICT["main"] = LS
 
 when isMainModule:
 
