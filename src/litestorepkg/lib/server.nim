@@ -248,6 +248,20 @@ proc process*(req: LSRequest, LS: LiteStore): LSResponse {.gcsafe.}=
     let trace = e.getStackTrace()
     return resError(Http500, "Internal Server Error: $1" % getCurrentExceptionMsg(), trace)
 
+
+proc process*(req: LSRequest, LSDICT: Table[string, LiteStore]): LSResponse {.gcsafe.}=
+  var matches = @["", ""]
+  if req.url.path.find(PEG_STORE_URL, matches) != -1:
+    let id = matches[0]
+    let path = matches[1]
+    var newReq = req
+    newReq.url.path = "/$1" % path
+    if not LSDICT.hasKey(id):
+      return resError(Http400, "Unknown store '$1'" % id)
+    return process(newReq, LSDICT[id])
+  else:
+    return process(req, LS)
+
 setControlCHook(handleCtrlC)
 
 proc serve*(LS: LiteStore) =
@@ -259,7 +273,7 @@ proc serve*(LS: LiteStore) =
     req.url.hostname = address[0]
     req.url.port = $int(address[1])
     LOG.info(getReqInfo(req).replace("$", "$$"))
-    let res = req.process(LS)
+    let res = req.process(LSDICT)
     var newReq = newRequest(req, client)
     await newReq.respond(res.code, res.content, res.headers)
   echo(LS.appname & " v" & LS.appversion & " started on " & LS.address & ":" & $LS.port & ".")
