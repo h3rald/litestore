@@ -115,6 +115,19 @@ type
     version: string
   ]
 
+proc initLiteStore*(): LiteStore = 
+  result.config = newJNull()
+  result.configFile = ""
+  result.cliSettings = newJNull()
+  result.directory = ""
+  result.manageSystemData = false
+  result.file = ""
+  result.mount = false
+  result.readonly = false
+  result.loglevel = "warn"
+  result.auth = newJNull()
+  result.authFile = ""
+
 proc httpMethod*(meth: string): HttpMethod =
   case meth:
     of "GET":
@@ -232,7 +245,9 @@ PEG_URL = peg"""^\/({(v\d+)} \/) {([^\/]+)} (\/ {(.+)} / \/?)$"""
 
 # Initialize LiteStore
 var LS* {.threadvar.}: LiteStore
+var LSDICT* {.threadvar.}: Table[string, LiteStore]
 var TAB_HEADERS* {.threadvar.}: array[0..2, (string, string)]
+LSDICT  = initTable[string, LiteStore]()
 
 LS.appversion = pkgVersion
 LS.appname = appname

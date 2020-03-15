@@ -3,6 +3,14 @@
     "log": "debug",
     "port": 9200
   },
+  "stores": {
+    "test1": {
+      "file": "test1.db"
+    },
+    "test2": {
+      "file": "test2.db"
+    }
+  },
   "resources": {
     "/docs/vehicles/*": {
       "GET": {
