@@ -1,6 +1,7 @@
 import
   strutils,
   strtabs,
+  tables,
   os,
   uri,
   httpcore,
@@ -37,7 +38,7 @@ proc processAuthConfig(configuration: JsonNode, auth: var JsonNode) =
         if content.hasKey("auth"):
           auth["access"][k][meth] = content["auth"]
 
-proc processConfigSettings() =
+proc processConfigSettings(LS: var LiteStore) =
   # Process config settings if present and if no cli settings are set
   if LS.config != newJNull() and LS.config.hasKey("settings"):
     let settings = LS.config["settings"]
@@ -103,7 +104,7 @@ proc executeOperation*() =
   else:
     quit(resp.code.int)
 
-proc setup*(open = true) =
+proc setup*(LS: var LiteStore, open = true) =
   if not LS.file.fileExists:
     try:
       LOG.debug("Creating datastore: ", LS.file)
@@ -117,7 +118,6 @@ proc setup*(open = true) =
       try:
         LS.store.upgradeDatastore()
       except:
-        echo getCurrentExceptionMsg()
         fail(203, "Unable to upgrade datastore '$1'" % [LS.file])
       if LS.mount:
         try:
@@ -128,16 +128,7 @@ proc setup*(open = true) =
     except:
       fail(201, "Unable to open datastore '$1'" % [LS.file])
 
-when isMainModule:
-
-  # Manage vacuum operation separately
-  if LS.operation == opVacuum:
-    setup(false)
-    vacuum LS.file
-  else:
-    # Open Datastore
-    setup(true)
-
+proc initStore(LS: var LiteStore) =
   if LS.configFile == "":
     # Attempt to retrieve config.json from system documents
     let options = newQueryOptions(true)
@@ -147,7 +138,7 @@ when isMainModule:
 
   if LS.config != newJNull():
     # Process config settings
-    processConfigSettings()
+    LS.processConfigSettings()
     # Process auth from config settings
     processAuthConfig(LS.config, LS.auth)
 
@@ -170,23 +161,56 @@ when isMainModule:
 
   if LS.execution.operation == "" and LS.operation == opExecute:
     fail(111, "--operation option not specified")
-  
-  case LS.operation:
-    of opRun:
-      LS.serve
-      runForever()
-    of opImport:
-      LS.store.importDir(LS.directory, LS.manageSystemData)
-    of opExport:
-      LS.store.exportDir(LS.directory, LS.manageSystemData)
-    of opDelete:
-      LS.store.deleteDir(LS.directory, LS.manageSystemData)
-    of opOptimize:
-      LS.store.optimize
-    of opExecute:
-      executeOperation()
-    else:
-      discard
+
+# stores: {
+#   test: {
+#     file: 'path/to/test.db',
+#     config: {
+#       resources: {},
+#       signature: ''
+#     }
+#   }
+# }
+proc initStores() =
+  LSDICT["main"] = LS
+  if LS.config.kind == JObject and LS.config.hasKey("stores"):
+    for k, v in LS.config["stores"].pairs:
+      # TODO error handling
+      LSDICT[k] = initLiteStore()
+      LSDICT[k].file = v["file"].getStr
+      if v.hasKey("config"):
+        LSDICT[k].config = v["config"]
+  for k in LSDICT.keys:
+    LOG.info("Initializing store '$1'" % k)
+    LSDICT[k].setup()
+    LSDICT[k].initStore()
+
+when isMainModule:
+
+  # Manage vacuum operation separately
+  if LS.operation == opVacuum:
+    LS.setup(false)
+    vacuum LS.file
+  else:
+    # Open Datastore
+    #LS.setup(true)
+    initStores()
+    case LS.operation:
+      of opRun:
+        LS.serve
+        runForever()
+      of opImport:
+        LS.store.importDir(LS.directory, LS.manageSystemData)
+      of opExport:
+        LS.store.exportDir(LS.directory, LS.manageSystemData)
+      of opDelete:
+        LS.store.deleteDir(LS.directory, LS.manageSystemData)
+      of opOptimize:
+        LS.store.optimize
+      of opExecute:
+        executeOperation()
+      else:
+        discard
 
 else:
 
