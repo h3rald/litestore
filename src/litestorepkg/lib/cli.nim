@@ -5,7 +5,7 @@ import
   os,
   strtabs
 import
-  logger,
+  core,
   config,
   types,
   utils
@@ -68,142 +68,128 @@ let
     -w, --middleware    Specify a path to a folder containing middleware definitions.
 """
 
-proc setLogLevel*(val: string) =
-  case val:
-    of "info":
-      LOG.level = lvInfo
-    of "warn":
-      LOG.level = lvWarn
-    of "debug":
-      LOG.level = lvDebug
-    of "error":
-      LOG.level = lvError
-    of "none":
-      LOG.level = lvNone
-    else:
-      fail(103, "Invalid log level '$1'" % val)
+proc run*() =
+  for kind, key, val in getOpt():
+    case kind:
+      of cmdArgument:
+        case key:
+          of "run":
+            operation = opRun
+          of "import":
+            operation = opImport
+          of "execute":
+            operation = opExecute
+          of "export":
+            operation = opExport
+          of "delete":
+            operation = opDelete
+          of "optimize":
+            operation = opOptimize
+          of "vacuum":
+            operation = opVacuum
+          else:
+            discard
+      of cmdLongOption, cmdShortOption:
+        case key:
+          of "address", "a":
+            if val == "":
+              fail(100, "Address not specified.")
+            address = val
+            cliSettings["address"] = %address
+          of "port", "p":
+            if val == "":
+              fail(101, "Port not specified.")
+            port = val.parseInt
+            cliSettings["port"] = %port
+          of "store", "s":
+            file = val
+            cliSettings["store"]  = %file
+          of "system":
+            system =  true
+          of "log", "l":
+            if val == "":
+              fail(102, "Log level not specified.")
+            setLogLevel(val)
+            logLevel = val
+            cliSettings["log"] = %logLevel
+          of "directory", "d":
+            if val == "":
+              fail(104, "Directory not specified.")
+            directory = val
+            cliSettings["directory"] = %directory
+          of "middleware", "w":
+            if val == "":
+              fail(115, "Middleware path not specified.")
+            if not val.existsDir():
+              fail(116, "Middleware directory does not exist.")
+            for file in val.walkDir():
+              if file.kind == pcFile or file.kind == pcLinkToFile:
+                middleware[file.path.splitFile[1]] = file.path.readFile()
+            cliSettings["middleware"] = %val
+          of "operation", "o":
+            if val == "":
+              fail(106, "Operation not specified.")
+            exOperation = val
+          of "file", "f":
+            if val == "":
+              fail(107, "File not specified.")
+            exFile = val
+          of "uri", "u":
+            if val == "":
+              fail(108, "URI not specified.")
+            exUri = val
+          of "body", "b":
+            if val == "":
+              fail(112, "Body not specified.")
+            exBody = val
+          of "type", "t":
+            if val == "":
+              fail(113, "Content type not specified.")
+            exType = val
+          of "auth":
+            if val == "":
+              fail(114, "Authentication/Authorization configuration file not specified.")
+            authFile = val
+          of "config", "c":
+            if val == "":
+              fail(115, "Configuration file not specified.")
+            configuration = val.parseFile
+            configFile = val
+          of "mount", "m":
+            mount = true
+            cliSettings["mount"] = %mount
+          of "version", "v":
+            echo pkgVersion
+            quit(0)
+          of "help", "h":
+            echo usage
+            quit(0)
+          of "readonly", "r":
+            readonly = true
+            cliSettings["readonly"] = %readonly
+          else:
+            discard
+      else:
+        discard
 
-for kind, key, val in getOpt():
-  case kind:
-    of cmdArgument:
-      case key:
-        of "run":
-          operation = opRun
-        of "import":
-          operation = opImport
-        of "execute":
-          operation = opExecute
-        of "export":
-          operation = opExport
-        of "delete":
-          operation = opDelete
-        of "optimize":
-          operation = opOptimize
-        of "vacuum":
-          operation = opVacuum
-        else:
-          discard
-    of cmdLongOption, cmdShortOption:
-      case key:
-        of "address", "a":
-          if val == "":
-            fail(100, "Address not specified.")
-          address = val
-          cliSettings["address"] = %address
-        of "port", "p":
-          if val == "":
-            fail(101, "Port not specified.")
-          port = val.parseInt
-          cliSettings["port"] = %port
-        of "store", "s":
-          file = val
-          cliSettings["store"]  = %file
-        of "system":
-          system =  true
-        of "log", "l":
-          if val == "":
-            fail(102, "Log level not specified.")
-          setLogLevel(val)
-          logLevel = val
-          cliSettings["log"] = %logLevel
-        of "directory", "d":
-          if val == "":
-            fail(104, "Directory not specified.")
-          directory = val
-          cliSettings["directory"] = %directory
-        of "middleware", "w":
-          if val == "":
-            fail(115, "Middleware path not specified.")
-          if not val.existsDir():
-            fail(116, "Middleware directory does not exist.")
-          for file in val.walkDir():
-            if file.kind == pcFile or file.kind == pcLinkToFile:
-              middleware[file.path.splitFile[1]] = file.path.readFile()
-          cliSettings["middleware"] = %val
-        of "operation", "o":
-          if val == "":
-            fail(106, "Operation not specified.")
-          exOperation = val
-        of "file", "f":
-          if val == "":
-            fail(107, "File not specified.")
-          exFile = val
-        of "uri", "u":
-          if val == "":
-            fail(108, "URI not specified.")
-          exUri = val
-        of "body", "b":
-          if val == "":
-            fail(112, "Body not specified.")
-          exBody = val
-        of "type", "t":
-          if val == "":
-            fail(113, "Content type not specified.")
-          exType = val
-        of "auth":
-          if val == "":
-            fail(114, "Authentication/Authorization configuration file not specified.")
-          authFile = val
-        of "config", "c":
-          if val == "":
-            fail(115, "Configuration file not specified.")
-          configuration = val.parseFile
-          configFile = val
-        of "mount", "m":
-          mount = true
-          cliSettings["mount"] = %mount
-        of "version", "v":
-          echo pkgVersion
-          quit(0)
-        of "help", "h":
-          echo usage
-          quit(0)
-        of "readonly", "r":
-          readonly = true
-          cliSettings["readonly"] = %readonly
-        else:
-          discard
-    else:
-      discard
-
-LS.operation = operation
-LS.address = address
-LS.port = port
-LS.file = file
-LS.directory = directory
-LS.readonly = readonly
-LS.favicon = favicon
-LS.logLevel = logLevel
-LS.cliSettings = cliSettings
-LS.auth = auth
-LS.manageSystemData = system
-LS.middleware = middleware
-LS.authFile = authFile
-LS.config = configuration
-LS.configFile = configFile
-LS.mount = mount
-LS.execution.file = exFile
-LS.execution.body = exBody
-LS.execution.ctype = exType
-LS.execution.uri = exUri
-LS.execution.operation = exOperation
+  LS.operation = operation
+  LS.address = address
+  LS.port = port
+  LS.file = file
+  LS.directory = directory
+  LS.readonly = readonly
+  LS.favicon = favicon
+  LS.logLevel = logLevel
+  LS.cliSettings = cliSettings
+  LS.auth = auth
+  LS.manageSystemData = system
+  LS.middleware = middleware
+  LS.authFile = authFile
+  LS.config = configuration
+  LS.configFile = configFile
+  LS.mount = mount
+  LS.execution.file = exFile
+  LS.execution.body = exBody
+  LS.execution.ctype = exType
+  LS.execution.uri = exUri
+  LS.execution.operation = exOperation

@@ -358,6 +358,19 @@ proc getTag*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequ
     result.content = $doc
     result.code = Http200
 
+proc getStore*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequest): LSResponse =
+  if (not LSDICT.hasKey(id)):
+    return resStoreNotFound(id)
+  let store = LSDICT[id]
+  var doc = newJObject()
+  doc["id"] = %id
+  doc["file"] = %store.file
+  doc["config"] = store.config
+  result.headers = ctJsonHeader()
+  setOrigin(LS, req, result.headers)
+  result.content = $doc
+  result.code = Http200
+
 proc getIndex*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequest): LSResponse =
   let doc = LS.store.retrieveIndex(id, options)
   result.headers = ctJsonHeader()
@@ -438,6 +451,7 @@ proc getStores(LS: LiteStore, options: QueryOptions = newQueryOptions(), req: LS
     var store = newJObject()
     store["id"] = %k
     store["file"] = %v.file
+    store["config"] = v.config
     docs.add(store)
   var content = newJObject()
   content["total"] = %LSDICT.len
@@ -543,7 +557,20 @@ proc putIndex*(LS: LiteStore, id, field: string, req: LSRequest): LSResponse =
     result.headers = ctJsonHeader()
     setOrigin(LS, req, result.headers)
     result.content = "{\"id\": \"$1\", \"field\": \"$2\"}" % [id, field]
-    result.code = Http200
+    result.code = Http201
+  except:
+    eWarn()
+    result = resError(Http500, "Unable to create index.")
+
+proc putStore*(LS: LiteStore, id: string, content: JsonNode, req: LSRequest): LSResponse =
+  try:
+    if (not id.match(PEG_STORE)):
+      return resError(Http400, "invalid store ID: $1" % id)
+    if (LSDICT.hasKey(id)):
+      return resError(Http409, "Store already exists: $1" % id)
+    # TODO: create store
+    result = getStore(LS, id, newQueryOptions(), req)
+    result.code = Http201
   except:
     eWarn()
     result = resError(Http500, "Unable to create index.")
@@ -764,6 +791,33 @@ proc options*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSRespo
           setOrigin(LS, req, result.headers)
           result.headers["Allow"] = "HEAD, GET, OPTIONS, POST"
           result.headers["Access-Control-Allow-Methods"] = "HEAD, GET, OPTIONS, POST"
+    of "stores":
+      result.code = Http204
+      result.content = ""
+      result.headers = newHttpHeaders(TAB_HEADERS)
+      setOrigin(LS, req, result.headers)
+      if id != "":
+        result.code = Http204
+        result.content = ""
+        if LS.readonly:
+          result.headers["Allow"] = "GET, OPTIONS"
+          result.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+        else:
+          result.headers["Allow"] = "GET, OPTIONS, PUT, DELETE"
+          result.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS, PUT, DELETE"
+      else:
+        result.code = Http204
+        result.content = ""
+        if LS.readonly:
+          result.headers = newHttpHeaders(TAB_HEADERS)
+          setOrigin(LS, req, result.headers)
+          result.headers["Allow"] = "GET, OPTIONS"
+          result.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+        else:
+          result.headers = newHttpHeaders(TAB_HEADERS)
+          setOrigin(LS, req, result.headers)
+          result.headers["Allow"] = "GET, OPTIONS"
+          result.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
     else:
       discard # never happens really.
 
@@ -829,10 +883,10 @@ proc get*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse 
       var options = newQueryOptions()
       try:
         parseQueryOptions(req.url.query, options);
-        #if id != "":
-        #  return LS.getIndex(id, options, req)
-        #else:
-        return LS.getStores(options, req)
+        if id != "":
+          return LS.getStore(id, options, req)
+        else:
+          return LS.getStores(options, req)
       except:
         return resError(Http400, "Bad Request - $1" % getCurrentExceptionMsg())
     of "info":

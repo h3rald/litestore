@@ -7,6 +7,7 @@ import
   json,
   pegs,
   strtabs,
+  tables,
   strutils,
   base64,
   math
@@ -592,3 +593,129 @@ proc destroyDocumentsByTag*(store: Datastore, tag: string): int64 =
   var ids = store.db.getAllRows(SQL_SELECT_DOCUMENT_IDS_BY_TAG, tag)
   for id in ids:
     result.inc(store.destroyDocument(id[0]).int)
+
+proc setLogLevel*(val: string) =
+  case val:
+    of "info":
+      LOG.level = lvInfo
+    of "warn":
+      LOG.level = lvWarn
+    of "debug":
+      LOG.level = lvDebug
+    of "error":
+      LOG.level = lvError
+    of "none":
+      LOG.level = lvNone
+    else:
+      fail(103, "Invalid log level '$1'" % val)
+
+proc processAuthConfig(configuration: JsonNode, auth: var JsonNode) =
+  if auth == newJNull() and configuration != newJNull() and configuration.hasKey("signature"):
+    auth = newJObject();
+    auth["access"] = newJObject();
+    auth["signature"] = configuration["signature"]
+    for k, v in configuration["resources"].pairs:
+      auth["access"][k] = newJObject()
+      for meth, content in v.pairs:
+        if content.hasKey("auth"):
+          auth["access"][k][meth] = content["auth"]
+
+proc processConfigSettings(LS: var LiteStore) =
+  # Process config settings if present and if no cli settings are set
+  if LS.config != newJNull() and LS.config.hasKey("settings"):
+    let settings = LS.config["settings"]
+    let cliSettings = LS.cliSettings
+    if not cliSettings.hasKey("address") and settings.hasKey("address"):
+      LS.address = settings["address"].getStr
+    if not cliSettings.hasKey("port") and settings.hasKey("port"):
+      LS.port = settings["port"].getInt
+    if not cliSettings.hasKey("store") and settings.hasKey("store"):
+      LS.file = settings["store"].getStr
+    if not cliSettings.hasKey("directory") and settings.hasKey("directory"):
+      LS.directory = settings["directory"].getStr
+    if not cliSettings.hasKey("middleware") and settings.hasKey("middleware"):
+      let val = settings["middleware"].getStr
+      for file in val.walkDir():
+        if file.kind == pcFile or file.kind == pcLinkToFile:
+          LS.middleware[file.path.splitFile[1]] = file.path.readFile()
+    if not cliSettings.hasKey("log") and settings.hasKey("log"):
+      LS.logLevel = settings["log"].getStr
+      setLogLevel(LS.logLevel)
+    if not cliSettings.hasKey("mount") and settings.hasKey("mount"):
+      LS.mount = settings["mount"].getBool
+    if not cliSettings.hasKey("readonly") and settings.hasKey("readonly"):
+      LS.readonly = settings["readonly"].getBool
+
+proc setup*(LS: var LiteStore, open = true) =
+  if not LS.file.fileExists:
+    try:
+      LS.file.createDatastore()
+    except:
+      eWarn()
+      fail(200, "Unable to create datastore '$1'" % [LS.file])
+  if (open):
+    try:
+      LS.store = LS.file.openDatastore()
+      try:
+        LS.store.upgradeDatastore()
+      except:
+        fail(203, "Unable to upgrade datastore '$1'" % [LS.file])
+      if LS.mount:
+        try:
+          LS.store.mountDir(LS.directory)
+        except:
+          eWarn()
+          fail(202, "Unable to mount directory '$1'" % [LS.directory])
+    except:
+      fail(201, "Unable to open datastore '$1'" % [LS.file])
+
+proc initStore*(LS: var LiteStore) =
+  if LS.configFile == "":
+    # Attempt to retrieve config.json from system documents
+    let options = newQueryOptions(true)
+    let rawDoc = LS.store.retrieveRawDocument("config.json", options)
+    if rawDoc != "":
+      LS.config = rawDoc.parseJson()["data"]
+
+  if LS.config != newJNull():
+    # Process config settings
+    LS.processConfigSettings()
+    # Process auth from config settings
+    processAuthConfig(LS.config, LS.auth)
+
+  if LS.auth == newJNull():
+    # Attempt to retrieve auth.json from system documents
+    let options = newQueryOptions(true)
+    let rawDoc = LS.store.retrieveRawDocument("auth.json", options)
+    if rawDoc != "":
+      LS.auth = rawDoc.parseJson()["data"]
+
+  # Validation
+  if LS.directory == "" and (LS.operation in [opDelete, opImport, opExport] or LS.mount):
+    fail(105, "--directory option not specified.")
+
+  if LS.execution.file == "" and (LS.execution.operation in ["put", "post", "patch"]):
+    fail(109, "--file option not specified")
+
+  if LS.execution.uri == "" and LS.operation == opExecute:
+    fail(110, "--uri option not specified")
+
+  if LS.execution.operation == "" and LS.operation == opExecute:
+    fail(111, "--operation option not specified")
+
+
+proc addStore*(LS: LiteStore, id, file: string, config = newJNull()): LiteStore =
+  result = initLiteStore()
+  result.address = LS.address
+  result.port = LS.port
+  result.appname = LS.appname
+  result.appversion = LS.appversion
+  result.favicon = LS.favicon
+  # TODO error handling
+  result.file = file
+  if config != newJNull():
+    result.config = config
+  LOG.info("Initializing store '$1'" % id)
+  result.setup(true)
+  result.initStore()
+

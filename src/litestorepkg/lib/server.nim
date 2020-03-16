@@ -263,17 +263,16 @@ proc process*(req: LSRequest, LS: LiteStore): LSResponse {.gcsafe.}=
     return resError(Http500, "Internal Server Error: $1" % getCurrentExceptionMsg(), trace)
 
 
-proc process*(req: LSRequest, LSDICT: Table[string, LiteStore]): LSResponse {.gcsafe.}=
+proc process*(req: LSRequest, LSDICT: OrderedTable[string, LiteStore]): LSResponse {.gcsafe.}=
   var matches = @["", ""]
   if req.url.path.find(PEG_STORE_URL, matches) != -1:
     let id = matches[0]
     let path = matches[1]
-    if not LSDICT.hasKey(id):
-      return resError(Http400, "Unknown store '$1'" % id)
     if path == "":
       var info: ResourceInfo
       info.version = "v7"
       info.resource = "stores"
+      info.id = id
       return req.processApiUrl(LS, info)
     else:
       var newReq = req
