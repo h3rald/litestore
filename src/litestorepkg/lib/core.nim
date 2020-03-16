@@ -733,7 +733,17 @@ proc initStore*(LS: var LiteStore) =
     fail(111, "--operation option not specified")
 
 
-proc addStore*(LS: LiteStore, id, file: string, config = newJNull(), updateConfig = false): LiteStore =
+proc updateConfig*(LS: LiteStore) =
+  let rawConfig = LS.config.pretty
+  if LS.configFile != "":
+    LS.configFile.writeFile(rawConfig)
+  else:
+    let options = newQueryOptions(true)
+    let configDoc = LS.store.retrieveRawDocument("config.json", options)
+    if configDoc != "":
+      discard LS.store.updateSystemDocument("config.json", rawConfig, "application/json")
+
+proc addStore*(LS: LiteStore, id, file: string, config = newJNull()): LiteStore =
   result = initLiteStore()
   result.address = LS.address
   result.port = LS.port
@@ -746,18 +756,8 @@ proc addStore*(LS: LiteStore, id, file: string, config = newJNull(), updateConfi
   LOG.info("Initializing store '$1'" % id)
   result.setup(true)
   result.initStore()
-  if not updateConfig:
-    return
   if not LS.config.hasKey("stores"):
     LS.config["stores"] = newJObject()
   LS.config["stores"][id] = newJObject()
   LS.config["stores"][id]["file"] = %file
   LS.config["stores"][id]["config"] = config
-  let rawConfig = LS.config.pretty
-  if LS.configFile != "":
-    LS.configFile.writeFile(rawConfig)
-  else:
-    let options = newQueryOptions(true)
-    let configDoc = LS.store.retrieveRawDocument("config.json", options)
-    if configDoc != "":
-      discard LS.store.updateSystemDocument("config.json", rawConfig, "application/json")
