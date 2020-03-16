@@ -7,7 +7,6 @@ import
   json,
   pegs,
   strtabs,
-  tables,
   strutils,
   base64,
   math
@@ -89,7 +88,7 @@ proc upgradeDatastore*(store: Datastore) =
       LOG.debug(e.getStackTrace())
       LOG.error("Unable to upgrade datastore '$1'." % store.path)
 
-proc openDatastore*(file: string): Datastore =
+proc openDatastore*(file: string): Datastore {.gcsafe.} =
   if not file.fileExists:
     raise newException(EDatastoreDoesNotExist,
         "Datastore '$1' does not exists." % file)
@@ -675,7 +674,7 @@ proc processConfigSettings(LS: var LiteStore) =
     if not cliSettings.hasKey("readonly") and settings.hasKey("readonly"):
       LS.readonly = settings["readonly"].getBool
 
-proc setup*(LS: var LiteStore, open = true) =
+proc setup*(LS: var LiteStore, open = true) {.gcsafe.} =
   if not LS.file.fileExists:
     try:
       LS.file.createDatastore()
