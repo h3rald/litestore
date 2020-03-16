@@ -5,10 +5,12 @@
   },
   "stores": {
     "test1": {
-      "file": "test1.db"
+      "file": "test1.db",
+      "config": null
     },
     "test2": {
-      "file": "test2.db"
+      "file": "test2.db",
+      "config": null
     },
     "test3": {
       "file": "test3.db",

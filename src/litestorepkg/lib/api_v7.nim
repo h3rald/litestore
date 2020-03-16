@@ -568,7 +568,8 @@ proc putStore*(LS: LiteStore, id: string, config: JsonNode, req: LSRequest): LSR
       return resError(Http400, "invalid store ID: $1" % id)
     if (LSDICT.hasKey(id)):
       return resError(Http409, "Store already exists: $1" % id)
-    let store = LS.addStore(id, id & ".db", config, true)
+    let store = LS.addStore(id, id & ".db", config)
+    LS.updateConfig()
     LSDICT[id] = store
     result = getStore(LS, id, newQueryOptions(), req)
     result.code = Http201
@@ -583,6 +584,25 @@ proc deleteIndex*(LS: LiteStore, id: string, req: LSRequest): LSResponse =
     return resError(Http404, "Index not found: $1" % id)
   try:
     LS.store.dropIndex(id)
+    result.headers = newHttpHeaders(TAB_HEADERS)
+    setOrigin(LS, req, result.headers)
+    result.headers["Content-Length"] = "0"
+    result.content = ""
+    result.code = Http204
+  except:
+    eWarn()
+    result = resError(Http500, "Unable to delete index.")
+
+proc deleteStore*(LS: LiteStore, id: string, req: LSRequest): LSResponse =
+  if (not id.match(PEG_STORE)):
+    return resError(Http400, "invalid store ID: $1" % id)
+  if (not LSDICT.hasKey(id)):
+    return resError(Http404, "Store not found: $1" % id)
+  try:
+    LSDICT.del(id)
+    if LS.config.hasKey("stores") and LS.config["stores"].hasKey(id):
+      LS.config["stores"].delete(id)
+    LS.updateConfig()
     result.headers = newHttpHeaders(TAB_HEADERS)
     setOrigin(LS, req, result.headers)
     result.headers["Content-Length"] = "0"
@@ -931,6 +951,8 @@ proc delete*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSRespon
   if id != "":
     if resource == "indexes":
       return LS.deleteIndex(id, req)
+    elif resource == "stores":
+      return LS.deleteStore(id, req)
     else: # Assume docs
       return LS.deleteDocument(id, req)
   else:
