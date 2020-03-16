@@ -1021,6 +1021,16 @@ proc route*(req: LSRequest, LS: LiteStore, resource = "docs", id = ""): LSRespon
     else:
       return resError(Http405, "Method not allowed: $1" % $req.reqMethod)
 
+proc multiRoute(req: LSRequest, resource, id: string): LSResponse =
+  var matches = @["", "", ""]
+  if req.url.path.find(PEG_STORE_URL, matches) != -1:
+    let id = matches[0]
+    let path = matches[1]
+    matches = @["", "", ""]
+    discard path.find(PEG_URL)
+    return req.route(LSDICT[id], matches[1], matches[2])
+  return req.route(LS, resource, id)
+
 proc newSimpleLSRequest(meth: HttpMethod, resource, id,  body = "", params = "", headers = newHttpHeaders()): LSRequest =
   result.reqMethod = meth
   result.body = body
@@ -1028,30 +1038,30 @@ proc newSimpleLSRequest(meth: HttpMethod, resource, id,  body = "", params = "",
   result.url = parseUri("$1://$2:$3/$4/$5?$6" % @["http", "localhost", "9500", resource, id, params])
   
 proc get(resource, id: string, params = ""): LSResponse =
-  return newSimpleLSRequest(HttpGet, resource, id, "", params).get(LS, resource, id)
+  return newSimpleLSRequest(HttpGet, resource, id, "", params).multiRoute(resource, id)
 
 proc post(resource, folder, body: string, ct = ""): LSResponse =
   var headers = newHttpHeaders()
   if ct != "":
     headers["Content-Type"] = ct
-  return newSimpleLSRequest(HttpPost, resource, "", body, "", headers).post(LS, resource, folder & "/")
+  return newSimpleLSRequest(HttpPost, resource, folder, body, "", headers).multiRoute(resource, folder & "/")
 
 proc put(resource, id, body: string, ct = ""): LSResponse =
   var headers = newHttpHeaders()
   if ct != "":
     headers["Content-Type"] = ct
-  return newSimpleLSRequest(HttpPut, resource, id, body, "", headers).put(LS, resource, id)
+  return newSimpleLSRequest(HttpPut, resource, id, body, "", headers).multiRoute(resource, id)
 
 proc patch(resource, id, body: string): LSResponse =
   var headers = newHttpHeaders()
   headers["Content-Type"] = "application/json"
-  return newSimpleLSRequest(HttpPatch, resource, id, body, "", headers).patch(LS, resource, id)
+  return newSimpleLSRequest(HttpPatch, resource, id, body, "", headers).multiRoute(resource, id)
 
 proc delete(resource, id: string): LSResponse =
-  return newSimpleLSRequest(HttpPatch, resource, id).delete(LS, resource, id)
+  return newSimpleLSRequest(HttpPatch, resource, id).multiRoute(resource, id)
 
 proc head(resource, id: string): LSResponse =
-  return newSimpleLSRequest(HttpHead, resource, id).head(LS, resource, id)
+  return newSimpleLSRequest(HttpHead, resource, id).multiRoute(resource, id)
 
 proc registerStoreApi(LS: LiteStore, ctx: DTContext, origResource, origId: string) =
   var api_idx = ctx.duk_push_object()
