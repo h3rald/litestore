@@ -232,6 +232,7 @@ var
   PEG_TAG* {.threadvar.}: Peg
   PEG_USER_TAG* {.threadvar.}: Peg
   PEG_INDEX* {.threadvar}: Peg
+  PEG_STORE* {.threadvar}: Peg
   PEG_JSON_FIELD* {.threadvar.}: Peg
   PEG_DEFAULT_URL* {.threadvar.}: Peg
   PEG_STORE_URL* {.threadvar.}: Peg
@@ -240,6 +241,7 @@ var
 PEG_TAG = peg"""^\$? [a-zA-Z0-9_\-?~:.@#^!+]+$"""
 PEG_USER_TAG = peg"""^[a-zA-Z0-9_\-?~:.@#^!+]+$"""
 PEG_INDEX = peg"""^[a-zA-Z0-9_]+$"""
+PEG_STORE = peg"""^[a-zA-Z0-9_]+$"""
 PEG_JSON_FIELD = peg"""'$' ('.' [a-z-A-Z0-9_]+)+"""
 PEG_DEFAULT_URL = peg"""^\/{(docs / info / dir / tags / indexes / stores)} (\/ {(.+)} / \/?)$"""
 PEG_STORE_URL = peg"""^\/stores \/ {([a-z0-9_]+)} (\/ {(.+)} / \/?)$"""
@@ -247,9 +249,9 @@ PEG_URL = peg"""^\/({(v\d+)} \/) {([^\/]+)} (\/ {(.+)} / \/?)$"""
 
 # Initialize LiteStore
 var LS* {.threadvar.}: LiteStore
-var LSDICT* {.threadvar.}: Table[string, LiteStore]
+var LSDICT* {.threadvar.}: OrderedTable[string, LiteStore]
 var TAB_HEADERS* {.threadvar.}: array[0..2, (string, string)]
-LSDICT  = initTable[string, LiteStore]()
+LSDICT  = initOrderedTable[string, LiteStore]()
 
 LS.appversion = pkgVersion
 LS.appname = appname

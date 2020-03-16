@@ -309,6 +309,9 @@ proc resTagNotFound*(id: string): LSResponse =
 proc resIndexNotFound*(id: string): LSResponse =
   resError(Http404, "Index '$1' not found." % id)
 
+proc resStoreNotFound*(id: string): LSResponse =
+  resError(Http404, "Store '$1' not found." % id)
+
 proc eWarn*() =
   var e = getCurrentException()
   LOG.warn(e.msg)
