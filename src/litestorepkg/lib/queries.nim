@@ -121,6 +121,15 @@ modified = ?
 WHERE id = ?
 """
 
+const SQL_UPDATE_SYSTEM_DOCUMENT* = sql"""
+UPDATE system_documents
+SET data = ?,
+content_type = ?,
+binary = ?,
+modified = ?
+WHERE id = ?
+"""
+
 const SQL_SET_DOCUMENT_MODIFIED* = sql"""
 UPDATE documents
 SET modified = ?

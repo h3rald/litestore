@@ -355,6 +355,35 @@ proc createSystemDocument*(store: Datastore, id = "", rawdata = "",
     eWarn()
     raise
 
+proc updateSystemDocument*(store: Datastore, id: string, rawdata: string,
+    contenttype = "text/plain", binary = -1): string =
+  let singleOp = not LS_TRANSACTION
+  var contenttype = contenttype.replace(peg"""\;(.+)$""", "") # Strip charset for now
+  var binary = checkIfBinary(binary, contenttype)
+  var data = rawdata
+  if contenttype == "application/json":
+    # Validate JSON data
+    try:
+      discard data.parseJson
+    except:
+      raise newException(JsonParsingError, "Invalid JSON content - " &
+          getCurrentExceptionMsg())
+  try:
+    LOG.debug("Updating system document '$1'" % id)
+    store.begin()
+    var res = store.db.execAffectedRows(SQL_UPDATE_SYSTEM_DOCUMENT, data, contenttype,
+        binary, currentTime(), id)
+    if res > 0:
+      result = $store.retrieveRawDocument(id)
+    else:
+      result = ""
+    if singleOp:
+      store.commit()
+  except:
+    eWarn()
+    store.rollback()
+    raise
+
 proc updateDocument*(store: Datastore, id: string, rawdata: string,
     contenttype = "text/plain", binary = -1, searchable = 1): string =
   let singleOp = not LS_TRANSACTION
@@ -704,18 +733,31 @@ proc initStore*(LS: var LiteStore) =
     fail(111, "--operation option not specified")
 
 
-proc addStore*(LS: LiteStore, id, file: string, config = newJNull()): LiteStore =
+proc addStore*(LS: LiteStore, id, file: string, config = newJNull(), updateConfig = false): LiteStore =
   result = initLiteStore()
   result.address = LS.address
   result.port = LS.port
   result.appname = LS.appname
   result.appversion = LS.appversion
   result.favicon = LS.favicon
-  # TODO error handling
   result.file = file
   if config != newJNull():
     result.config = config
   LOG.info("Initializing store '$1'" % id)
   result.setup(true)
   result.initStore()
-
+  if not updateConfig:
+    return
+  if not LS.config.hasKey("stores"):
+    LS.config["stores"] = newJObject()
+  LS.config["stores"][id] = newJObject()
+  LS.config["stores"][id]["file"] = %file
+  LS.config["stores"][id]["config"] = config
+  let rawConfig = LS.config.pretty
+  if LS.configFile != "":
+    LS.configFile.writeFile(rawConfig)
+  else:
+    let options = newQueryOptions(true)
+    let configDoc = LS.store.retrieveRawDocument("config.json", options)
+    if configDoc != "":
+      discard LS.store.updateSystemDocument("config.json", rawConfig, "application/json")
