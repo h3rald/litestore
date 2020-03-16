@@ -9,35 +9,62 @@
     },
     "test2": {
       "file": "test2.db"
+    },
+    "test3": {
+      "file": "test3.db",
+      "config": null
     }
   },
   "resources": {
     "/docs/vehicles/*": {
       "GET": {
-        "middleware": ["validate", "log"]
+        "middleware": [
+          "validate",
+          "log"
+        ]
       },
       "HEAD": {
-        "middleware": ["validate", "log"]
+        "middleware": [
+          "validate",
+          "log"
+        ]
       },
       "POST": {
         "allowed": false
       },
       "PATCH": {
-        "auth": ["admin:vehicles"],
-        "middleware": ["validate", "log"]
+        "auth": [
+          "admin:vehicles"
+        ],
+        "middleware": [
+          "validate",
+          "log"
+        ]
       },
       "PUT": {
-        "auth": ["admin:vehicles"],
-        "middleware": ["validate", "log"]
+        "auth": [
+          "admin:vehicles"
+        ],
+        "middleware": [
+          "validate",
+          "log"
+        ]
       },
       "DELETE": {
-        "auth": ["admin:vehicles"],
-        "middleware": ["validate", "log"]
+        "auth": [
+          "admin:vehicles"
+        ],
+        "middleware": [
+          "validate",
+          "log"
+        ]
       }
     },
     "/docs/logs/*": {
       "GET": {
-        "auth": ["admin:server"]
+        "auth": [
+          "admin:server"
+        ]
       },
       "POST": {
         "allowed": false

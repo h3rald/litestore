@@ -562,18 +562,19 @@ proc putIndex*(LS: LiteStore, id, field: string, req: LSRequest): LSResponse =
     eWarn()
     result = resError(Http500, "Unable to create index.")
 
-proc putStore*(LS: LiteStore, id: string, content: JsonNode, req: LSRequest): LSResponse =
+proc putStore*(LS: LiteStore, id: string, config: JsonNode, req: LSRequest): LSResponse =
   try:
-    if (not id.match(PEG_STORE)):
+    if (not id.match(PEG_STORE) or id == "master"):
       return resError(Http400, "invalid store ID: $1" % id)
     if (LSDICT.hasKey(id)):
       return resError(Http409, "Store already exists: $1" % id)
-    # TODO: create store
+    let store = LS.addStore(id, id & ".db", config, true)
+    LSDICT[id] = store
     result = getStore(LS, id, newQueryOptions(), req)
     result.code = Http201
   except:
     eWarn()
-    result = resError(Http500, "Unable to create index.")
+    result = resError(Http500, "Unable to create store.")
 
 proc deleteIndex*(LS: LiteStore, id: string, req: LSRequest): LSResponse =
   if (not id.match(PEG_INDEX)):
@@ -911,6 +912,13 @@ proc put*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse 
       except:
         return resError(Http400, "Bad Request - Invalid JSON body - $1" % getCurrentExceptionMsg())
       return LS.putIndex(id, field, req)
+    elif resource == "stores":
+      var config = newJNull()
+      try:
+        config = parseJson(req.body)
+      except:
+        return resError(Http400, "Bad Request - Invalid JSON body - $1" % getCurrentExceptionMsg())
+      return LS.putStore(id, config, req)
     else: # Assume docs
       var ct = "text/plain"
       if req.headers.hasKey("Content-Type"):
