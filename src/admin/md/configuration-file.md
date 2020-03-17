@@ -12,6 +12,32 @@ A typical configuration file looks like this:
     "log": "debug",
     "port": 9200
   },
+  "stores": {
+    "logs": {
+      "file": "logs.db",
+      "config": {
+        "resources": {
+          "/docs/*": {
+            "GET": {
+              "auth": ["admin:server"]
+            },
+            "POST": {
+              "allowed": false
+            },
+            "PUT": {
+              "allowed": false
+            },
+            "PATCH": {
+              "allowed": false
+            },
+            "DELETE": {
+              "allowed": false
+            }
+          }
+        }
+      }
+    }
+  },
   "resources": {
     "/docs/vehicles/*": {
       "GET": {
@@ -35,26 +61,8 @@ A typical configuration file looks like this:
         "auth": ["admin:vehicles"],
         "middleware": ["validate", "log"]
       }
-    },
-    "/docs/logs/*": {
-      "GET": {
-        "auth": ["admin:server"]
-      },
-      "POST": {
-        "allowed": false
-      },
-      "PUT": {
-        "allowed": false
-      },
-      "PATCH": {
-        "allowed": false
-      },
-      "DELETE": {
-        "allowed": false
-      }
     }
-  },
-  "signature": "\n-----BEGIN CERTIFICATE-----\n<certificate text goes here>\n-----END CERTIFICATE-----\n"
+  }
 }
 ```
 
@@ -74,6 +82,12 @@ This section contains some of the most common command-line options, i.e.:
 * log
 
 If a configuration file is specified and some of these settings are configured, they will be recognized as if they were specified via command line. However, if you also specify the same settings via command line, the command line settings will take precedence over the settings defined in the configuration file.
+
+### stores
+
+This section is used to defined additional stores to be managed by LiteStore by specifying the SQLite file to open and optionally the store configuration. 
+
+In this case, the **logs** store is configured as an additional store.
 
 ### resources
 

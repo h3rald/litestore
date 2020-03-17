@@ -16,15 +16,19 @@
       }
     };
     var readonly = info.read_only ? m("span.label.label-success", "Yes") : m("span.label.label-danger", "No");
+    var auth = info.auth ? m("span.label.label-success", "Yes") : m("span.label.label-danger", "No");
     var mirror = info.mount ? m("span.label.label-success", "Yes") : m("span.label.label-danger", "No");
     var infolist = m(".col-sm-6", [m("ul.list-unstyled", [
           li("Version", info.version),
           li("Datastore Version", info.datastore_version),
+          li("API Version", info.api_version),
           li("Size", info.size),
           li("Serving Directory", info.directory, info.directory === null),
           li("Mirroring Changes", mirror),
           li("Log Level", info.log_level),
           li("Read-Only", readonly),
+          li("Auth", auth),
+          li("Additional Stores", info.additional_stores && info.additional_stores.join(", ") || "n/a"),
           li("Total Documents", m("span.badge", info.total_documents)),
           li("Total Tags", m("span.badge", info.total_tags)),
     ])]);

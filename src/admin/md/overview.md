@@ -47,6 +47,10 @@ LiteStore can be configure validate [JWT](https://jwt.io/) tokens and configure 
 
 By leveraging the [duktape](https://duktape.org/) library, you can create your own middleware functions in JavaScript to perform additional tasks (validation, logging, data aggregation...) before accessing data.
 
+#### Multiple Data Stores
+
+LiteStore can be configured to manage more than one SQLite file through the same process. At run time, it will be possible to access data stored in each store but also add and remove stores.
+
 #### Nim API
 
 If you want, you can use LiteStore as a [Nim](https://nim-lang.org) library and perform data store operations from your own Nim program.
