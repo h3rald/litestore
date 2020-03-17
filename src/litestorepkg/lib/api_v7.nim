@@ -529,6 +529,7 @@ proc getInfo*(LS: LiteStore, req: LSRequest): LSResponse =
   var content = newJObject()
   content["version"] = %(LS.appname & " v" & LS.appversion)
   content["datastore_version"] = %version
+  content["api_version"] = %7
   content["size"] = %($((LS.file.getFileSize().float/(1024*1024)).formatFloat(ffDecimal, 2)) & " MB")
   content["read_only"] = %LS.readonly
   content["log_level"] = %LS.loglevel
@@ -537,6 +538,14 @@ proc getInfo*(LS: LiteStore, req: LSRequest): LSResponse =
   else:
     content["directory"] = %LS.directory
   content["mount"] = %LS.mount
+  if LS.config != newJNull() and LS.config.hasKey("stores") and LS.config["stores"].len > 0:
+    content["additional_stores"] = %toSeq(LS.config["stores"].keys)
+  else:
+    content["additional_stores"] = newJArray()
+  if LS.auth != newJNull():
+    content["auth"] = %true
+  else:
+    content["auth"] = %false
   content["total_documents"] = %total_documents
   content["total_tags"] = %total_tags
   content["tags"] = tags

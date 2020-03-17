@@ -11,6 +11,7 @@ pages=(
   md/middleware.md
     md/global-js-objects.md
   md/system-documents.md
+  md/multiple-stores.md
   md/admin_app.md
   md/api.md
     md/api_info.md
@@ -18,6 +19,7 @@ pages=(
     md/api_docs.md
     md/api_tags.md
     md/api_indexes.md
+    md/api_stores.md
   md/nim-api.md
     md/nim-api_high.md
     md/nim-api_low.md
