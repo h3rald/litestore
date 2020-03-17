@@ -12,7 +12,8 @@ import
   strtabs,
   base64,
   asyncnet,
-  jwt
+  jwt,
+  sequtils
 import 
   types, 
   utils, 
@@ -297,15 +298,23 @@ proc serve*(LS: LiteStore) =
     await newReq.respond(res.code, res.content, res.headers)
   echo(LS.appname & " v" & LS.appversion & " started on " & LS.address & ":" & $LS.port & ".")
   if LS.configFile != "":
-    echo "- Configuration File: " & LS.configFile
+    echo "- Configuration file: " & LS.configFile
   if LS.authFile != "":
-    echo "- Auth File: " & LS.authFile
+    echo "- Auth file: " & LS.authFile
   if LS.mount:
     echo "- Mirroring datastore changes to: " & LS.directory
+  elif LS.directory != "":
+    echo "- Serving directory: " & LS.directory
   if LS.readonly:
     echo "- Read-only mode"
-  echo "- Log Level: " & LS.loglevel
-  echo "- Store: " & LS.file
+  echo "- Log level: " & LS.loglevel
+  echo "- Stores:"
+  let storeIds = toSeq(LSDICT.keys)
+  for i in countdown(storeIds.len-1, 0):
+    let file = LSDICT[storeIds[i]].file
+    echo "  - $1: $2" % [storeIds[i], file]
+  if LS.middleware.len > 0:
+    echo "- Middleware configured"
   if LS.auth != newJNull():
     echo "- Authorization configured"
   asyncCheck server.serve(LS.port.Port, handleHttpRequest, LS.address)
