@@ -31,7 +31,7 @@ requires "nim >= 1.0.0", "jwt", "nimgen", "duktape"
 
 const
   parallel = "" #"--parallelBuild:1 --verbosity:3"
-  compile = "nim c -d:release --threads:on" & " " & parallel
+  compile = "nim c -d:release" & " " & parallel
   linux_x64 = "--cpu:amd64 --os:linux"
   windows_x64 = "--cpu:amd64 --os:windows"
   macosx_x64 = ""
