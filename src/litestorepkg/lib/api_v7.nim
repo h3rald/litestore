@@ -1180,7 +1180,7 @@ proc getMiddleware*(LS: LiteStore, id: string): string =
   else:
     result = LS.middleware[id]
 
-proc getMiddlewareSeq(resource, id, meth: string): seq[string] =
+proc getMiddlewareSeq(LS: LiteStore, resource, id, meth: string): seq[string] =
   result = newSeq[string]() 
   if LS.config.kind != JObject or not LS.config.hasKey("resources"):
     return 
@@ -1206,7 +1206,8 @@ proc getMiddlewareSeq(resource, id, meth: string): seq[string] =
         result.add m.getStr
 
 proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSResponse =
-  let middleware = getMiddlewareSeq(resource, id, $req.reqMethod)
+  echo LS.file
+  let middleware = getMiddlewareSeq(LS, resource, id, $req.reqMethod)
   LOG.debug("Middleware: " & middleware.join(" -> "));
   if middleware.len == 0:
     return route(req, LS, resource, id)

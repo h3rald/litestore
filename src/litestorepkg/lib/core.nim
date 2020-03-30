@@ -750,6 +750,7 @@ proc addStore*(LS: LiteStore, id, file: string, config = newJNull()): LiteStore 
   result.appversion = LS.appversion
   result.favicon = LS.favicon
   result.file = file
+  result.middleware = newStringTable()
   if config != newJNull():
     result.config = config
   LOG.info("Initializing store '$1'" % id)

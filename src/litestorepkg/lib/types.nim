@@ -118,7 +118,7 @@ type
 proc initLiteStore*(): LiteStore = 
   result.config = newJNull()
   result.configFile = ""
-  result.cliSettings = newJNull()
+  result.cliSettings = newJObject()
   result.directory = ""
   result.manageSystemData = false
   result.file = ""
