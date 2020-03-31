@@ -3,6 +3,27 @@ import x_db_sqlite
 
 # SQL QUERIES
 
+const
+  SQL_CREATE_INDEX_DOCUMENTS_DOCID* = sql"CREATE INDEX IF NOT EXISTS documents_docid ON documents(docid)"
+  SQL_CREATE_INDEX_DOCUMENTS_ID* = sql"CREATE INDEX IF NOT EXISTS documents_id ON documents(id)"
+  SQL_CREATE_INDEX_SYSTEM_DOCUMENTS_DOCID* = sql"CREATE INDEX IF NOT EXISTS system_documents_docid ON documents(docid)"
+  SQL_CREATE_INDEX_SYSTEM_DOCUMENTS_ID* = sql"CREATE INDEX IF NOT EXISTS system_documents_id ON documents(id)"
+  SQL_CREATE_INDEX_TAGS_DOCUMENT_ID* = sql"CREATE INDEX IF NOT EXISTS tags_document_id ON tags(document_id)"
+  SQL_CREATE_INDEX_TAGS_TAG_ID* = sql"CREATE INDEX IF NOT EXISTS tags_tag_id ON tags(tag_id)"
+
+  SQL_DROP_INDEX_DOCUMENTS_DOCID* = sql"DROP INDEX IF EXISTS documents_docid"
+  SQL_DROP_INDEX_DOCUMENTS_ID* = sql"DROP INDEX IF EXISTS documents_id"
+  SQL_DROP_INDEX_SYSTEM_DOCUMENTS_DOCID* = sql"DROP INDEX IF EXISTS system_documents_docid"
+  SQL_DROP_INDEX_SYSTEM_DOCUMENTS_ID* = sql"DROP INDEX IF EXISTS system_documents_id"
+  SQL_DROP_INDEX_TAGS_DOCUMENT_ID* = sql"DROP INDEX IF EXISTS tags_document_id"
+  SQL_DROP_INDEX_TAGS_TAG_ID* = sql"DROP INDEX IF EXISTS tags_tag_id"
+
+  SQL_REINDEX* = sql"REINDEX"
+  SQL_OPTIMIZE* = sql"INSERT INTO searchdata(searchdata) VALUES('optimize')"
+  SQL_REBUILD* = sql"INSERT INTO searchdata(searchdata) VALUES('rebuild')"
+
+  SQL_VACUUM* = sql"VACUUM"
+
 const SQL_CREATE_DOCUMENTS_TABLE* = sql"""
 CREATE TABLE documents (
 docid INTEGER PRIMARY KEY,
@@ -14,22 +35,18 @@ searchable INTEGER,
 created TEXT,
 modified TEXT)
 """
-const
-  SQL_CREATE_INDEX_DOCUMENTS_DOCID* = sql"CREATE INDEX IF NOT EXISTS documents_docid ON documents(docid)"
-  SQL_CREATE_INDEX_DOCUMENTS_ID* = sql"CREATE INDEX IF NOT EXISTS documents_id ON documents(id)"
-  SQL_CREATE_INDEX_TAGS_DOCUMENT_ID* = sql"CREATE INDEX IF NOT EXISTS tags_document_id ON tags(document_id)"
-  SQL_CREATE_INDEX_TAGS_TAG_ID* = sql"CREATE INDEX IF NOT EXISTS tags_tag_id ON tags(tag_id)"
 
-  SQL_DROP_INDEX_DOCUMENTS_DOCID* = sql"DROP INDEX IF EXISTS documents_docid"
-  SQL_DROP_INDEX_DOCUMENTS_ID* = sql"DROP INDEX IF EXISTS documents_id"
-  SQL_DROP_INDEX_TAGS_DOCUMENT_ID* = sql"DROP INDEX IF EXISTS tags_document_id"
-  SQL_DROP_INDEX_TAGS_TAG_ID* = sql"DROP INDEX IF EXISTS tags_tag_id"
-
-  SQL_REINDEX* = sql"REINDEX"
-  SQL_OPTIMIZE* = sql"INSERT INTO searchdata(searchdata) VALUES('optimize')"
-  SQL_REBUILD* = sql"INSERT INTO searchdata(searchdata) VALUES('rebuild')"
-
-  SQL_VACUUM* = sql"VACUUM"
+const SQL_CREATE_SYSTEM_DOCUMENTS_TABLE* = sql"""
+CREATE TABLE system_documents (
+  docid INTEGER PRIMARY KEY,
+  id TEXT UNIQUE NOT NULL,
+  data TEXT,
+  content_type TEXT,
+  binary INTEGER,
+  created TEXT,
+  modified TEXT
+)
+"""
 
 const SQL_CREATE_SEARCHDATA_TABLE* = sql"""
 CREATE VIRTUAL TABLE searchdata USING fts4(
@@ -58,10 +75,14 @@ INSERT INTO info
 VALUES (?, ?)
 """
 
+const SQL_UPDATE_VERSION* = sql"""
+UPDATE info
+SET version = ?
+"""
+
 const SQL_SELECT_INFO* = sql"""
 SELECT * FROM info
 """
-
 
 const SQL_SET_TOTAL_DOCS* = sql"""
 UPDATE info
@@ -84,12 +105,27 @@ INSERT INTO documents
 VALUES (?, ?, ?, ?, ?, ?)
 """
 
+const SQL_INSERT_SYSTEM_DOCUMENT* = sql"""
+INSERT INTO system_documents
+(id, data, content_type, binary, created)
+VALUES (?, ?, ?, ?, ?)
+"""
+
 const SQL_UPDATE_DOCUMENT* = sql"""
 UPDATE documents
 SET data = ?,
 content_type = ?,
 binary = ?,
 searchable = ?,
+modified = ?
+WHERE id = ?
+"""
+
+const SQL_UPDATE_SYSTEM_DOCUMENT* = sql"""
+UPDATE system_documents
+SET data = ?,
+content_type = ?,
+binary = ?,
 modified = ?
 WHERE id = ?
 """
@@ -154,6 +190,10 @@ WHERE documents.id = tags.document_id AND
 tag_id = ?
 """
 
+const SQL_SELECT_SYSTEM_DOCUMENTS* = sql"""
+SELECT * FROM system_documents
+"""
+
 const SQL_SELECT_DOCUMENT_IDS_BY_TAG* = sql"""
 SELECT id FROM documents, tags
 WHERE documents.id = tags.document_id AND
@@ -181,6 +221,10 @@ const SQL_DELETE_DOCUMENTS_BY_TAG* = sql"""
 DELETE FROM documents
 WHERE documents.id IN
 (SELECT document_id FROM tags WHERE tag_id = ?)
+"""
+
+const SQL_DELETE_SYSTEM_DOCUMENTS* = sql"""
+DELETE FROM system_documents
 """
 
 const SQL_DELETE_SEARCHDATA_BY_TAG* = sql"""

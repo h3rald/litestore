@@ -7,6 +7,11 @@ pages=(
   md/getting-started.md
   md/usage.md
   md/auth.md
+  md/configuration-file.md
+  md/middleware.md
+    md/global-js-objects.md
+  md/system-documents.md
+  md/multiple-stores.md
   md/admin_app.md
   md/api.md
     md/api_info.md
@@ -14,6 +19,7 @@ pages=(
     md/api_docs.md
     md/api_tags.md
     md/api_indexes.md
+    md/api_stores.md
   md/nim-api.md
     md/nim-api_high.md
     md/nim-api_low.md
@@ -24,7 +30,7 @@ for page in ${pages[@]}
 do
   (cat "${page}"; printf "\n\n") >> LiteStore_UserGuide.md
 done
-hastyscribe --field/version:1.7.0 LiteStore_UserGuide.md
+hastyscribe --field/version:1.9.0 LiteStore_UserGuide.md
 rm LiteStore_UserGuide.md
 mv LiteStore_UserGuide.htm ..
 cd ../..

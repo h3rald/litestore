@@ -2,6 +2,11 @@
 
 LiteStore can be configured to automatically validate [JWT](https://jwt.io/) tokens and authorize authenticated users on specific resources (and specific resource verbs even) based on their [OAuth2 scopes](https://oauth.net/2/scope/) specified in the token itself.
 
+> %note%
+> auth.json vs. config.json 
+> 
+> As of version 1.8.0, it is recommended to use the LiteStore configuration file to configure authorization. This specialized **auth.json** configuration file  format will however be maintained  for compatibility reasons.
+
 To configure authorization, create an **auth.json** file like the following:
 
 ```
