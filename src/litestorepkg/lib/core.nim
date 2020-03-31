@@ -41,9 +41,10 @@ proc createDatastore*(file: string) =
   LOG.debug("Creating tables")
   data.exec(SQL_CREATE_DOCUMENTS_TABLE)
   data.exec(SQL_CREATE_SEARCHDATA_TABLE)
+  data.exec(SQL_CREATE_SYSTEM_DOCUMENTS_TABLE)
   data.exec(SQL_CREATE_TAGS_TABLE)
   data.exec(SQL_CREATE_INFO_TABLE)
-  data.exec(SQL_INSERT_INFO, 1, 0, 0)
+  data.exec(SQL_INSERT_INFO, 2, 0)
   LOG.debug("Creating indexes")
   data.createIndexes()
   LOG.debug("Database created")
@@ -64,7 +65,30 @@ proc destroyDatastore*(store: Datastore) =
     raise newException(EDatastoreUnavailable,
         "Datastore '$1' cannot destroyed." % store.path)
 
-proc openDatastore*(file: string): Datastore =
+proc retrieveInfo*(store: Datastore): array[0..1, int] =
+  var data = store.db.getRow(SQL_SELECT_INFO)
+  return [data[0].parseInt, data[1].parseInt]
+
+proc upgradeDatastore*(store: Datastore) =
+  let info = store.retrieveInfo()
+  if info[0] == 1:
+    LOG.debug("Upgrading datastore to version 2...")
+    let bkp_path = store.path & "__v1_backup"
+    copyFile(store.path, bkp_path)
+    try:
+      store.db.exec(SQL_CREATE_SYSTEM_DOCUMENTS_TABLE)
+      store.db.exec(SQL_UPDATE_VERSION, 2)
+      LOG.debug("Done.")
+    except:
+      store.closeDatastore()
+      store.path.removeFile()
+      copyFile(bkp_path, store.path)
+      let e = getCurrentException()
+      LOG.error(getCurrentExceptionMsg())
+      LOG.debug(e.getStackTrace())
+      LOG.error("Unable to upgrade datastore '$1'." % store.path)
+
+proc openDatastore*(file: string): Datastore {.gcsafe.} =
   if not file.fileExists:
     raise newException(EDatastoreDoesNotExist,
         "Datastore '$1' does not exists." % file)
@@ -75,7 +99,7 @@ proc openDatastore*(file: string): Datastore =
     discard create_function(cast[PSqlite3](result.db), "rank", -1, SQLITE_ANY,
         cast[pointer](SQLITE_DETERMINISTIC), okapi_bm25f_kb, nil, nil)
     LOG.debug("Executing PRAGMAs...")
-    discard result.db.tryExec("PRAGMA locking_mode = exclusive".sql)
+    discard result.db.tryExec("PRAGMA journal_mode = WAL".sql)
     discard result.db.tryExec("PRAGMA page_size = 4096".sql)
     discard result.db.tryExec("PRAGMA cache_size = 10000".sql)
     discard result.db.tryExec("PRAGMA foreign_keys = ON".sql)
@@ -85,10 +109,6 @@ proc openDatastore*(file: string): Datastore =
   except:
     raise newException(EDatastoreUnavailable,
         "Datastore '$1' cannot be opened." % file)
-
-proc retrieveInfo*(store: Datastore): array[0..1, int] =
-  var data = store.db.getRow(SQL_SELECT_INFO)
-  return [data[0].parseInt, data[1].parseInt]
 
 proc hasMirror(store: Datastore): bool =
   return store.mount.len > 0
@@ -143,7 +163,6 @@ proc retrieveIndexes*(store: Datastore, options: QueryOptions = newQueryOptions(
   var query = prepareSelectIndexesQuery(options)
   var raw_indexes: seq[Row]
   if (options.like.len > 0):
-    echo options.like
     if (options.like[options.like.len-1] == '*' and options.like[0] != '*'):
       let str = "json_index_" & options.like.substr(0, options.like.len-2)
       raw_indexes = store.db.getAllRows(query.sql, str, str & "{")
@@ -303,6 +322,67 @@ proc createDocument*(store: Datastore, id = "", rawdata = "",
     eWarn()
     raise
 
+proc createSystemDocument*(store: Datastore, id = "", rawdata = "",
+    contenttype = "text/plain", binary = -1): string =
+  let singleOp = not LS_TRANSACTION
+  var id = id
+  var contenttype = contenttype.replace(peg"""\;(.+)$""", "") # Strip charset for now
+  var binary = checkIfBinary(binary, contenttype)
+  var data = rawdata
+  if contenttype == "application/json":
+    # Validate JSON data
+    try:
+      discard data.parseJson
+    except:
+      raise newException(JsonParsingError, "Invalid JSON content - " &
+          getCurrentExceptionMsg())
+  if id == "":
+    id = $genOid()
+  elif id.isFolder:
+    id = id & $genOid()
+  # Store document
+  try:
+    LOG.debug("Creating system document '$1'" % id)
+    store.begin()
+    discard store.db.insertID(SQL_INSERT_SYSTEM_DOCUMENT, id, data, contenttype,
+        binary, currentTime())
+    if singleOp:
+      store.commit()
+    return $store.retrieveRawDocument(id)
+  except:
+    store.rollback()
+    eWarn()
+    raise
+
+proc updateSystemDocument*(store: Datastore, id: string, rawdata: string,
+    contenttype = "text/plain", binary = -1): string =
+  let singleOp = not LS_TRANSACTION
+  var contenttype = contenttype.replace(peg"""\;(.+)$""", "") # Strip charset for now
+  var binary = checkIfBinary(binary, contenttype)
+  var data = rawdata
+  if contenttype == "application/json":
+    # Validate JSON data
+    try:
+      discard data.parseJson
+    except:
+      raise newException(JsonParsingError, "Invalid JSON content - " &
+          getCurrentExceptionMsg())
+  try:
+    LOG.debug("Updating system document '$1'" % id)
+    store.begin()
+    var res = store.db.execAffectedRows(SQL_UPDATE_SYSTEM_DOCUMENT, data, contenttype,
+        binary, currentTime(), id)
+    if res > 0:
+      result = $store.retrieveRawDocument(id)
+    else:
+      result = ""
+    if singleOp:
+      store.commit()
+  except:
+    eWarn()
+    store.rollback()
+    raise
+
 proc updateDocument*(store: Datastore, id: string, rawdata: string,
     contenttype = "text/plain", binary = -1, searchable = 1): string =
   let singleOp = not LS_TRANSACTION
@@ -404,11 +484,16 @@ proc retrieveRawDocuments*(store: Datastore,
 proc countDocuments*(store: Datastore): int64 =
   return store.db.getRow(SQL_COUNT_DOCUMENTS)[0].parseInt
 
-proc importFile*(store: Datastore, f: string, dir = "") =
+proc importFile*(store: Datastore, f: string, dir = "/", system = false) =
   if not f.fileExists:
     raise newException(EFileNotFound, "File '$1' not found." % f)
   let ext = f.splitFile.ext
-  var d_id = f.replace("\\", "/")
+  var d_id: string
+  if system:
+    # Do not save original directory name
+    d_id = f.replace("\\", "/")[dir.len+1..f.len-1];
+  else:
+    d_id = f.replace("\\", "/");
   var d_contents = f.readFile
   var d_ct = "application/octet-stream"
   if CONTENT_TYPES.hasKey(ext):
@@ -422,8 +507,11 @@ proc importFile*(store: Datastore, f: string, dir = "") =
   let singleOp = not LS_TRANSACTION
   store.begin()
   try:
-    discard store.createDocument(d_id, d_contents, d_ct, d_binary, d_searchable)
-    if dir != "":
+    if system:
+      discard store.createSystemDocument(d_id, d_contents, d_ct, d_binary)
+    else:
+      discard store.createDocument(d_id, d_contents, d_ct, d_binary, d_searchable)
+    if dir != "/" and not system:
       store.db.exec(SQL_INSERT_TAG, "$dir:"&dir, d_id)
   except:
     store.rollback()
@@ -456,7 +544,7 @@ proc vacuum*(file: string) =
     quit(203)
   quit(0)
 
-proc importDir*(store: Datastore, dir: string) =
+proc importDir*(store: Datastore, dir: string, system = false) =
   var files = newSeq[string]()
   if not dir.dirExists:
     raise newException(EDirectoryNotFound, "Directory '$1' not found." % dir)
@@ -478,7 +566,7 @@ proc importDir*(store: Datastore, dir: string) =
   store.db.dropIndexes()
   for f in files:
     try:
-      store.importFile(f, dir)
+      store.importFile(f, dir, system)
       cFiles.inc
       if (cFiles-1) mod batchSize == 0:
         cBatches.inc
@@ -494,8 +582,12 @@ proc importDir*(store: Datastore, dir: string) =
   store.commit()
   LOG.info("Imported $1/$2 files", cFiles, files.len)
 
-proc exportDir*(store: Datastore, dir: string) =
-  let docs = store.db.getAllRows(SQL_SELECT_DOCUMENTS_BY_TAG, "$dir:"&dir)
+proc exportDir*(store: Datastore, dir: string, system = false) =
+  var docs: seq[Row]
+  if system:
+    docs = store.db.getAllRows(SQL_SELECT_SYSTEM_DOCUMENTS)
+  else:
+    docs = store.db.getAllRows(SQL_SELECT_DOCUMENTS_BY_TAG, "$dir:"&dir)
   LOG.info("Exporting $1 files...", docs.len)
   for doc in docs:
     LOG.debug("Exporting: $1", doc[1])
@@ -509,12 +601,15 @@ proc exportDir*(store: Datastore, dir: string) =
     file.writeFile(data)
   LOG.info("Done.");
 
-proc deleteDir*(store: Datastore, dir: string) =
-  store.db.exec(SQL_DELETE_SEARCHDATA_BY_TAG, "$dir:"&dir)
-  store.db.exec(SQL_DELETE_DOCUMENTS_BY_TAG, "$dir:"&dir)
-  store.db.exec(SQL_DELETE_TAGS_BY_TAG, "$dir:"&dir)
-  let total = store.db.getRow(SQL_COUNT_DOCUMENTS)[0].parseInt
-  store.db.exec(SQL_SET_TOTAL_DOCS, total)
+proc deleteDir*(store: Datastore, dir: string, system = false) =
+  if system:
+    store.db.exec(SQL_DELETE_SYSTEM_DOCUMENTS)
+  else:
+    store.db.exec(SQL_DELETE_SEARCHDATA_BY_TAG, "$dir:"&dir)
+    store.db.exec(SQL_DELETE_DOCUMENTS_BY_TAG, "$dir:"&dir)
+    store.db.exec(SQL_DELETE_TAGS_BY_TAG, "$dir:"&dir)
+    let total = store.db.getRow(SQL_COUNT_DOCUMENTS)[0].parseInt
+    store.db.exec(SQL_SET_TOTAL_DOCS, total)
 
 proc mountDir*(store: var Datastore, dir: string) =
   if not dir.dirExists:
@@ -526,3 +621,143 @@ proc destroyDocumentsByTag*(store: Datastore, tag: string): int64 =
   var ids = store.db.getAllRows(SQL_SELECT_DOCUMENT_IDS_BY_TAG, tag)
   for id in ids:
     result.inc(store.destroyDocument(id[0]).int)
+
+proc setLogLevel*(val: string) =
+  case val:
+    of "info":
+      LOG.level = lvInfo
+    of "warn":
+      LOG.level = lvWarn
+    of "debug":
+      LOG.level = lvDebug
+    of "error":
+      LOG.level = lvError
+    of "none":
+      LOG.level = lvNone
+    else:
+      fail(103, "Invalid log level '$1'" % val)
+
+proc processAuthConfig(configuration: JsonNode, auth: var JsonNode) =
+  if auth == newJNull() and configuration != newJNull() and configuration.hasKey("signature"):
+    auth = newJObject();
+    auth["access"] = newJObject();
+    auth["signature"] = configuration["signature"]
+    for k, v in configuration["resources"].pairs:
+      auth["access"][k] = newJObject()
+      for meth, content in v.pairs:
+        if content.hasKey("auth"):
+          auth["access"][k][meth] = content["auth"]
+
+proc processConfigSettings(LS: var LiteStore) =
+  # Process config settings if present and if no cli settings are set
+  if LS.config != newJNull() and LS.config.hasKey("settings"):
+    let settings = LS.config["settings"]
+    let cliSettings = LS.cliSettings
+    if not cliSettings.hasKey("address") and settings.hasKey("address"):
+      LS.address = settings["address"].getStr
+    if not cliSettings.hasKey("port") and settings.hasKey("port"):
+      LS.port = settings["port"].getInt
+    if not cliSettings.hasKey("store") and settings.hasKey("store"):
+      LS.file = settings["store"].getStr
+    if not cliSettings.hasKey("directory") and settings.hasKey("directory"):
+      LS.directory = settings["directory"].getStr
+    if not cliSettings.hasKey("middleware") and settings.hasKey("middleware"):
+      let val = settings["middleware"].getStr
+      for file in val.walkDir():
+        if file.kind == pcFile or file.kind == pcLinkToFile:
+          LS.middleware[file.path.splitFile[1]] = file.path.readFile()
+    if not cliSettings.hasKey("log") and settings.hasKey("log"):
+      LS.logLevel = settings["log"].getStr
+      setLogLevel(LS.logLevel)
+    if not cliSettings.hasKey("mount") and settings.hasKey("mount"):
+      LS.mount = settings["mount"].getBool
+    if not cliSettings.hasKey("readonly") and settings.hasKey("readonly"):
+      LS.readonly = settings["readonly"].getBool
+
+proc setup*(LS: var LiteStore, open = true) {.gcsafe.} =
+  if not LS.file.fileExists:
+    try:
+      LS.file.createDatastore()
+    except:
+      eWarn()
+      fail(200, "Unable to create datastore '$1'" % [LS.file])
+  if (open):
+    try:
+      LS.store = LS.file.openDatastore()
+      try:
+        LS.store.upgradeDatastore()
+      except:
+        fail(203, "Unable to upgrade datastore '$1'" % [LS.file])
+      if LS.mount:
+        try:
+          LS.store.mountDir(LS.directory)
+        except:
+          eWarn()
+          fail(202, "Unable to mount directory '$1'" % [LS.directory])
+    except:
+      fail(201, "Unable to open datastore '$1'" % [LS.file])
+
+proc initStore*(LS: var LiteStore) =
+  if LS.configFile == "":
+    # Attempt to retrieve config.json from system documents
+    let options = newQueryOptions(true)
+    let rawDoc = LS.store.retrieveRawDocument("config.json", options)
+    if rawDoc != "":
+      LS.config = rawDoc.parseJson()["data"]
+
+  if LS.config != newJNull():
+    # Process config settings
+    LS.processConfigSettings()
+    # Process auth from config settings
+    processAuthConfig(LS.config, LS.auth)
+
+  if LS.auth == newJNull():
+    # Attempt to retrieve auth.json from system documents
+    let options = newQueryOptions(true)
+    let rawDoc = LS.store.retrieveRawDocument("auth.json", options)
+    if rawDoc != "":
+      LS.auth = rawDoc.parseJson()["data"]
+
+  # Validation
+  if LS.directory == "" and (LS.operation in [opDelete, opImport, opExport] or LS.mount):
+    fail(105, "--directory option not specified.")
+
+  if LS.execution.file == "" and (LS.execution.operation in ["put", "post", "patch"]):
+    fail(109, "--file option not specified")
+
+  if LS.execution.uri == "" and LS.operation == opExecute:
+    fail(110, "--uri option not specified")
+
+  if LS.execution.operation == "" and LS.operation == opExecute:
+    fail(111, "--operation option not specified")
+
+
+proc updateConfig*(LS: LiteStore) =
+  let rawConfig = LS.config.pretty
+  if LS.configFile != "":
+    LS.configFile.writeFile(rawConfig)
+  else:
+    let options = newQueryOptions(true)
+    let configDoc = LS.store.retrieveRawDocument("config.json", options)
+    if configDoc != "":
+      discard LS.store.updateSystemDocument("config.json", rawConfig, "application/json")
+
+proc addStore*(LS: LiteStore, id, file: string, config = newJNull()): LiteStore =
+  result = initLiteStore()
+  result.address = LS.address
+  result.port = LS.port
+  result.appname = LS.appname
+  result.appversion = LS.appversion
+  result.favicon = LS.favicon
+  result.file = file
+  result.middleware = newStringTable()
+  if config != newJNull():
+    result.config = config
+  LOG.info("Initializing store '$1'" % id)
+  result.setup(true)
+  result.initStore()
+  if not LS.config.hasKey("stores"):
+    LS.config["stores"] = newJObject()
+  LS.config["stores"][id] = newJObject()
+  LS.config["stores"][id]["file"] = %file
+  LS.config["stores"][id]["config"] = config

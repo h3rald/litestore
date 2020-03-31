@@ -35,10 +35,28 @@ The [info](class:kwd) table currently contains just two INT columns used to keep
 The [documents](class:kwd) table is the most important table of the data store, as it contains all the documents stored in it. The following information is stored for each document:
 
 * **docid** &ndash; The internal unique document identifier.
-* **id** &ndash; The public unique document identifier, used to access the document via the HTTP API.
+* **id** &ndash; The public unique document identifier, used to access the document via the HTTP API or Nim API.
 * **data** &ndash; The contents of the document (or their base64-encoded representation in case of binary documents).
 * **binary** &ndash; Whether the document is binary (1) or textual (0).
 * **searchable** &ndash; Whether the document is searchable (1) or not (0). Currently, textual documents are searchable and binary documents are not.
+* **created** &ndash; When the document was created.
+* **modified** &ndash; When the document was last modified.
+
+##### system_documents Table
+
+The [system_documents](class:kwd) table has a structure similar to the [documents](class:kwd) table, but it is used for well-known system documents that are used to provide additional functionalities, such as authorization or custom resources. 
+
+Unlike ordinary documents, system documents:
+* cannot be accessed via the HTTP or Nim API, they can only be imported, exported, or deleted with the corresponding commands.
+* are not searchable.
+* cannot be tagged.
+
+The following information is stored for each system document:
+
+* **docid** &ndash; The internal unique document identifier.
+* **id** &ndash; The public unique document identifier.
+* **data** &ndash; The contents of the document (or their base64-encoded representation in case of binary documents).
+* **binary** &ndash; Whether the document is binary (1) or textual (0).
 * **created** &ndash; When the document was created.
 * **modified** &ndash; When the document was last modified.
 

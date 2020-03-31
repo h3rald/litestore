@@ -1,9 +1,11 @@
 import
   parseopt,
   strutils,
-  json
+  json, 
+  os,
+  strtabs
 import
-  logger,
+  core,
   config,
   types,
   utils
@@ -15,8 +17,10 @@ var
   directory:string = ""
   readonly = false
   logLevel = "warn"
+  system = false
   mount = false
   auth = newJNull()
+  middleware = newStringTable()
   configuration = newJNull()
   authFile = ""
   configFile = ""
@@ -57,173 +61,135 @@ let
     -p, --port          Specify server port number (default: 9500).
     -r, --readonly      Allow only data retrieval operations.
     -s, --store         Specify a datastore file (default: data.db)
+    --system            Set the system flag for import, export, and delete operations
     -t, --type          Specify a content type for the body an operation to be executed via the execute command.
     -u, --uri           Specify an uri to execute an operation through the execute command.
     -v, --version       Display the program version.
+    -w, --middleware    Specify a path to a folder containing middleware definitions.
 """
 
-for kind, key, val in getOpt():
-  case kind:
-    of cmdArgument:
-      case key:
-        of "run":
-          operation = opRun
-        of "import":
-          operation = opImport
-        of "execute":
-          operation = opExecute
-        of "export":
-          operation = opExport
-        of "delete":
-          operation = opDelete
-        of "optimize":
-          operation = opOptimize
-        of "vacuum":
-          operation = opVacuum
-        else:
-          discard
-    of cmdLongOption, cmdShortOption:
-      case key:
-        of "address", "a":
-          if val == "":
-            fail(100, "Address not specified.")
-          address = val
-          cliSettings["address"] = %address
-        of "port", "p":
-          if val == "":
-            fail(101, "Port not specified.")
-          port = val.parseInt
-          cliSettings["port"] = %port
-        of "store", "s":
-          file = val
-          cliSettings["store"]  = %file
-        of "log", "l":
-          if val == "":
-            fail(102, "Log level not specified.")
-          case val:
-            of "info":
-              LOG.level = lvInfo
-            of "warn":
-              LOG.level = lvWarn
-            of "debug":
-              LOG.level = lvDebug
-            of "error":
-              LOG.level = lvError
-            of "none":
-              LOG.level = lvNone
-            else:
-              fail(103, "Invalid log level '$1'" % val)
-          loglevel = val
-          cliSettings["log"] = %logLevel
-        of "directory", "d":
-          if val == "":
-            fail(104, "Directory not specified.")
-          directory = val
-          cliSettings["directory"] = %directory
-        of "operation", "o":
-          if val == "":
-            fail(106, "Operation not specified.")
-          exOperation = val
-        of "file", "f":
-          if val == "":
-            fail(107, "File not specified.")
-          exFile = val
-        of "uri", "u":
-          if val == "":
-            fail(108, "URI not specified.")
-          exUri = val
-        of "body", "b":
-          if val == "":
-            fail(112, "Body not specified.")
-          exBody = val
-        of "type", "t":
-          if val == "":
-            fail(113, "Content type not specified.")
-          exType = val
-        of "auth":
-          if val == "":
-            fail(114, "Authentication/Authorization configuration file not specified.")
-          authFile = val
-        of "config", "c":
-          if val == "":
-            fail(115, "Configuration file not specified.")
-          configuration = val.parseFile
-          configFile = val
-        of "mount", "m":
-          mount = true
-          cliSettings["mounnt"] = %mount
-        of "version", "v":
-          echo pkgVersion
-          quit(0)
-        of "help", "h":
-          echo usage
-          quit(0)
-        of "readonly", "r":
-          readonly = true
-          cliSettings["readonly"] = %readonly
-        else:
-          discard
-    else:
-      discard
+proc run*() =
+  for kind, key, val in getOpt():
+    case kind:
+      of cmdArgument:
+        case key:
+          of "run":
+            operation = opRun
+          of "import":
+            operation = opImport
+          of "execute":
+            operation = opExecute
+          of "export":
+            operation = opExport
+          of "delete":
+            operation = opDelete
+          of "optimize":
+            operation = opOptimize
+          of "vacuum":
+            operation = opVacuum
+          else:
+            discard
+      of cmdLongOption, cmdShortOption:
+        case key:
+          of "address", "a":
+            if val == "":
+              fail(100, "Address not specified.")
+            address = val
+            cliSettings["address"] = %address
+          of "port", "p":
+            if val == "":
+              fail(101, "Port not specified.")
+            port = val.parseInt
+            cliSettings["port"] = %port
+          of "store", "s":
+            file = val
+            cliSettings["store"]  = %file
+          of "system":
+            system =  true
+          of "log", "l":
+            if val == "":
+              fail(102, "Log level not specified.")
+            setLogLevel(val)
+            logLevel = val
+            cliSettings["log"] = %logLevel
+          of "directory", "d":
+            if val == "":
+              fail(104, "Directory not specified.")
+            directory = val
+            cliSettings["directory"] = %directory
+          of "middleware", "w":
+            if val == "":
+              fail(115, "Middleware path not specified.")
+            if not val.existsDir():
+              fail(116, "Middleware directory does not exist.")
+            for file in val.walkDir():
+              if file.kind == pcFile or file.kind == pcLinkToFile:
+                middleware[file.path.splitFile[1]] = file.path.readFile()
+            cliSettings["middleware"] = %val
+          of "operation", "o":
+            if val == "":
+              fail(106, "Operation not specified.")
+            exOperation = val
+          of "file", "f":
+            if val == "":
+              fail(107, "File not specified.")
+            exFile = val
+          of "uri", "u":
+            if val == "":
+              fail(108, "URI not specified.")
+            exUri = val
+          of "body", "b":
+            if val == "":
+              fail(112, "Body not specified.")
+            exBody = val
+          of "type", "t":
+            if val == "":
+              fail(113, "Content type not specified.")
+            exType = val
+          of "auth":
+            if val == "":
+              fail(114, "Authentication/Authorization configuration file not specified.")
+            authFile = val
+          of "config", "c":
+            if val == "":
+              fail(115, "Configuration file not specified.")
+            configuration = val.parseFile
+            configFile = val
+          of "mount", "m":
+            mount = true
+            cliSettings["mount"] = %mount
+          of "version", "v":
+            echo pkgVersion
+            quit(0)
+          of "help", "h":
+            echo usage
+            quit(0)
+          of "readonly", "r":
+            readonly = true
+            cliSettings["readonly"] = %readonly
+          else:
+            discard
+      else:
+        discard
 
-# Process auth configuration if present
-
-if auth == newJNull() and configuration != newJNull() and configuration.hasKey("signature"):
-  auth = newJObject();
-  auth["access"] = newJObject();
-  auth["signature"] = configuration["signature"]
-  for k, v in configuration["resources"].pairs:
-    if v.hasKey("auth"):
-      auth["access"][k] = v["auth"]
-
-# Process config settings if present and if no cli settings are set
-
-if configuration != newJNull() and configuration.hasKey("settings"):
-  let settings = configuration["settings"]
-  if not cliSettings.hasKey("address") and settings.hasKey("address"):
-    address = settings["address"].getStr
-  if not cliSettings.hasKey("port") and settings.hasKey("port"):
-    port = settings["port"].getInt
-  if not cliSettings.hasKey("store") and settings.hasKey("store"):
-    file = settings["store"].getStr
-  if not cliSettings.hasKey("directory") and settings.hasKey("directory"):
-    directory = settings["directory"].getStr
-  if not cliSettings.hasKey("mount") and settings.hasKey("mount"):
-    mount = settings["mount"].getBool
-  if not cliSettings.hasKey("readonly") and settings.hasKey("readonly"):
-    readonly = settings["readonly"].getBool
-
-# Validation
-
-if directory == "" and (operation in [opDelete, opImport, opExport] or mount):
-  fail(105, "--directory option not specified.")
-
-if exFile == "" and (exOperation in ["put", "post", "patch"]):
-  fail(109, "--file option not specified")
-
-if exUri == "" and operation == opExecute:
-  fail(110, "--uri option not specified")
-
-if exOperation == "" and operation == opExecute:
-  fail(111, "--operation option not specified")
-
-
-
-LS.operation = operation
-LS.address = address
-LS.port = port
-LS.file = file
-LS.directory = directory
-LS.readonly = readonly
-LS.favicon = favicon
-LS.loglevel = loglevel
-LS.auth = auth
-LS.authFile = authFile
-LS.config = configuration
-LS.configFile = configFile
-LS.mount = mount
-LS.execution.file = exFile
-LS.execution.body = exBody
-LS.execution.ctype = exType
-LS.execution.uri = exUri
-LS.execution.operation = exOperation
+  LS.operation = operation
+  LS.address = address
+  LS.port = port
+  LS.file = file
+  LS.directory = directory
+  LS.readonly = readonly
+  LS.favicon = favicon
+  LS.logLevel = logLevel
+  LS.cliSettings = cliSettings
+  LS.auth = auth
+  LS.manageSystemData = system
+  LS.middleware = middleware
+  LS.authFile = authFile
+  LS.config = configuration
+  LS.configFile = configFile
+  LS.mount = mount
+  LS.execution.file = exFile
+  LS.execution.body = exBody
+  LS.execution.ctype = exType
+  LS.execution.uri = exUri
+  LS.execution.operation = exOperation

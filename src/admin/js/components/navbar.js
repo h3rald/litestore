@@ -18,6 +18,11 @@
         {path: "/guide/getting-started", title: "Getting Started"},
         {path: "/guide/usage", title: "Usage"},
         {path: "/guide/auth", title: "Authorization"},
+        {path: "/guide/configuration-file", title: "Configuration File"},
+        {path: "/guide/middleware", title: "Middleware"},
+        {path: "/guide/global-js-objects", title: caret+"Global JavaScript Objects"},
+        {path: "/guide/system-documents", title: "System Documents"},
+        {path: "/guide/multiple-stores", title: "Multiple Data Stores"},
         {path: "/guide/admin_app", title: "Administration App"},
         {path: "/guide/api", title: "HTTP API Reference"},
         {path: "/guide/api_info", title: caret+"info (LiteStore Information)"},
@@ -25,9 +30,10 @@
         {path: "/guide/api_docs", title: caret+"docs (LiteStore Documents)"},
         {path: "/guide/api_tags", title: caret+"tags (LiteStore Tags)"},
         {path: "/guide/api_indexes", title: caret+"indexes (LiteStore Indexes)"},
+        {path: "/guide/api_stores", title: caret+"stores (LiteStore Stores)"},
         {path: "/guide/nim-api", title: "Nim API Reference"},
-        {path: "/guide/nim-api_high", title: caret+"High Level"},
-        {path: "/guide/nim-api_low", title: caret+"Low Level"},
+        {path: "/guide/nim-api_high", title: caret+"High-Level Nim API"},
+        {path: "/guide/nim-api_low", title: caret+"Low-Level Nim API"},
         {path: "/guide/credits", title: "Credits"}
       ];
       vm.taglinks = function(info){

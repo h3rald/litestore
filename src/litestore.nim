@@ -1,15 +1,16 @@
 import
   strutils,
-  os,
   uri,
-  httpcore
+  httpcore,
+  json,
+  tables
 import
   litestorepkg/lib/types,
   litestorepkg/lib/logger,
   litestorepkg/lib/utils,
   litestorepkg/lib/core,
-  litestorepkg/lib/cli,
-  litestorepkg/lib/server
+  litestorepkg/lib/server,
+  litestorepkg/lib/cli
 
 export
   types,
@@ -58,58 +59,62 @@ proc executeOperation*() =
   req.hostname = "<cli>"
   req.url = parseUri("$1://$2:$3/$4" % @["http", "localhost", "9500", uri])
   let resp = req.process(LS)
-  echo resp.content
   if resp.code.int < 300 and resp.code.int >= 200:
     quit(0)
   else:
     quit(resp.code.int)
 
-proc setup*(open = true) =
-  if not LS.file.fileExists:
-    try:
-      LOG.debug("Creating datastore: ", LS.file)
-      LS.file.createDatastore()
-    except:
-      eWarn()
-      fail(200, "Unable to create datastore '$1'" % [LS.file])
-  if (open):
-    try:
-      LS.store = LS.file.openDatastore()
-      if LS.mount:
-        try:
-          LS.store.mountDir(LS.directory)
-        except:
-          eWarn()
-          fail(202, "Unable to mount directory '$1'" % [LS.directory])
-    except:
-      fail(201, "Unable to open datastore '$1'" % [LS.file])
+# stores: {
+#   test: {
+#     file: 'path/to/test.db',
+#     config: {
+#       resources: {},
+#       signature: ''
+#     }
+#   }
+# }
+proc initStores*() =
+  if LS.config.kind == JObject and LS.config.hasKey("stores"):
+    for k, v in LS.config["stores"].pairs:
+      if not v.hasKey("file"):
+        fail(120, "File not specified for store '$1'" % k) 
+      let file = v["file"].getStr
+      var config = newJNull()
+      if v.hasKey("config"):
+        config = v["config"]
+      LSDICT[k] = LS.addStore(k, file, config)
+  LOG.info("Initializing master store")
+  LS.setup(true)
+  LS.initStore()
+  LSDICT["master"] = LS
 
 when isMainModule:
 
+  run()
+
   # Manage vacuum operation separately
   if LS.operation == opVacuum:
-    setup(false)
+    LS.setup(false)
     vacuum LS.file
   else:
     # Open Datastore
-    setup(true)
-
-  case LS.operation:
-    of opRun:
-      LS.serve
-      runForever()
-    of opImport:
-      LS.store.importDir(LS.directory)
-    of opExport:
-      LS.store.exportDir(LS.directory)
-    of opDelete:
-      LS.store.deleteDir(LS.directory)
-    of opOptimize:
-      LS.store.optimize
-    of opExecute:
-      executeOperation()
-    else:
-      discard
+    initStores()
+    case LS.operation:
+      of opRun:
+        LS.serve
+        runForever()
+      of opImport:
+        LS.store.importDir(LS.directory, LS.manageSystemData)
+      of opExport:
+        LS.store.exportDir(LS.directory, LS.manageSystemData)
+      of opDelete:
+        LS.store.deleteDir(LS.directory, LS.manageSystemData)
+      of opOptimize:
+        LS.store.optimize
+      of opExecute:
+        executeOperation()
+      else:
+        discard
 
 else:
 

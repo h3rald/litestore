@@ -9,7 +9,7 @@ LiteStore is, first and foremost a _document store_. Although it uses a relation
 As a document store, LiteStore provides the following features
 
 * You can save and retrieve data as arbitrary JSON documents but also as arbitrary documents of virtually any content type.
-* You can query data using user-specified and system tags and/or via the native full-text search functionality (available only for textual documents).
+* You can query data using user-specified and system tags, via the native full-text search functionality (available only for textual documents) or writing SQL-like queries on JSON documents.
 * You can access data by the means of a RESTful API.
 
 #### SPA Prototyping Backend and Lightweight File Server
