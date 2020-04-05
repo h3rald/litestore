@@ -503,7 +503,7 @@ proc importFile*(store: Datastore, f: string, dir = "/", system = false) =
   if d_ct.isBinary:
     d_binary = 1
     d_searchable = 0
-    d_contents = d_contents.encode(d_contents.len*2) # Encode in Base64.
+    d_contents = d_contents.encode # Encode in Base64.
   let singleOp = not LS_TRANSACTION
   store.begin()
   try:
@@ -639,6 +639,7 @@ proc setLogLevel*(val: string) =
 
 proc processAuthConfig(configuration: JsonNode, auth: var JsonNode) =
   if auth == newJNull() and configuration != newJNull() and configuration.hasKey("signature"):
+    LOG.debug("Authentication: Signature found, processing authentication rules in configuration.")
     auth = newJObject();
     auth["access"] = newJObject();
     auth["signature"] = configuration["signature"]
@@ -709,6 +710,7 @@ proc initStore*(LS: var LiteStore) =
     # Process config settings
     LS.processConfigSettings()
     # Process auth from config settings
+    LOG.debug("Authentication: Checking configuration for auth rules - Store file: " & LS.file)
     processAuthConfig(LS.config, LS.auth)
 
   if LS.auth == newJNull():
@@ -753,7 +755,7 @@ proc addStore*(LS: LiteStore, id, file: string, config = newJNull()): LiteStore 
   result.middleware = newStringTable()
   if config != newJNull():
     result.config = config
-  LOG.info("Initializing store '$1'" % id)
+  LOG.debug("Initializing store '$1'" % id)
   result.setup(true)
   result.initStore()
   if not LS.config.hasKey("stores"):

@@ -51,7 +51,7 @@ proc handleCtrlC() {.noconv.} =
   LOG.info("Exiting...")
   quit()
   
-template auth(uri: string, jwt: JWT): void =
+template auth(uri: string, jwt: JWT, LS: LiteStore): void =
   let cfg = access[uri]
   if cfg.hasKey(reqMethod):
     LOG.debug("Authenticating: " & reqMethod & " " & uri)
@@ -122,12 +122,12 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
     while true:
       # Match exact url
       if access.hasKey(uri):
-        auth(uri, jwt)
+        auth(uri, jwt, LS)
         break
       # Match exact url adding /* (e.g. /docs would match also /docs/* in auth.json)
       elif uri[^1] != '*' and uri[^1] != '/':
         if access.hasKey(uri & "/*"):
-          auth(uri & "/*", jwt)
+          auth(uri & "/*", jwt, LS)
           break
       var parts = uri.split("/")
       if parts[^1] == "*":
@@ -140,7 +140,7 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
         # If at the end of the URL, check generic URL
         uri = "/*"
         if access.hasKey(uri):
-          auth(uri, jwt)
+          auth(uri, jwt, LS)
         break
   if info.version == "v7":
     if info.resource.match(peg"^docs / info / tags / indexes / stores$"):

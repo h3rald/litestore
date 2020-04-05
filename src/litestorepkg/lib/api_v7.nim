@@ -1206,7 +1206,6 @@ proc getMiddlewareSeq(LS: LiteStore, resource, id, meth: string): seq[string] =
         result.add m.getStr
 
 proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSResponse =
-  echo LS.file
   let middleware = getMiddlewareSeq(LS, resource, id, $req.reqMethod)
   LOG.debug("Middleware: " & middleware.join(" -> "));
   if middleware.len == 0:
