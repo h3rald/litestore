@@ -74,6 +74,7 @@ proc executeOperation*() =
 #   }
 # }
 proc initStores*() =
+  LOG.debug("Initializing stores...")
   if LS.config.kind == JObject and LS.config.hasKey("stores"):
     for k, v in LS.config["stores"].pairs:
       if not v.hasKey("file"):
@@ -83,7 +84,7 @@ proc initStores*() =
       if v.hasKey("config"):
         config = v["config"]
       LSDICT[k] = LS.addStore(k, file, config)
-  LOG.info("Initializing master store")
+  LOG.debug("Initializing master store")
   LS.setup(true)
   LS.initStore()
   LSDICT["master"] = LS
