@@ -1004,6 +1004,7 @@ proc route*(req: LSRequest, LS: LiteStore, resource = "docs", id = ""): LSRespon
   var reqMethod = $req.reqMethod
   if req.headers.hasKey("X-HTTP-Method-Override"):
     reqMethod = req.headers["X-HTTP-Method-Override"]
+  LOG.debug("ROUTE - resource: " & resource & " id: " & id)
   case reqMethod.toUpperAscii:
     of "POST":
       if LS.readonly:
@@ -1034,9 +1035,9 @@ proc multiRoute(req: LSRequest, resource, id: string): LSResponse =
   var matches = @["", "", ""]
   if req.url.path.find(PEG_STORE_URL, matches) != -1:
     let id = matches[0]
-    let path = matches[1]
+    let path = "/v7/" & matches[1]
     matches = @["", "", ""]
-    discard path.find(PEG_URL)
+    discard path.find(PEG_URL, matches)
     return req.route(LSDICT[id], matches[1], matches[2])
   return req.route(LS, resource, id)
 
