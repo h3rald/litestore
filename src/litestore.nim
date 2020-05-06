@@ -60,8 +60,10 @@ proc executeOperation*() =
   req.url = parseUri("$1://$2:$3/$4" % @["http", "localhost", "9500", uri])
   let resp = req.process(LS)
   if resp.code.int < 300 and resp.code.int >= 200:
+    echo resp.content
     quit(0)
   else:
+    echo resp.content
     quit(resp.code.int)
 
 # stores: {
