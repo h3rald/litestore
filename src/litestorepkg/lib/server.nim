@@ -84,14 +84,16 @@ template auth(uri: string, jwt: JWT, LS: LiteStore): void =
       writeStackTrace()
       return resError(Http401, "Unauthorized - Invalid token")
 
-proc isAllowed(resource, id, meth: string): bool =
+proc isAllowed(LS: LiteStore, resource, id, meth: string): bool =
   if LS.config.kind != JObject or not LS.config.hasKey("resources"):
     return true
   var reqUri = "/" & resource & "/" & id
+  var lastItemOffset = 2
   if reqUri[^1] == '/':
+    lastItemOffset = 1
     reqUri.removeSuffix({'/'})
   let parts = reqUri.split("/")
-  let ancestors = parts[1..parts.len-2]
+  let ancestors = parts[1..parts.len-lastItemOffset]
   var currentPath = ""
   var currentPaths = ""
   for p in ancestors:
@@ -113,7 +115,7 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
     reqUri.removeSuffix({'/'})
   let reqMethod = $req.reqMethod
   var jwt: JWT
-  if not isAllowed(info.resource, info.id, reqMethod):
+  if not LS.isAllowed(info.resource, info.id, reqMethod):
     return resError(Http405, "Method not allowed: $1" % reqMethod)
   # Authentication/Authorization
   if LS.auth != newJNull():

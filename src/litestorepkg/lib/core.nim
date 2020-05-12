@@ -755,7 +755,6 @@ proc addStore*(LS: LiteStore, id, file: string, config = newJNull()): LiteStore 
   result.middleware = newStringTable()
   if config != newJNull():
     result.config = config
-  LOG.debug("Initializing store '$1'" % id)
   result.setup(true)
   result.initStore()
   if not LS.config.hasKey("stores"):
