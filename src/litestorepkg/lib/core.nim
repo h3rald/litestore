@@ -297,8 +297,9 @@ proc createDocument*(store: Datastore, id = "", rawdata = "",
   try:
     LOG.debug("Creating document '$1'" % id)
     store.begin()
+    let time = currentTime()
     var res = store.db.insertID(SQL_INSERT_DOCUMENT, id, data, contenttype,
-        binary, searchable, currentTime())
+        binary, searchable, time, time)
     if res > 0:
       store.db.exec(SQL_INCREMENT_DOCS)
       if binary <= 0 and searchable >= 0:

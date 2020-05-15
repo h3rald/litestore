@@ -101,8 +101,8 @@ SET total_documents = total_documents - 1
 
 const SQL_INSERT_DOCUMENT* = sql"""
 INSERT INTO documents
-(id, data, content_type, binary, searchable, created)
-VALUES (?, ?, ?, ?, ?, ?)
+(id, data, content_type, binary, searchable, created, modified)
+VALUES (?, ?, ?, ?, ?, ?, ?)
 """
 
 const SQL_INSERT_SYSTEM_DOCUMENT* = sql"""
