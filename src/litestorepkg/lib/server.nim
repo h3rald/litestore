@@ -286,6 +286,29 @@ proc process*(req: LSRequest, LSDICT: OrderedTable[string, LiteStore]): LSRespon
 
 setControlCHook(handleCtrlC)
 
+proc printCfg(id: string, indent = "") =
+  let store = LSDICT[id]
+  if (indent == ""):
+    echo "Master Store: $2" % [id, store.file]
+  else:
+    echo indent & "Additional Store ($1): $2" % [id, store.file]
+  if store.configFile != "":
+    echo indent & "- Configuration file: " & store.configFile
+  if store.authFile != "":
+    echo indent & "- Auth file: " & store.authFile
+  if store.mount:
+    echo indent & "- Mirroring datastore changes to: " & store.directory
+  elif store.directory != "":
+    echo indent & "- Serving directory: " & store.directory
+  echo indent & "- Log level: " & LS.loglevel
+  if store.readonly:
+    echo indent & "- Read-only mode"
+  if store.middleware.len > 0:
+    echo indent & "- Middleware configured"
+  if store.auth != newJNull():
+    echo indent & "- Authorization configured"
+
+
 proc serve*(LS: LiteStore) =
   var server = newAsyncHttpServer()
   proc handleHttpRequest(origReq: Request): Future[void] {.async, gcsafe, closure.} =
@@ -299,24 +322,9 @@ proc serve*(LS: LiteStore) =
     var newReq = newRequest(req, client)
     await newReq.respond(res.code, res.content, res.headers)
   echo(LS.appname & " v" & LS.appversion & " started on " & LS.address & ":" & $LS.port & ".")
-  if LS.configFile != "":
-    echo "- Configuration file: " & LS.configFile
-  if LS.authFile != "":
-    echo "- Auth file: " & LS.authFile
-  if LS.mount:
-    echo "- Mirroring datastore changes to: " & LS.directory
-  elif LS.directory != "":
-    echo "- Serving directory: " & LS.directory
-  if LS.readonly:
-    echo "- Read-only mode"
-  echo "- Log level: " & LS.loglevel
-  echo "- Stores:"
+  printCfg("master")
   let storeIds = toSeq(LSDICT.keys)
-  for i in countdown(storeIds.len-1, 0):
-    let file = LSDICT[storeIds[i]].file
-    echo "  - $1: $2" % [storeIds[i], file]
-  if LS.middleware.len > 0:
-    echo "- Middleware configured"
-  if LS.auth != newJNull():
-    echo "- Authorization configured"
+  if (storeIds.len > 1):
+    for i in countdown(storeIds.len-2, 0):
+      printCfg(storeIds[i], "  ")
   asyncCheck server.serve(LS.port.Port, handleHttpRequest, LS.address)
