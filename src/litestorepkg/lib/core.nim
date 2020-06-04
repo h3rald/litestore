@@ -136,7 +136,7 @@ proc rollback(store: Datastore) =
 # Manage Indexes
 
 proc createIndex*(store: Datastore, indexId, field: string) =
-  let query = sql("CREATE INDEX json_index_$1 ON documents(json_extract(data, ?) COLLATE NOCASE)" % [indexId])
+  let query = sql("CREATE INDEX json_index_$1 ON documents(json_extract(data, ?) COLLATE NOCASE) WHERE json_valid(data)" % [indexId])
   store.begin()
   store.db.exec(query, field)
   store.commit()

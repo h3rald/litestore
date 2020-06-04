@@ -7,11 +7,6 @@
 
 LiteStore Indexes are special indexes used to optimize the performance of queries on JSON documents.
 
-> %warning%
-> JSON-only Documents Required!
->
-> Indexes can be created *only* if the entire database is composed by JSON documents. If not, LiteStore will return an error when attempting to create the first index.
-
 #### OPTIONS indexes
 
 Returns the allowed HTTP verbs for this resource.
