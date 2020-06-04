@@ -1208,7 +1208,8 @@ proc getMiddlewareSeq(LS: LiteStore, resource, id, meth: string): seq[string] =
 
 proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSResponse =
   let middleware = getMiddlewareSeq(LS, resource, id, $req.reqMethod)
-  LOG.debug("Middleware: " & middleware.join(" -> "));
+  if middleware.len > 0:
+    LOG.debug("Middleware: " & middleware.join(" -> "));
   if middleware.len == 0:
     return route(req, LS, resource, id)
   var jReq = $(%* req)
