@@ -1068,7 +1068,7 @@ proc patch(resource, id, body: string): LSResponse =
   return newSimpleLSRequest(HttpPatch, resource, id, body, "", headers).multiRoute(resource, id)
 
 proc delete(resource, id: string): LSResponse =
-  return newSimpleLSRequest(HttpPatch, resource, id).multiRoute(resource, id)
+  return newSimpleLSRequest(HttpDelete, resource, id).multiRoute(resource, id)
 
 proc head(resource, id: string): LSResponse =
   return newSimpleLSRequest(HttpHead, resource, id).multiRoute(resource, id)
