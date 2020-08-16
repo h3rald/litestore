@@ -207,7 +207,10 @@ proc parseQueryOption*(fragment: string, options: var QueryOptions) =
       discard
 
 proc parseQueryOptions*(querystring: string, options: var QueryOptions) =
-  var fragments = querystring.split('&')
+  var q = querystring
+  if q.startsWith("?"):
+    q = q[1 .. q.len - 1]
+  var fragments = q.split('&')
   for f in fragments:
     f.parseQueryOption(options)
 
