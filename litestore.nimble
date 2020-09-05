@@ -32,7 +32,7 @@ requires "nim >= 1.0.0", "jwt", "nimgen", "duktape"
 const
   parallel = "" #"--parallelBuild:1 --verbosity:3"
   compile = "nim c -d:release" & " " & parallel
-  linux_x64 = "--cpu:amd64 --os:linux"
+  linux_x64 = "--cpu:amd64 --os:linux --passL:-static"
   windows_x64 = "--cpu:amd64 --os:windows"
   macosx_x64 = ""
   ls = "litestore"
