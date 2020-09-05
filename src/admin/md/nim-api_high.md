@@ -12,13 +12,13 @@ Retrieves a resource.
 
 <dl>
 <dt>resource</dt>
-<dd>The resource to perform the operation on ([info](class:kwd) or [docs](class:kwd)).</dd>
+<dd>The resource to perform the operation on <span class="kwd">info</span> or <span class="kwd">docs</span>.</dd>
 <dt>id</dt> 
 <dd>The identifier of the resource (set to an empty string if not needed).</dd>
 <dt>params</dt>
 <dd>The parameters to pass to the operation (see the corresponding HTTP querystring parameters).</dd>
 <dt>headers</dt>
-<dd>An [HttpHeaders](class:kwd) object containing the headers of the request. Use the [Content-Type](class:kwd) header to specify the content type of the [body](class:kwd) parameter.</dd>
+<dd>An <span class="kwd">HttpHeaders</span> object containing the headers of the request. Use the <span class="kwd">Content-Type</span> header to specify the content type of the <span class="kwd">body</span> parameter.</dd>
 </dl>
 
 #### post
@@ -31,13 +31,13 @@ Creates a new resource.
 
 <dl>
 <dt>resource</dt>
-<dd>The resource to perform the operation on ([info](class:kwd) or [docs](class:kwd)).</dd>
+<dd>The resource to perform the operation on <span class="kwd">info</span> or <span class="kwd">docs</span>.</dd>
 <dt>folder</dt>
 <dd>The folder that will contain the resource (set to an empty string if not needed).</dd>
 <dt>body</dt>
 <dd>The request body.</dd>
 <dt>headers</dt>
-<dd>An [HttpHeaders](class:kwd) object containing the headers of the request. Use the [Content-Type](class:kwd) header to specify the content type of the [body](class:kwd) parameter.</dd>
+<dd>An <span class="kwd">HttpHeaders</span> object containing the headers of the request. Use the <span class="kwd">Content-Type</span> header to specify the content type of the <span class="kwd">body</span> parameter.</dd>
 </dl>
 
 #### put
@@ -50,13 +50,13 @@ Modifies an existing resource.
 
 <dl>
 <dt>resource</dt>
-<dd>The resource to perform the operation on ([info](class:kwd) or [docs](class:kwd)).</dd>
+<dd>The resource to perform the operation on <span class="kwd">info</span> or <span class="kwd">docs</span>.</dd>
 <dt>id</dt> 
 <dd>The identifier of the resource (set to an empty string if not needed).</dd>
 <dt>body</dt>
 <dd>The request body.</dd>
 <dt>headers</dt>
-<dd>An [HttpHeaders](class:kwd) object containing the headers of the request. Use the [Content-Type](class:kwd) header to specify the content type of the [body](class:kwd) parameter.</dd>
+<dd>An <span class="kwd">HttpHeaders</span> object containing the headers of the request. Use the <span class="kwd">Content-Type</span> header to specify the content type of the <span class="kwd">body</span> parameter.</dd>
 </dl>
 
 #### patch
@@ -69,13 +69,13 @@ Modifies the tags of an existing resource (or the data of a JSON document).
 
 <dl>
 <dt>resource</dt>
-<dd>The resource to perform the operation on ([info](class:kwd) or [docs](class:kwd)).</dd>
+<dd>The resource to perform the operation on <span class="kwd">info</span> or <span class="kwd">docs</span>.</dd>
 <dt>id</dt> 
 <dd>The identifier of the resource (set to an empty string if not needed).</dd>
 <dt>body</dt>
 <dd>The request body.</dd>
 <dt>headers</dt>
-<dd>An [HttpHeaders](class:kwd) object containing the headers of the request. Use the [Content-Type](class:kwd) header to specify the content type of the [body](class:kwd) parameter.</dd>
+<dd>An <span class="kwd">HttpHeaders</span> object containing the headers of the request. Use the <span class="kwd">Content-Type</span> header to specify the content type of the <span class="kwd">body</span> parameter.</dd>
 </dl>
 
 #### delete
@@ -88,11 +88,11 @@ Deletes an existing resource.
 
 <dl>
 <dt>resource</dt>
-<dd>The resource to perform the operation on ([info](class:kwd) or [docs](class:kwd)).</dd>
+<dd>The resource to perform the operation on <span class="kwd">info</span> or <span class="kwd">docs</span>.</dd>
 <dt>id</dt> 
 <dd>The identifier of the resource (set to an empty string if not needed).</dd>
 <dt>headers</dt>
-<dd>An [HttpHeaders](class:kwd) object containing the headers of the request. Use the [Content-Type](class:kwd) header to specify the content type of the [body](class:kwd) parameter.</dd>
+<dd>An <span class="kwd">HttpHeaders</span> object containing the headers of the request. Use the <span class="kwd">Content-Type</span> header to specify the content type of the <span class="kwd">body</span> parameter.</dd>
 </dl>
 
 #### head
@@ -105,11 +105,11 @@ Checks whether a resource exists or not.
 
 <dl>
 <dt>resource</dt>
-<dd>The resource to perform the operation on ([info](class:kwd) or [docs](class:kwd)).</dd>
+<dd>The resource to perform the operation on <span class="kwd">info</span> or <span class="kwd">docs</span>.</dd>
 <dt>id</dt> 
 <dd>The identifier of the resource (set to an empty string if not needed).</dd>
 <dt>headers</dt>
-<dd>An [HttpHeaders](class:kwd) object containing the headers of the request. Use the [Content-Type](class:kwd) header to specify the content type of the [body](class:kwd) parameter.</dd>
+<dd>An <span class="kwd">HttpHeaders</span> object containing the headers of the request. Use the <span class="kwd">Content-Type</span> header to specify the content type of the <span class="kwd">body</span> parameter.</dd>
 </dl>
 
 #### options
@@ -122,9 +122,9 @@ Checks what HTTP methods are supported by the specified resource.
 
 <dl>
 <dt>resource</dt>
-<dd>The resource to perform the operation on ([info](class:kwd) or [docs](class:kwd)).</dd>
+<dd>The resource to perform the operation on <span class="kwd">info</span> or <span class="kwd">docs</span>.</dd>
 <dt>id</dt> 
 <dd>The identifier of the resource (set to an empty string if not needed).</dd>
 <dt>headers</dt>
-<dd>An [HttpHeaders](class:kwd) object containing the headers of the request. Use the [Content-Type](class:kwd) header to specify the content type of the [body](class:kwd) parameter.</dd>
+<dd>An <span class="kwd">HttpHeaders</span> object containing the headers of the request. Use the <span class="kwd">Content-Type</span> header to specify the content type of the <span class="kwd">body</span> parameter.</dd>
 </dl>

@@ -41,7 +41,7 @@ access-control-allow-methods: GET,OPTIONS,PUT,DELETE
 Content-Length: 0
 ```
 
-#### GET indexes
+#### GET stores
 
 Retrieves information on all available stores (file name and configuration).
 

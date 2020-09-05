@@ -18,7 +18,7 @@ Retrieves multiple documents in JSON format based on the specified options.
 
 <dl>
 <dt>options</dt>
-<dd>A [QueryOptions](#QueryOptions) object representing a query to execute on a document.</dd>
+<dd>A <a href="#QueryOptions">QueryOptions</a> object representing a query to execute on a document.</dd>
 </dl>
 
 #### getDocument
@@ -33,7 +33,7 @@ Retrieves a single document.
 <dt>id</dt> 
 <dd>The identifier of the resource (set to an empty string if not needed).</dd>
 <dt>options</dt>
-<dd>A [QueryOptions](#QueryOptions) object representing a query to execute on a document.</dd>
+<dd>A <a href="#QueryOptions">QueryOptions</a> object representing a query to execute on a document.</dd>
 </dl>
 
 #### getRawDocument
@@ -48,7 +48,7 @@ Retrieves a single document in JSON format.
 <dt>id</dt> 
 <dd>The identifier of the resource (set to an empty string if not needed).</dd>
 <dt>options</dt>
-<dd>A [QueryOptions](#QueryOptions) object representing a query to execute on a document.</dd>
+<dd>A <a href="#QueryOptions">QueryOptions</a> object representing a query to execute on a document.</dd>
 </dl>
 
 #### deleteDocument
@@ -76,7 +76,7 @@ Creates a new document in the specified folder.
 <dt>body</dt>
 <dd>The request body.</dd>
 <dt>ct</dt>
-<dd>Determines the content type of the [body](class:kwd) parameter.</dd>
+<dd>Determines the content type of the <span class="kwd">body</span> parameter.</dd>
 <dt>folder</dt>
 <dd>A logical folder where the document will be saved.</dd>
 </dl>
@@ -95,7 +95,7 @@ Modifies an existing document.
 <dt>body</dt>
 <dd>The request body.</dd>
 <dt>ct</dt>
-<dd>Determines the content type of the [body](class:kwd) parameter.</dd>
+<dd>Determines the content type of the <span class="kwd">body</span> parameter.</dd>
 </dl>
 
 #### patchDocument
