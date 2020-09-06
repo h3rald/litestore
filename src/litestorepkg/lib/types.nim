@@ -16,14 +16,14 @@ import
   config
 
 type
-  EDatastoreExists* = object of Exception
-  EDatastoreDoesNotExist* = object of Exception
-  EDatastoreUnavailable* = object of Exception
-  EInvalidTag* = object of Exception
-  EDirectoryNotFound* = object of Exception
-  EFileNotFound* = object of Exception
-  EFileExists* = object of Exception
-  EInvalidRequest* = object of Exception
+  EDatastoreExists* = object of CatchableError 
+  EDatastoreDoesNotExist* = object of CatchableError
+  EDatastoreUnavailable* = object of CatchableError
+  EInvalidTag* = object of CatchableError
+  EDirectoryNotFound* = object of CatchableError
+  EFileNotFound* = object of CatchableError
+  EFileExists* = object of CatchableError
+  EInvalidRequest* = object of CatchableError
   ConfigFiles* = object
     auth*: string
     config*: string
