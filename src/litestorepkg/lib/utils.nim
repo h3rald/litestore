@@ -344,7 +344,7 @@ proc validate*(req: LSRequest, LS: LiteStore, resource: string, id: string, cb: 
 # which is covered by the MIT License
 # http://opensource.org/licenses/MIT
 # the following code shall also be covered by the same MIT License
-let okapi_bm25f_kb*: Create_function_func_func = proc (pCtx: Pcontext, nVal: int32, apVal: PValueArg) {.cdecl.} =
+proc okapi_bm25f_kb*(pCtx: Pcontext, nVal: int32, apVal: PValueArg) {.cdecl.} =
   var matchinfo = cast[ptr UncheckedArray[int32]](value_blob(apVal[0]))
   # Setting the default values and ignoring argument based inputs so the extra
   # arguments can be the column weights instead.

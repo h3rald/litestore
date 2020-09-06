@@ -1,4 +1,4 @@
-import unittest, json, httpclient, strutils, os, times
+import unittest, json, httpclient, strutils, times
 
 suite "LiteStore HTTP API":
 
@@ -59,7 +59,7 @@ suite "LiteStore HTTP API":
 
 
   test "GET info":
-    check(info("datastore_version") == %1)
+    check(info("datastore_version") == %2)
 
   test "POST document":
     var rpost = jpost("docs", contents[0])
