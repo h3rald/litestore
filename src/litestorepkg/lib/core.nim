@@ -550,7 +550,7 @@ proc importDir*(store: Datastore, dir: string, system = false) =
   if not dir.dirExists:
     raise newException(EDirectoryNotFound, "Directory '$1' not found." % dir)
   for f in dir.walkDirRec():
-    if f.existsDir:
+    if f.dirExists:
       continue
     if f.splitFile.name.startsWith("."):
       # Ignore hidden files
