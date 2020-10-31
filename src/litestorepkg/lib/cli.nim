@@ -120,7 +120,7 @@ proc run*() =
           of "middleware", "w":
             if val == "":
               fail(115, "Middleware path not specified.")
-            if not val.existsDir():
+            if not val.dirExists():
               fail(116, "Middleware directory does not exist.")
             for file in val.walkDir():
               if file.kind == pcFile or file.kind == pcLinkToFile:
