@@ -63,7 +63,7 @@ template auth(uri: string, jwt: JWT, LS: LiteStore): void =
       jwt = token.toJwt()
       let parts = token.split(".")
       var sig = LS.auth["signature"].getStr 
-      discard verifySignature(parts[0] & "." & parts[1], decodeUrlSafe(parts[2]), sig)
+      discard verifySignature(parts[0] & "." & parts[1], decodeUrlSafe(parts[2]), sig, RS256)
       verifyTimeClaims(jwt)
       let scopes = cfg[reqMethod]
       # Validate scope
