@@ -15,14 +15,6 @@ If you already have [Nim](http://nim-lang.org/) installed on your computer, you 
 
 [nimble install litestore](class:cmd)
 
-### Building from Source
-
-You can also build LiteStore from source, if there is no pre-built binary for your platform. All you have to do is the following:
-
-1. Download and install [Nim](http://nim-lang.org/).
-2. Clone the LiteStore [repository](https://github.com/h3rald/litestore).
-4. Run [nim c litestore.nim](class:cmd) within the respository folder.
-
 ### Running the Administration App
 
 A simple but functional Administration App is available to manage LiteStore, create documents interactively, view and search content, etc. 
