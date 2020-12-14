@@ -297,7 +297,9 @@ proc resError*(code: HttpCode, message: string, trace = ""): LSResponse =
   if trace.len > 0:
     LOG.debug(trace.replace("$", "$$"))
   result.code = code
-  result.content = """{"error":"$1"}""" % message
+  var content = newJObject()
+  content["error"] = %message
+  result.content = content.pretty
   result.headers = ctJsonHeader()
 
 proc resDocumentNotFound*(id: string): LSResponse =
