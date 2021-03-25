@@ -16,7 +16,8 @@ import
   core,
   utils,
   logger,
-  duktape
+  duktape,
+  ../hastyscribe/hastyscribe
 
 # Helper procs
 
