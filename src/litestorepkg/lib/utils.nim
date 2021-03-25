@@ -107,7 +107,11 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
     result = result & options.select.join(", ")
     result = result & " FROM "&tables.join(", ")&" WHERE 1=1 "
   if options.single:
-    result = result & "AND id = ?"
+    if options.like.len > 0:
+      result = result & "AND id LIKE ? ESCAPE '\\' "
+      options.limit = 1
+    else:
+      result = result & "AND id = ?"
   var doc_id_col: string
   if options.tags.len > 0 or options.folder.len > 0:
     if options.jsonFilter.len > 0 or (options.search.len > 0 and options.select[0] != "COUNT(docid)"):
