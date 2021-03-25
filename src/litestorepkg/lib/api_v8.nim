@@ -395,8 +395,22 @@ proc getRawDocument*(LS: LiteStore, id: string, options = newQueryOptions(), req
     result.content = doc
     result.code = Http200
 
+
+# render markdow as HTML using HastyScribe
+proc renderHtml*(contents: string, getFragment: proc (name: string) : string) : string =
+  var options = HastyOptions(toc: false, output: "", css: "", watermark: "", fragment: false)
+  var fields = HastyFields()
+  var hs = newHastyScribe(options, fields)
+  # retrieve optional sidebar and footer
+  let sidebar = getFragment("sidebar")
+  let sidebarFragment = hs.compileFragment(sidebar, "")
+  let footer = getFragment("footer")
+  let footerFragment = hs.compileFragment(footer, "")
+  result = hs.compileDocument(contents, "", sidebarFragment, footerFragment)
+
+
 # search for special pages (e.g. _footer.md) starting from specified directory up to the root
-proc getFragment(LS: LiteStore, dirId, name:string): string =
+proc findSpecialDocument(LS: LiteStore, dirId, name:string): string =
   var searchDir = dirId
   var options = newQueryOptions()
   options.like = "*"
@@ -431,16 +445,8 @@ proc getDocument*(LS: LiteStore, id: string, options = newQueryOptions(), req: L
   if mdDoc.data == "":
     result = resDocumentNotFound(id)
   else:
-    # render HTML using HastyScribe
-    var options = HastyOptions(toc: false, output: "", css: "", watermark: "", fragment: false)
-    var fields = HastyFields()
-    var hs = newHastyScribe(options, fields)
-    # retrieve optional sidebar and footer
-    let sidebar = getFragment(LS, parts.dir, "sidebar")
-    let sidebarFragment = hs.compileFragment(sidebar, "")
-    let footer = getFragment(LS, parts.dir, "footer")
-    let footerFragment = hs.compileFragment(footer, "")
-    let html = hs.compileDocument(mdDoc.data, "", sidebarFragment, footerFragment)
+    proc getFragment(name: string):string = findSpecialDocument(LS, parts.dir, name)
+    let html = mdDoc.data.renderHtml(getFragment)
     result.headers = ctHeader("text/html")
     setOrigin(LS, req, result.headers)
     result.content = html
@@ -1023,7 +1029,7 @@ proc patch*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSRespons
 
 
 # search for special pages (e.g. _footer.md) starting from specified directory up to the root
-proc getFragmentFile(root, dir, name:string): string =
+proc findSpecialFile(root, dir, name:string): string =
   var searchDir = dir
   result = ""
   while searchDir != root:
@@ -1036,20 +1042,6 @@ proc getFragmentFile(root, dir, name:string): string =
       except:
         discard
     searchDir = searchDir.parentDir
-
-
-proc getRenderedFile*(root, dir, path: string): string =
-  let contents = path.readFile
-  # render HTML using HastyScribe
-  var options = HastyOptions(toc: false, output: "", css: "", watermark: "", fragment: false)
-  var fields = HastyFields()
-  var hs = newHastyScribe(options, fields)
-  # retrieve optional sidebar and footer
-  let sidebar = getFragmentFile(root, dir, "sidebar")
-  let sidebarFragment = hs.compileFragment(sidebar, "")
-  let footer = getFragmentFile(root, dir, "footer")
-  let footerFragment = hs.compileFragment(footer, "")
-  result = hs.compileDocument(contents, "", sidebarFragment, footerFragment)
 
 
 proc serveFile*(req: LSRequest, LS: LiteStore, id: string): LSResponse =
@@ -1080,10 +1072,12 @@ proc serveFile*(req: LSRequest, LS: LiteStore, id: string): LSResponse =
         let mdPath = path.changeFileExt("md")
         if mdPath.fileExists:
           try:
-            let contents = getRenderedFile(LS.directory, parts.dir, mdPath)
+            let markdown = mdPath.readFile
+            proc getFragment(name: string):string = findSpecialFile(LS.directory, parts.dir, name)
+            let html = markdown.renderHtml(getFragment)    
             result.headers = ctHeader("text/html")
             setOrigin(LS, req, result.headers)
-            result.content = contents
+            result.content = html
             result.code = Http200
             return
           except:
