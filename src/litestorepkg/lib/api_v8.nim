@@ -395,15 +395,57 @@ proc getRawDocument*(LS: LiteStore, id: string, options = newQueryOptions(), req
     result.content = doc
     result.code = Http200
 
+# search for special pages (e.g. _footer.md) starting from specified directory up to the root
+proc getFragment(LS: LiteStore, dirId, name:string): string =
+  var searchDir = dirId
+  var options = newQueryOptions()
+  options.like = "*"
+  result = ""
+  while searchDir != "":
+    let searchId = searchDir & "/\\_" & name & "%.md"
+    LOG.debug("Search $1: '$2'", name, searchId)
+    let footerDoc = LS.store.retrieveDocument(searchId, options)
+    if footerDoc.data != "":
+      result = footerDoc.data
+      break
+    else:
+      let parts = searchDir.splitFile
+      searchDir = parts.dir
+
+
 proc getDocument*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequest): LSResponse =
   let doc = LS.store.retrieveDocument(id, options)
-  if doc.data == "":
-    result = resDocumentNotFound(id)
-  else:
+  if doc.data != "":
     result.headers = doc.contenttype.ctHeader
     setOrigin(LS, req, result.headers)
     result.content = doc.data
     result.code = Http200
+    return
+  # if requested document was HTML then check if the corresponding MD file exists
+  let parts = id.splitFile()
+  if parts.ext != ".htm" and parts.ext != ".html":
+    result = resDocumentNotFound(id)
+    return 
+  let mdId = id.changeFileExt("md")
+  let mdDoc = LS.store.retrieveDocument(mdId, options)
+  if mdDoc.data == "":
+    result = resDocumentNotFound(id)
+  else:
+    # render HTML using HastyScribe
+    var options = HastyOptions(toc: false, output: "", css: "", watermark: "", fragment: false)
+    var fields = HastyFields()
+    var hs = newHastyScribe(options, fields)
+    # retrieve optional sidebar and footer
+    let sidebar = getFragment(LS, parts.dir, "sidebar")
+    let sidebarFragment = hs.compileFragment(sidebar, "")
+    let footer = getFragment(LS, parts.dir, "footer")
+    let footerFragment = hs.compileFragment(footer, "")
+    let html = hs.compileDocument(mdDoc.data, "", sidebarFragment, footerFragment)
+    result.headers = ctHeader("text/html")
+    setOrigin(LS, req, result.headers)
+    result.content = html
+    result.code = Http200
+
 
 proc deleteDocument*(LS: LiteStore, id: string, req: LSRequest): LSResponse =
   let doc = LS.store.retrieveDocument(id)
@@ -979,6 +1021,37 @@ proc patch*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSRespons
   else:
     return resError(Http400, "Bad request: document ID must be specified in PATCH requests.")
 
+
+# search for special pages (e.g. _footer.md) starting from specified directory up to the root
+proc getFragmentFile(root, dir, name:string): string =
+  var searchDir = dir
+  result = ""
+  while searchDir != root:
+    let searchPattern = searchDir / ("_" & name & "*.md")
+    LOG.debug("Search $1: '$2'", name, searchPattern)
+    for file in walkFiles(searchPattern):
+      try:
+        result = file.readFile
+        return
+      except:
+        discard
+    searchDir = searchDir.parentDir
+
+
+proc getRenderedFile*(root, dir, path: string): string =
+  let contents = path.readFile
+  # render HTML using HastyScribe
+  var options = HastyOptions(toc: false, output: "", css: "", watermark: "", fragment: false)
+  var fields = HastyFields()
+  var hs = newHastyScribe(options, fields)
+  # retrieve optional sidebar and footer
+  let sidebar = getFragmentFile(root, dir, "sidebar")
+  let sidebarFragment = hs.compileFragment(sidebar, "")
+  let footer = getFragmentFile(root, dir, "footer")
+  let footerFragment = hs.compileFragment(footer, "")
+  result = hs.compileDocument(contents, "", sidebarFragment, footerFragment)
+
+
 proc serveFile*(req: LSRequest, LS: LiteStore, id: string): LSResponse =
   let path = LS.directory / id
   var reqMethod = $req.reqMethod
@@ -988,10 +1061,10 @@ proc serveFile*(req: LSRequest, LS: LiteStore, id: string): LSResponse =
     of "OPTIONS":
       return validate(req, LS, "dir", id, options)
     of "GET":
+      let parts = path.splitFile
       if path.fileExists:
         try:
           let contents = path.readFile
-          let parts = path.splitFile
           if CONTENT_TYPES.hasKey(parts.ext):
             result.headers = CONTENT_TYPES[parts.ext].ctHeader
           else:
@@ -999,12 +1072,26 @@ proc serveFile*(req: LSRequest, LS: LiteStore, id: string): LSResponse =
           setOrigin(LS, req, result.headers)
           result.content = contents
           result.code = Http200
+          return
         except:
           return resError(Http500, "Unable to read file '$1'." % path)
-      else:
-        return resError(Http404, "File '$1' not found." % path)
+      # if requested document was HTML then check if the corresponding MD file exists
+      if parts.ext == ".htm" or parts.ext == ".html":
+        let mdPath = path.changeFileExt("md")
+        if mdPath.fileExists:
+          try:
+            let contents = getRenderedFile(LS.directory, parts.dir, mdPath)
+            result.headers = ctHeader("text/html")
+            setOrigin(LS, req, result.headers)
+            result.content = contents
+            result.code = Http200
+            return
+          except:
+            return resError(Http500, "Unable to read file '$1'." % mdPath)
+      return resError(Http404, "File '$1' not found." % path)
     else:
       return resError(Http405, "Method not allowed: $1" % $req.reqMethod)
+
 
 proc route*(req: LSRequest, LS: LiteStore, resource = "docs", id = ""): LSResponse =
   var reqMethod = $req.reqMethod
@@ -1041,7 +1128,7 @@ proc multiRoute(req: LSRequest, resource, id: string): LSResponse =
   var matches = @["", "", ""]
   if req.url.path.find(PEG_STORE_URL, matches) != -1:
     let id = matches[0]
-    let path = "/v7/" & matches[1]
+    let path = "/v8/" & matches[1]
     matches = @["", "", ""]
     discard path.find(PEG_URL, matches)
     return req.route(LSDICT[id], matches[1], matches[2])
