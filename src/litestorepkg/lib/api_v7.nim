@@ -707,7 +707,9 @@ proc patchDocument*(LS: LiteStore, id: string, body: string, req: LSRequest): LS
         return resError(Http400, "Bad request: patch operation #$1 is malformed." % $c)
     c.inc
   if apply:
-    if origData.len > 0 and origData != data:
+    # when document is not JSON the origData is not defined
+    # the extra check allows editing tags for non-JSON documents
+    if origData != nil and origData.len > 0 and origData != data:
       try:
         var doc = LS.store.updateDocument(id, data.pretty, "application/json")
         if doc == "":
