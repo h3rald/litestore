@@ -107,9 +107,12 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
     result = result & options.select.join(", ")
     result = result & " FROM "&tables.join(", ")&" WHERE 1=1 "
   if options.single:
-    result = result & "AND id = ?"
+    if options.like.len > 0:      
+      options.limit = 1
+    else:
+      result = result & "AND id = ?"
   var doc_id_col: string
-  if options.tags.len > 0 or options.folder.len > 0:
+  if options.tags.len > 0 or options.folder.len > 0 or options.like.len > 0:
     if options.jsonFilter.len > 0 or (options.search.len > 0 and options.select[0] != "COUNT(docid)"):
       doc_id_col = "$1.id" % documents_table
     else:
@@ -124,6 +127,8 @@ proc prepareSelectDocumentsQuery*(options: var QueryOptions): string =
     result = result & "AND modified < \"" & $options.modifiedBefore & "\" "
   if options.folder.len > 0:
     result = result & "AND " & doc_id_col & " BETWEEN ? and ? "
+  if options.like.len > 0:
+    result = result & "AND " & doc_id_col & " LIKE ? ESCAPE '\\' "
   if options.tags.len > 0:
     result = result & options.tags.selectDocumentsByTags(doc_id_col)
   if options.jsonFilter.len > 0:
