@@ -248,12 +248,12 @@ proc process*(req: LSRequest, LS: LiteStore): LSResponse {.gcsafe.}=
     req.route PEG_DEFAULT_URL:
       info.version = "v7"
       info.resource = matches[0]
-      info.id = matches[1]
+      info.id = matches[1].decodeUrl
       return req.processApiUrl(LS, info)
     req.route PEG_URL:
       info.version = matches[0]
       info.resource = matches[1]
-      info.id = matches[2]
+      info.id = matches[2].decodeUrl
       return req.processApiUrl(LS, info)
     raise newException(EInvalidRequest, req.getReqInfo())
   except EInvalidRequest:
