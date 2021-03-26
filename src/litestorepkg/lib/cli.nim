@@ -18,6 +18,7 @@ var
   readonly = false
   logLevel = "warn"
   system = false
+  importTags = false
   mount = false
   auth = newJNull()
   middleware = newStringTable()
@@ -62,6 +63,7 @@ let
     -r, --readonly      Allow only data retrieval operations.
     -s, --store         Specify a datastore file (default: data.db)
     --system            Set the system flag for import, export, and delete operations
+    --tags              During import read tags from '_tags' file and apply them to imported documents from the same directory.
     -t, --type          Specify a content type for the body an operation to be executed via the execute command.
     -u, --uri           Specify an uri to execute an operation through the execute command.
     -v, --version       Display the program version.
@@ -153,11 +155,14 @@ proc run*() =
           of "config", "c":
             if val == "":
               fail(115, "Configuration file not specified.")
-            configuration = val.parseFile
+            configuration = val.parseFile()
             configFile = val
           of "mount", "m":
             mount = true
             cliSettings["mount"] = %mount
+          of "importTags":
+            importTags = true
+            cliSettings["importTags"] = %importTags
           of "version", "v":
             echo pkgVersion
             quit(0)
@@ -187,6 +192,7 @@ proc run*() =
   LS.authFile = authFile
   LS.config = configuration
   LS.configFile = configFile
+  LS.importTags = importTags
   LS.mount = mount
   LS.execution.file = exFile
   LS.execution.body = exBody

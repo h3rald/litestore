@@ -88,6 +88,7 @@ type
     directory*: string
     manageSystemData*: bool
     file*: string
+    importTags*: bool
     mount*: bool
     readonly*: bool
     appname*: string

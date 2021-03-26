@@ -107,7 +107,7 @@ when isMainModule:
         LS.serve
         runForever()
       of opImport:
-        LS.store.importDir(LS.directory, LS.manageSystemData)
+        LS.store.importDir(LS.directory, LS.manageSystemData, LS.importTags)
       of opExport:
         LS.store.exportDir(LS.directory, LS.manageSystemData)
       of opDelete:

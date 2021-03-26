@@ -30,6 +30,7 @@
 * **-r**, **-\-readonly** &mdash; Allow only data retrieval operations.
 * **-s**, **-\-store** &mdash; Specify a datastore file (default: data.db)
 * **--system**  &mdash; Set the system flag for import, export, and delete operations
+* **--importTags**  &mdash; During import read tags from '_tags' file and apply them to imported documents from the same directory.
 * **-t**, **--type** &mdash; Specify a content type for the body an operation to be executed via the execute command.
 * **-u**, **--uri** &mdash; Specify an uri to execute an operation through the execute command.
 * **-v**, **-\-version** &mdash; Display the program version.
@@ -78,6 +79,30 @@ Import a directory called **admin**:
 Import all documents stored in a directory called **system** as system documents:
 
 [litestore import -d:system --system](class:cmd)
+
+Import all documents stored in a directory called **media** (including subdirectories):
+```
++ media
+  + cars
+  | + _tags
+  | + Lamborgini.jpg
+  | + VW.jpg
+  | ` BMW.jpg
+  + planes
+  | + _tags
+  | + 767.jpg
+  | + F-16.jpg
+  | ` B-1.jpg
+  ` trains
+    + TGV.jpg
+    ` Eurostar.jpg
+```   
+
+[litestore import -d:media --importTags](class:cmd)
+
+Every **_tags** file contains a list of tags, one per line, which are applied to all imported documents from the same directory. In the example above all cars and planes images will be tagged on import. The trains images, not as there is not **_tags** file in the **trains** directory.
+
+The individual **_tags** files are also imported. When the **--importTags** option is not set the **_tags** files are ignored and not imported.
 
 #### Exporting a directory
 
