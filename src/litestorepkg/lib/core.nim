@@ -485,7 +485,7 @@ proc retrieveRawDocuments*(store: Datastore,
 proc countDocuments*(store: Datastore): int64 =
   return store.db.getRow(SQL_COUNT_DOCUMENTS)[0].parseInt
 
-proc importFile*(store: Datastore, f: string, dir = "/", system = false) =
+proc importFile*(store: Datastore, f: string, dir = "/", system = false): string  =
   if not f.fileExists:
     raise newException(EFileNotFound, "File '$1' not found." % f)
   let ext = f.splitFile.ext
@@ -520,6 +520,24 @@ proc importFile*(store: Datastore, f: string, dir = "/", system = false) =
     raise
   if singleOp:
     store.commit()
+  return d_id  
+
+proc importTags(store: Datastore, f,d_id: string) =
+  let tags_file = f.splitFile.dir / "_tags"
+  if not tags_file.fileExists:
+    return
+
+  let singleOp = not LS_TRANSACTION
+  store.begin()
+  try:
+    for tag in tags_file.lines:    
+      store.db.exec(SQL_INSERT_TAG, tag, d_id)
+  except:
+    store.rollback()
+    eWarn()
+    raise
+  if singleOp:
+    store.commit()
 
 proc optimize*(store: Datastore) =
   try:
@@ -545,15 +563,19 @@ proc vacuum*(file: string) =
     quit(203)
   quit(0)
 
-proc importDir*(store: Datastore, dir: string, system = false) =
+proc importDir*(store: Datastore, dir: string, system = false, importTags = false) =
   var files = newSeq[string]()
   if not dir.dirExists:
     raise newException(EDirectoryNotFound, "Directory '$1' not found." % dir)
   for f in dir.walkDirRec():
     if f.dirExists:
       continue
-    if f.splitFile.name.startsWith("."):
+    let fileName = f.splitFile.name
+    if fileName.startsWith("."):
       # Ignore hidden files
+      continue
+    if fileName == "_tags" and not importTags:
+      # Ignore tags file unless the CLI flag was set
       continue
     files.add(f)
   # Import single files in batch
@@ -567,7 +589,9 @@ proc importDir*(store: Datastore, dir: string, system = false) =
   store.db.dropIndexes()
   for f in files:
     try:
-      store.importFile(f, dir, system)
+      let docId = store.importFile(f, dir, system)
+      if not system and importTags:
+        store.importTags(f, docId)
       cFiles.inc
       if (cFiles-1) mod batchSize == 0:
         cBatches.inc
@@ -671,6 +695,8 @@ proc processConfigSettings(LS: var LiteStore) =
     if not cliSettings.hasKey("log") and settings.hasKey("log"):
       LS.logLevel = settings["log"].getStr
       setLogLevel(LS.logLevel)
+    if not cliSettings.hasKey("importTags") and settings.hasKey("importTags"):
+      LS.importTags = settings["importTags"].getBool
     if not cliSettings.hasKey("mount") and settings.hasKey("mount"):
       LS.mount = settings["mount"].getBool
     if not cliSettings.hasKey("readonly") and settings.hasKey("readonly"):
