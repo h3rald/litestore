@@ -468,6 +468,19 @@ proc retrieveDocument*(store: Datastore, id: string,
     else:
       return (data: raw_document[1], contenttype: raw_document[2])
 
+
+proc findDocumentId*(store: Datastore, id: string): string =  
+  var select = "SELECT id FROM documents WHERE id LIKE ? ESCAPE '\\' "
+  var raw_document = store.db.getRow(select.sql, id)
+  LOG.debug("Retrieving document '$1'" % id)
+  if raw_document[0] == "":
+    LOG.debug("(No Such Document)")
+    result = ""
+  else:
+    result = raw_document[0]
+    LOG.debug("Found id: $1" % result)
+
+
 proc retrieveRawDocuments*(store: Datastore,
     options: var QueryOptions = newQueryOptions()): JsonNode =
   var select = prepareSelectDocumentsQuery(options)

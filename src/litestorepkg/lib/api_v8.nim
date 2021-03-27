@@ -9,7 +9,9 @@ import
   os,
   uri,
   tables,
-  times
+  times,
+  re,
+  strtabs
 import
   types,
   contenttypes,
@@ -396,21 +398,40 @@ proc getRawDocument*(LS: LiteStore, id: string, options = newQueryOptions(), req
     result.code = Http200
 
 
-# render markdow as HTML using HastyScribe
-proc renderHtml*(contents: string, getFragment: proc (name: string) : string) : string =
+proc convertWikiLinks(contents: string, findDocument: proc (name: string): string, baseUrl: string): string =
+  ## replace [[Wiki Page]] links to real pages, e.g. [Wiki Page](wiki/Wiki-Page.md)   
+  let regex = re"\[\[.+?\]\]"
+  # find all wiki links and try to find corresponding documents
+  let mapping = contents.findAll(regex).deduplicate
+      .map(proc(wikiLink:string): tuple[wikiLink, link: string] =
+        let label = wikiLink[2 .. ^3]
+        let name = label.replace(" ", "-")
+        let docId = findDocument(name)
+        let link = "[" & label & "](" & baseUrl & docId & ")"
+        LOG.debug("wiki link conversion: $1 -> $2 -> $3 -> $4 -> $5", wikiLink, label, name, docId, link)
+        return (wikiLink, link)
+      )
+  
+  # replace all pairs from the mapping table
+  result = strutils.multiReplace(contents, mapping)   
+   
+
+proc renderHtml*(contents: string, getFragment: proc (name: string): string, findDocument: proc (name: string): string, baseUrl: string): string =
+  ## render markdown as HTML using HastyScribe
   var options = HastyOptions(toc: false, output: "", css: "", watermark: "", fragment: false)
   var fields = HastyFields()
   var hs = newHastyScribe(options, fields)
   # retrieve optional sidebar and footer
-  let sidebar = getFragment("sidebar")
+  let sidebar = getFragment("sidebar").convertWikiLinks(findDocument, baseUrl)
   let sidebarFragment = hs.compileFragment(sidebar, "")
-  let footer = getFragment("footer")
+  let footer = getFragment("footer").convertWikiLinks(findDocument, baseUrl)
   let footerFragment = hs.compileFragment(footer, "")
-  result = hs.compileDocument(contents, "", sidebarFragment, footerFragment)
+  let linkifiedContents = contents.convertWikiLinks(findDocument, baseUrl)
+  result = hs.compileDocument(linkifiedContents, "", sidebarFragment, footerFragment)
+  
 
-
-# search for special pages (e.g. _footer.md) starting from specified directory up to the root
 proc findSpecialDocument(LS: LiteStore, dirId, name:string): string =
+  ## search for special pages (e.g. _footer.md) starting from specified directory up to the root
   var searchDir = dirId
   var options = newQueryOptions()
   options.like = "*"
@@ -426,6 +447,16 @@ proc findSpecialDocument(LS: LiteStore, dirId, name:string): string =
       let parts = searchDir.splitFile
       searchDir = parts.dir
 
+proc findDocumentId(LS: LiteStore, name:string): string =
+  ## Search for a markdown document of given name (last part of the document id)
+  ## and return the full document id with the extension changed to .htm  
+  let searchId = "%/" & name & ".md"
+  LOG.debug("Search $1: '$2'", name, searchId)
+  let docId = LS.store.findDocumentId(searchId)
+  if docId != "":
+    result = docId.changeFileExt(".htm")    
+  else:
+    result = ""
 
 proc getDocument*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequest): LSResponse =
   let doc = LS.store.retrieveDocument(id, options)
@@ -446,7 +477,21 @@ proc getDocument*(LS: LiteStore, id: string, options = newQueryOptions(), req: L
     result = resDocumentNotFound(id)
   else:
     proc getFragment(name: string):string = findSpecialDocument(LS, parts.dir, name)
-    let html = mdDoc.data.renderHtml(getFragment)
+    proc findDocument(name: string):string = findDocumentId(LS, name)   
+
+    # detect if the URL contained store id
+    var storeId = ""
+    for id, ls in pairs(LSDICT):
+      if (ls == LS):
+         storeId = id
+         break;
+    var baseUrl = ""
+    if storeId != "":
+      baseUrl = "/stores/" & storeId & "/docs/"      
+    else:
+      baseUrl = "/docs/"  
+    LOG.debug("Base URL $1", baseUrl)
+    let html = mdDoc.data.renderHtml(getFragment, findDocument, baseUrl)
     result.headers = ctHeader("text/html")
     setOrigin(LS, req, result.headers)
     result.content = html
@@ -1028,21 +1073,31 @@ proc patch*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSRespons
     return resError(Http400, "Bad request: document ID must be specified in PATCH requests.")
 
 
-# search for special pages (e.g. _footer.md) starting from specified directory up to the root
-proc findSpecialFile(root, dir, name:string): string =
+proc findSpecialFile(dir, name:string): string =
+  ## search for special pages (e.g. _footer.md) starting from specified directory up to the root
   var searchDir = dir
-  result = ""
-  while searchDir != root:
+  result = ""  
+  while searchDir != "":
     let searchPattern = searchDir / ("_" & name & "*.md")
     LOG.debug("Search $1: '$2'", name, searchPattern)
     for file in walkFiles(searchPattern):
       try:
-        result = file.readFile
+        result = file.readFile        
         return
       except:
         discard
     searchDir = searchDir.parentDir
 
+
+proc findFile(root, name:string): string =
+  ## Search for a markdown file of given name 
+  ## and return the relative file path (without root) converted to URL and with the extension changed to .htm
+  result = ""
+  for file in walkDirRec(root):
+    let parts = file.splitFile
+    if parts.name == name and parts.ext.cmpIgnoreCase(".md") == 0:
+       result = file.changeFileExt(".htm").replace("\\", "/")[len(root) .. ^1]       
+       return
 
 proc serveFile*(req: LSRequest, LS: LiteStore, id: string): LSResponse =
   let path = LS.directory / id
@@ -1068,13 +1123,14 @@ proc serveFile*(req: LSRequest, LS: LiteStore, id: string): LSResponse =
         except:
           return resError(Http500, "Unable to read file '$1'." % path)
       # if requested document was HTML then check if the corresponding MD file exists
-      if parts.ext == ".htm" or parts.ext == ".html":
-        let mdPath = path.changeFileExt("md")
+      if parts.ext.cmpIgnoreCase(".htm") == 0 or parts.ext.cmpIgnoreCase(".html") == 0:
+        let mdPath = path.changeFileExt(".md")
         if mdPath.fileExists:
           try:
             let markdown = mdPath.readFile
-            proc getFragment(name: string):string = findSpecialFile(LS.directory, parts.dir, name)
-            let html = markdown.renderHtml(getFragment)    
+            proc getFragment(name: string):string = findSpecialFile(parts.dir, name)
+            proc findDocument(name: string):string = findFile(LS.directory, name)
+            let html = markdown.renderHtml(getFragment, findDocument, "/dir/")    
             result.headers = ctHeader("text/html")
             setOrigin(LS, req, result.headers)
             result.content = html
