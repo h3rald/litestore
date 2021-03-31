@@ -27,6 +27,9 @@ installExt    = @["nim", "c", "h", "json", "ico"]
 
 requires "nim >= 1.4.4", "jwt >= 0.2", "nimgen", "duktape"
 
+before install:
+  exec "nifty install"
+
 # Build
 
 const
