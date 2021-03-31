@@ -16,7 +16,8 @@ import
   core,
   utils,
   logger,
-  duktape
+  duktape,
+  renderer
 
 # Helper procs
 
@@ -397,7 +398,10 @@ proc getRawDocument*(LS: LiteStore, id: string, options = newQueryOptions(), req
 proc getDocument*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequest): LSResponse =
   let doc = LS.store.retrieveDocument(id, options)
   if doc.data == "":
-    result = resDocumentNotFound(id)
+    if LS.renderMarkdown:
+      result = tryRenderMarkdownDocument(LS, id, options, req)
+    else:
+      result = resDocumentNotFound(id)
   else:
     result.headers = doc.contenttype.ctHeader
     setOrigin(LS, req, result.headers)
@@ -1001,7 +1005,10 @@ proc serveFile*(req: LSRequest, LS: LiteStore, id: string): LSResponse =
         except:
           return resError(Http500, "Unable to read file '$1'." % path)
       else:
-        return resError(Http404, "File '$1' not found." % path)
+        if LS.renderMarkdown:
+          return tryRenderMarkdownFile(LS, path, req)
+        else:      
+          return resError(Http404, "File '$1' not found." % path)
     else:
       return resError(Http405, "Method not allowed: $1" % $req.reqMethod)
 

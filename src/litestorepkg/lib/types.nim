@@ -89,6 +89,7 @@ type
     manageSystemData*: bool
     file*: string
     importTags*: bool
+    renderMarkdown*: bool
     mount*: bool
     readonly*: bool
     appname*: string
