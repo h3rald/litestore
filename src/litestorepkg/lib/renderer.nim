@@ -5,7 +5,8 @@ import
   pegs,
   json,
   os,
-  tables
+  tables,
+  strtabs
 
 {.passL: "-Lpackages/hastyscribe/src/hastyscribepkg/vendor".}  
 import  
@@ -55,6 +56,43 @@ proc convertWikiLinks(contents: string, findDocument: proc (name: string): strin
     mapping.add((wikiLink, link))    
   # replace all pairs from the mapping table
   return multiReplace(contents, mapping)
+
+proc handleFootnotes(contents: string): string =
+  ## replace [^footnote] with a superscripted internal link to the footnote
+  ## and replace [^footnote]: text into and anchored line of text with [footnote] header
+  let peg_footnote_use = peg"'\[\^' {@} '\]'"
+  let peg_footnote_definition = peg" \n '\[\^' {@} '\]:' {@} \n"
+  var mapping = newSeq[(string,string)]()
+  var footnotes = newStringTable()
+  # footnote definitions should be unique
+  for footnote_definition in contents.findAll(peg_footnote_definition):
+    var matches: array[0..1, string]
+    discard footnote_definition.match(peg_footnote_definition, matches)      
+    LOG.debug("footnote definition $1 $2", matches[0], matches[1].substr(0,40))
+    let footnote_id = matches[0].strip
+    let footnote_text = matches[1].strip
+    let back_link = "<a href=\"#$1-use\" title=\"back to document\"><span class=\"fa-arrow-up\"></span></a>" % footnote_id
+    let footnote_definition_tag = "\n<a id=\"$1\"></a>[<b>$1</b>]: $2 $3\n" % [footnote_id, footnote_text, back_link] 
+    mapping.add((footnote_definition, footnote_definition_tag))    
+    footnotes[footnote_id] = footnote_text
+  # find footnote uses, there may be duplicates
+  for footnote_use in contents.findAll(peg_footnote_use).deduplicate():
+    var matches: array[0..0, string]
+    discard footnote_use.match(peg_footnote_use, matches)      
+    LOG.debug("footnote use $1", matches[0])
+    let footnote_id = matches[0].strip
+    let back_link = "<a id=\"$1-use\"></a>" % footnote_id
+    var footnote_use_tag = ""
+    if footnotes.hasKey(footnote_id):
+      let footnote_text = footnotes[footnote_id]
+      footnote_use_tag = "$3<sup><a href=\"#$1\" title=\"$2\">$1</a></sup>" % [footnote_id, footnote_text, back_link]
+    else:
+      # no backlink, this footnote has no definition
+      footnote_use_tag = "<sup><a href=\"#$1\" title=\"No definition!\">$1</a></sup>$2" % [footnote_id, back_link]
+    mapping.add((footnote_use, footnote_use_tag)) 
+  # replace all pairs from the mapping table
+  return multiReplace(contents, mapping)
+
 
 proc getFonts(): string =
   var fa_solid = ""
@@ -137,8 +175,6 @@ proc renderHtml(contents: string, getFragment: proc (name: string): string, find
     document = document.convertWikiLinks(findDocument, baseUrl)
     LOG.debug("Converted WikiLinks")
 
-    # TODO: correct ==highlights==    
-
     # render footer and sidebar
     let sidebar_fragment = hs.compileFragment(sidebar, "")
     LOG.debug("Rendered sidebar:\n$1\n...", sidebar_fragment.substr(0,40))
@@ -150,7 +186,12 @@ proc renderHtml(contents: string, getFragment: proc (name: string): string, find
     document = hs.preprocess(document, "")   
     LOG.debug("Pre-processed document:\n$1\n...", document.substr(0,40))
 
-    # Process markdown
+    # handle footnotes (only in the main document)
+    # convert them to syntax understood by discount
+    document = document.handleFootnotes()
+    LOG.debug("Footnotes:\n$1\n...", document.substr(0,40))
+
+    # Process markdown    
     var metadata = TMDMetaData(title:"", author:"", date:"", toc:"", css:"")
     document = document.md(0, metadata)
     LOG.debug("Metadata, TOC, CSS processed");
