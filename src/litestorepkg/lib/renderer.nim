@@ -22,36 +22,47 @@ import
 
 const
   options_embed = false
-  options_markdown_css = "styles/_markdown.css"
-  options_additional_css = "styles/_layout.css"
-  options_fa_solid = "fonts/fa-solid-900.woff"
-  options_fa_brands = "fonts/fa-brands-400.woff"
+  options_markdown_css = "_renderer/_markdown.css"
+  options_additional_css = "_renderer/_layout.css"
+  options_fa_solid = "_renderer/fa-solid-900.woff"
+  options_fa_brands = "_renderer/fa-brands-400.woff"
   options_js = ""
   options_watermark = ""
-  options_template = "_template.htm"
-  options_common = "_common.mac"
+  options_template = "_renderer/_template.htm"
+  options_common = "_renderer/_common.md"
 
 
 proc convertWikiLinks(contents: string, findDocument: proc (name: string): string, baseUrl: string): string =
   ## replace [[Wiki Page]] links to real pages, e.g. [Wiki Page](wiki/Wiki-Page.md)   
   ## additionally allow changing the displayed name [[My Page|Wiki-Page]] links to real pages, e.g. [My Page](wiki/Wiki-Page.md)   
+  ## the tagret page may have #Targret-Anchor defined
   let peg_wiki_link1 = peg"'\[\[' {@} '\]\]'"
   let peg_wiki_link2 = peg"'\[\[' {@} '|' {@} '\]\]'"
+  let peg_wiki_link3 = peg"'\[\[' {@} '|' {@} '#' {@} '\]\]'"
   var mapping = newSeq[(string,string)]()
   # find all wiki links and try to find corresponding documents
   for wikiLink in contents.findAll(peg_wiki_link1).deduplicate():
-    var matches: array[0..1, string]
-    discard wikiLink.match(peg_wiki_link2, matches)      
-    LOG.debug("match '$1' '$2'", matches[0], matches[1])
+    var matches: array[0..2, string]    
+    discard wikiLink.match(peg_wiki_link3, matches)
+    LOG.debug("WikiLink '$1' match '$2' '$3' '$4'", wikiLink, matches[0], matches[1], matches[2])
     var label = matches[0].strip
     var name = matches[1].strip
-    if label == "" or name == "":
-      discard wikiLink.match(peg_wiki_link1, matches)      
-      LOG.debug("match '$1'", matches[0])
+    var anchor = matches[2].strip
+    if label == "" or name == "" or anchor == "":
+      discard wikiLink.match(peg_wiki_link2, matches)      
+      LOG.debug("WikiLink '$1' match '$2' '$3'", wikiLink, matches[0], matches[1])
       label = matches[0].strip
-      name = label.replace(" ", "-")
+      name = matches[1].strip
+      anchor = ""
+      if label == "" or name == "":
+        discard wikiLink.match(peg_wiki_link1, matches)      
+        LOG.debug("WikiLink '$1' match '$2'", wikiLink, matches[0])
+        label = matches[0].strip
+        name = label.replace(" ", "-")        
     let docId = findDocument(name)
-    let link = "[" & label & "](" & baseUrl & docId & ")"
+    if anchor != "":
+      anchor = "#" & anchor
+    let link = "[" & label & "](" & baseUrl & docId & anchor & ")"
     LOG.debug("wiki link conversion: $1 -> $2 -> $3 -> $4 -> $5", wikiLink, label, name, docId, link)
     mapping.add((wikiLink, link))    
   # replace all pairs from the mapping table
@@ -94,15 +105,15 @@ proc handleFootnotes(contents: string): string =
   return multiReplace(contents, mapping)
 
 
-proc getFonts(): string =
+proc getFonts(baseUrl: string): string =
   var fa_solid = ""
   var fa_brands = ""  
   if options_embed:
     fa_solid = fa_solid_font
     fa_brands = fa_brands_font
   else:  
-    fa_solid = options_fa_solid
-    fa_brands = options_fa_brands
+    fa_solid = baseUrl & options_fa_solid
+    fa_brands = baseUrl & options_fa_brands
 
   let fonts = @[
     create_font_face(fa_solid, "Font Awesome 5 Free", "normal", 900, options_embed),
@@ -257,6 +268,9 @@ proc renderHtml(contents: string, getFragment: proc (name: string): string, find
     var watermark_css_tag  = ""
     if options_watermark != "":
       watermark_css_tag = watermark_css(options_watermark)
+
+    # read fonts needed for icons
+    var fonts_tag = getFonts(baseUrl) 
     
     # get document template and populate fields
     let docTemplate = getSpecialContent(options_template)
@@ -275,7 +289,7 @@ proc renderHtml(contents: string, getFragment: proc (name: string): string, find
     "additional_css_tag", additional_css_tag, 
     "headings", headings, 
     "body", document,
-    "fonts_css_tag", getFonts(), # needed for decorating links with icons
+    "fonts_css_tag", fonts_tag,
     "internal_css_tag", metadata.css, 
     "watermark_css_tag", watermark_css_tag,
     "js", user_js_tag,
@@ -302,9 +316,9 @@ proc findSpecialDocument(LS: LiteStore, dirId, name:string): string =
   while searchDir != "":
     let searchId = searchDir & "/\\_" & name & "%.md"
     LOG.debug("Search $1: '$2'", name, searchId)
-    let footerDoc = LS.store.retrieveDocument(searchId, options)
-    if footerDoc.data != "":
-      return footerDoc.data
+    let specialDoc = LS.store.retrieveDocument(searchId, options)
+    if specialDoc.data != "":
+      return specialDoc.data
     else:
       let parts = searchDir.splitFile
       searchDir = parts.dir
@@ -327,6 +341,7 @@ proc getSpecialDocumentContent(LS: LiteStore, name: string): string =
   result = ""
   if name != "":
     let options = newQueryOptions()
+    LOG.debug("Get special document $1", name)
     var doc = LS.store.retrieveDocument(name, options)
     result = doc.data
 
@@ -357,6 +372,7 @@ proc findFile(root, name:string): string =
 
 
 proc getSpecialFileContent(dir, name: string): string =
+  ## read content of the specified file from the served directory
   result = ""
   if name != "":
     try:
@@ -400,7 +416,7 @@ proc tryRenderMarkdownDocument*(LS: LiteStore, id: string, options = newQueryOpt
   try:
     let markdown = data
     proc getFragment(name: string):string = findSpecialDocument(LS, parts.dir, name)
-    proc findDocument(name: string):string = findDocumentId(LS, name)   
+    proc findDocument(name: string):string = findDocumentId(LS, name)      
     proc getSpecialContent(name: string):string = getSpecialDocumentContent(LS, name)   
     
     let html = markdown.renderHtml(getFragment, findDocument, getSpecialContent, baseUrl, tags)
