@@ -450,6 +450,17 @@ proc destroyDocument*(store: Datastore, id: string): int64 =
     eWarn()
     store.rollback()
 
+proc findDocumentId*(store: Datastore, pattern: string): string =  
+  var select = "SELECT id FROM documents WHERE id LIKE ? ESCAPE '\\' "
+  var raw_document = store.db.getRow(select.sql, pattern)
+  LOG.debug("Retrieving document '$1'" % pattern)
+  if raw_document[0] == "":
+    LOG.debug("(No Such Document)")
+    result = ""
+  else:
+    result = raw_document[0]
+    LOG.debug("Found id: $1" % result)
+
 proc retrieveDocument*(store: Datastore, id: string,
     options: QueryOptions = newQueryOptions()): tuple[data: string,
     contenttype: string] =

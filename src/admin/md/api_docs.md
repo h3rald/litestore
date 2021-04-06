@@ -195,6 +195,20 @@ Example: http://127.0.0.1:9500/docs/?search=Something
 > 
 > If **search** is specified, each result will contain a **highlight** property with a highlighted search snippet, and a **rank** property identified the rank of the result within the search. Results will also be automatically ordered by descending rank.
 
+##### `like` option
+
+If this option is specified, retrieves a single document which id matches the specified pattern. The value give to `like` option is not used so the search pattern is specified as the regular document id as a part of the path. The regular SQL wildcards `%` and `_` can be used. To escape them use `\` encoded in the URL as `%5C`.
+
+Example: http://127.0.0.1:9500/docs/%/api%5C_%.md?like=1&raw=true&contents=false&search=API%20v7%Required
+
+If finds the first markdown file which name starts with _api\__ and which contains string _API v7 Required_.
+
+> %tip%
+> Tip
+> 
+> Only the first matching document is returned even if there was more than one which id matched the pattern. To get the subsequent documents use `offset` option and increase its value from _1_ up. 
+
+
 ##### `tags` option
 
 Retrieve only documents with matching tag(s). 
