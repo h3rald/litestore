@@ -19,3 +19,4 @@ js
 ./config.json
 *.db-shm
 *.db-wal
+*.nim.bak
