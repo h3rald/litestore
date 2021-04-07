@@ -21,12 +21,12 @@ import
   logger
 
 const
-  options_embed = false
+  options_embed = false  
   options_markdown_css = "_renderer/_markdown.css"
   options_additional_css = "_renderer/_layout.css"
   options_fa_solid = "_renderer/fa-solid-900.woff"
   options_fa_brands = "_renderer/fa-brands-400.woff"
-  options_js = ""
+  options_user_js = ""
   options_watermark = ""
   options_template = "_renderer/_template.htm"
   options_common = "_renderer/_common.md"
@@ -143,6 +143,20 @@ proc renderHtml(contents: string, getFragment: proc (name: string): string, find
     var hasMetadata = handleYamlMetadata(document, fields)
     LOG.debug("YAML metadata $1", hasMetadata)
 
+    # check if MathJax (math) or Mermaid (diagrams) was enabled
+    # remove the fields as they are not needed in the document
+    var options_math = false
+    if fields.hasKey("math"):
+      options_math = fields["math"].parseBool
+      LOG.debug("Math $1", options_math)
+      fields.del("math")  
+      
+    var options_diagrams = false
+    if fields.hasKey("diagrams"):
+      options_diagrams = fields["diagrams"].parseBool
+      LOG.debug("Diagrams $1", options_diagrams)
+      fields.del("diagrams")  
+
     # if tags were defined concatenate them into a single string and add as a field
     if tags.len > 0:
       var systemTags = newSeq[string]()
@@ -236,7 +250,6 @@ proc renderHtml(contents: string, getFragment: proc (name: string): string, find
     if options_toc and metadata.toc != "":
       toc = metadata.toc
       headings = " class=\"headings\""    
-
     
     # read main CSS, fallback to HastyScribe style
     var main_css_tag = ""
@@ -260,9 +273,28 @@ proc renderHtml(contents: string, getFragment: proc (name: string): string, find
 
     # read optional javascript code
     var user_js_tag = ""
-    let jsFile = getSpecialContent(options_js)
+    let jsFile = getSpecialContent(options_user_js)
     if jsFile != "":
       user_js_tag = "<script type=\"text/javascript\">\n" & jsFile & "\n</script>"
+      LOG.debug("User js:\n$1\n...", user_js_tag.substr(0,40))
+
+    # handle javascript for MathJax
+    var mathjax_js_tag = ""
+    if options_math:
+      mathjax_js_tag = """
+<script type="text/javascript" id="MathJax-config" defer src="$1_renderer/_mathjax_config.js"></script>
+<script type="text/javascript" id="MathJax-script" defer src="$1_mathjax/es5/tex-svg.js"></script>
+""" % baseUrl
+      LOG.debug("MathJax js:\n$1\n...", mathjax_js_tag.substr(0,40))
+
+    # handle javascript for Mermaid
+    var mermaid_js_tag = ""
+    if options_diagrams:
+      mermaid_js_tag = """
+<script src="$1_mermaid/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true});</script>
+""" % baseUrl
+      LOG.debug("Mermaid js:\n$1\n...", mermaid_js_tag.substr(0,40))  
 
     # read optional watermark picture
     var watermark_css_tag  = ""
@@ -292,7 +324,9 @@ proc renderHtml(contents: string, getFragment: proc (name: string): string, find
     "fonts_css_tag", fonts_tag,
     "internal_css_tag", metadata.css, 
     "watermark_css_tag", watermark_css_tag,
-    "js", user_js_tag,
+    "user_js_tag", user_js_tag,
+    "mathjax_js_tag", mathjax_js_tag,
+    "mermaid_js_tag", mermaid_js_tag,
     "sidebar", sidebar_fragment,
     "footer", footer_fragment]
   
