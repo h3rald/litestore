@@ -22,6 +22,7 @@ import
 
 const
   options_embed = false  
+  options_use_main_store = true
   options_markdown_css = "_renderer/_markdown.css"
   options_additional_css = "_renderer/_layout.css"
   options_fa_solid = "_renderer/fa-solid-900.woff"
@@ -35,7 +36,7 @@ const
 proc convertWikiLinks(contents: string, findDocument: proc (name: string): string, baseUrl: string): string =
   ## replace [[Wiki Page]] links to real pages, e.g. [Wiki Page](wiki/Wiki-Page.md)   
   ## additionally allow changing the displayed name [[My Page|Wiki-Page]] links to real pages, e.g. [My Page](wiki/Wiki-Page.md)   
-  ## the tagret page may have #Targret-Anchor defined
+  ## the target page may have #Target-Anchor defined
   let peg_wiki_link1 = peg"'\[\[' {@} '\]\]'"
   let peg_wiki_link2 = peg"'\[\[' {@} '|' {@} '\]\]'"
   let peg_wiki_link3 = peg"'\[\[' {@} '|' {@} '#' {@} '\]\]'"
@@ -113,9 +114,9 @@ proc getFonts(baseUrl: string): string =
   if options_embed:
     fa_solid = fa_solid_font
     fa_brands = fa_brands_font
-  else:  
+  else:
     fa_solid = baseUrl & options_fa_solid
-    fa_brands = baseUrl & options_fa_brands
+    fa_brands = baseUrl & options_fa_brands    
 
   let fonts = @[
     create_font_face(fa_solid, "Font Awesome 5 Free", "normal", 900, options_embed),
@@ -133,10 +134,10 @@ proc handleToc(contents: string, hasToc: var bool): string =
     return #replace only the first occurence
 
 
-proc renderHtml(contents: string, getFragment: proc (name: string): string, findDocument: proc (name: string): string, getSpecialContent: proc (name: string): string, baseUrl: string, tags: openArray[string]): string =
+proc renderHtml(contents: string, getFragment: proc (name: string): string, findDocument: proc (name: string): string, getSpecialContent: proc (name: string): string, baseUrl, specialBaseUrl: string, tags: openArray[string]): string =
   ## render markdown as HTML using HastyScribe
   
-  try:
+  try:  
     # process YAML metadata and convert it into fields for HastyScribe
     # remove metadata from the document as Discount cannot handle it 
     # (it can handle pandoc metadata but it is too limiting)
@@ -261,7 +262,7 @@ proc renderHtml(contents: string, getFragment: proc (name: string): string, find
         main_css = stylesheet
       main_css_tag = main_css.style_tag
     else:
-      main_css_tag = (baseUrl & options_markdown_css).style_link_tag
+      main_css_tag = (specialBaseUrl & options_markdown_css).style_link_tag
   
     # read additional CSS
     var additional_css_tag = ""    
@@ -271,13 +272,13 @@ proc renderHtml(contents: string, getFragment: proc (name: string): string, find
         if additional_css != "":
             additional_css_tag = additional_css.style_tag
       else:
-        additional_css_tag = (baseUrl & options_additional_css).style_link_tag
+        additional_css_tag = (specialBaseUrl & options_additional_css).style_link_tag
 
     # read optional javascript code
     var user_js_tag = ""
     let jsFile = getSpecialContent(options_user_js)
     if jsFile != "":
-      user_js_tag = "<script type=\"text/javascript\">\n" & jsFile & "\n</script>"
+      user_js_tag = "<script type=\"text/javascript\">\n" & specialBaseUrl & jsFile & "\n</script>"
       LOG.debug("User js:\n$1\n...", user_js_tag.substr(0,40))
 
     # handle javascript for MathJax
@@ -286,7 +287,7 @@ proc renderHtml(contents: string, getFragment: proc (name: string): string, find
       mathjax_js_tag = """
 <script type="text/javascript" id="MathJax-config" defer src="$1_renderer/_mathjax_config.js"></script>
 <script type="text/javascript" id="MathJax-script" defer src="$1_mathjax/es5/tex-svg.js"></script>
-""" % baseUrl
+""" % specialBaseUrl
       LOG.debug("MathJax js:\n$1\n...", mathjax_js_tag.substr(0,40))
 
     # handle javascript for Mermaid
@@ -295,7 +296,7 @@ proc renderHtml(contents: string, getFragment: proc (name: string): string, find
       mermaid_js_tag = """
 <script src="$1_mermaid/mermaid.min.js"></script>
 <script>mermaid.initialize({startOnLoad:true});</script>
-""" % baseUrl
+""" % specialBaseUrl
       LOG.debug("Mermaid js:\n$1\n...", mermaid_js_tag.substr(0,40))  
 
     # read optional watermark picture
@@ -304,7 +305,7 @@ proc renderHtml(contents: string, getFragment: proc (name: string): string, find
       watermark_css_tag = watermark_css(options_watermark)
 
     # read fonts needed for icons
-    var fonts_tag = getFonts(baseUrl) 
+    var fonts_tag = getFonts(specialBaseUrl) 
     
     # get document template and populate fields
     let docTemplate = getSpecialContent(options_template)
@@ -448,14 +449,20 @@ proc tryRenderMarkdownDocument*(LS: LiteStore, id: string, options = newQueryOpt
     baseUrl = "/stores/" & storeId & "/docs/"
   else:
     baseUrl = "/docs/"  
-  
+
+  var specialBaseUrl = baseUrl
+  var specialStore = LS
+  if options_use_main_store:
+    specialStore = LSDICT["master"]    
+    specialBaseUrl = "/docs/"
+
   try:
     let markdown = data
     proc getFragment(name: string):string = findSpecialDocument(LS, parts.dir, name)
     proc findDocument(name: string):string = findDocumentId(LS, name)      
-    proc getSpecialContent(name: string):string = getSpecialDocumentContent(LS, name)   
+    proc getSpecialContent(name: string):string = getSpecialDocumentContent(specialStore, name)   
     
-    let html = markdown.renderHtml(getFragment, findDocument, getSpecialContent, baseUrl, tags)
+    let html = markdown.renderHtml(getFragment, findDocument, getSpecialContent, baseUrl, specialBaseUrl, tags)
     result.headers = ctHeader("text/html")
     setOrigin(LS, req, result.headers)
     result.content = html
@@ -484,7 +491,7 @@ proc tryRenderMarkdownFile*(LS: LiteStore, path: string, req: LSRequest): LSResp
     proc findDocument(name: string):string = findFile(LS.directory, name)
     proc getSpecialContent(name: string):string = getSpecialFileContent(LS.directory, name)   
     
-    let html = markdown.renderHtml(getFragment, findDocument, getSpecialContent,"/dir/", tags)    
+    let html = markdown.renderHtml(getFragment, findDocument, getSpecialContent,"/dir/", "/dir/", tags)    
     result.headers = ctHeader("text/html")
     setOrigin(LS, req, result.headers)
     result.content = html
