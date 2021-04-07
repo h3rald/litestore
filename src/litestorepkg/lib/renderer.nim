@@ -59,7 +59,9 @@ proc convertWikiLinks(contents: string, findDocument: proc (name: string): strin
         LOG.debug("WikiLink '$1' match '$2'", wikiLink, matches[0])
         label = matches[0].strip
         name = label.replace(" ", "-")        
-    let docId = findDocument(name)
+    var docId = findDocument(name)
+    if baseUrl.endsWith('/') and docId.startsWith('/'):
+      docId = docId[1 .. ^1]
     if anchor != "":
       anchor = "#" & anchor
     let link = "[" & label & "](" & baseUrl & docId & anchor & ")"
