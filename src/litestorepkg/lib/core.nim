@@ -450,6 +450,17 @@ proc destroyDocument*(store: Datastore, id: string): int64 =
     eWarn()
     store.rollback()
 
+proc findDocumentId*(store: Datastore, pattern: string): string =  
+  var select = "SELECT id FROM documents WHERE id LIKE ? ESCAPE '\\' "
+  var raw_document = store.db.getRow(select.sql, pattern)
+  LOG.debug("Retrieving document '$1'" % pattern)
+  if raw_document[0] == "":
+    LOG.debug("(No Such Document)")
+    result = ""
+  else:
+    result = raw_document[0]
+    LOG.debug("Found id: $1" % result)
+
 proc retrieveDocument*(store: Datastore, id: string,
     options: QueryOptions = newQueryOptions()): tuple[data: string,
     contenttype: string] =
@@ -485,7 +496,7 @@ proc retrieveRawDocuments*(store: Datastore,
 proc countDocuments*(store: Datastore): int64 =
   return store.db.getRow(SQL_COUNT_DOCUMENTS)[0].parseInt
 
-proc importFile*(store: Datastore, f: string, dir = "/", system = false) =
+proc importFile*(store: Datastore, f: string, dir = "/", system = false): string  =
   if not f.fileExists:
     raise newException(EFileNotFound, "File '$1' not found." % f)
   let ext = f.splitFile.ext
@@ -520,6 +531,20 @@ proc importFile*(store: Datastore, f: string, dir = "/", system = false) =
     raise
   if singleOp:
     store.commit()
+  return d_id
+
+proc importTags*(store: Datastore, d_id: string, tags: openArray[string]) =
+  let singleOp = not LS_TRANSACTION
+  store.begin()
+  try:
+    for tag in tags:
+      store.db.exec(SQL_INSERT_TAG, tag, d_id)
+  except:
+    store.rollback()
+    eWarn()
+    raise
+  if singleOp:
+    store.commit()
 
 proc optimize*(store: Datastore) =
   try:
@@ -545,15 +570,27 @@ proc vacuum*(file: string) =
     quit(203)
   quit(0)
 
-proc importDir*(store: Datastore, dir: string, system = false) =
+proc getTagsForFile*(f: string): seq[string] =
+  result = newSeq[string]()
+  let tags_file = f.splitFile.dir / "_tags"
+  if tags_file.fileExists:
+    for tag in tags_file.lines:
+      result.add(tag) 
+
+
+proc importDir*(store: Datastore, dir: string, system = false, importTags = false) =
   var files = newSeq[string]()
   if not dir.dirExists:
     raise newException(EDirectoryNotFound, "Directory '$1' not found." % dir)
   for f in dir.walkDirRec():
     if f.dirExists:
       continue
-    if f.splitFile.name.startsWith("."):
+    let fileName = f.splitFile.name
+    if fileName.startsWith("."):
       # Ignore hidden files
+      continue
+    if fileName == "_tags" and not importTags:
+      # Ignore tags file unless the CLI flag was set
       continue
     files.add(f)
   # Import single files in batch
@@ -567,7 +604,11 @@ proc importDir*(store: Datastore, dir: string, system = false) =
   store.db.dropIndexes()
   for f in files:
     try:
-      store.importFile(f, dir, system)
+      let docId = store.importFile(f, dir, system)
+      if not system and importTags:
+        let tags = getTagsForFile(f)
+        if tags.len > 0:
+          store.importTags(docId, tags)
       cFiles.inc
       if (cFiles-1) mod batchSize == 0:
         cBatches.inc
@@ -734,7 +775,8 @@ proc initStore*(LS: var LiteStore) =
   if LS.execution.operation == "" and LS.operation == opExecute:
     fail(111, "--operation option not specified")
 
-
+  if LS.importTags and LS.operation != opImport:
+    fail(116, "--importTags option alowed only for import operation.")
 proc updateConfig*(LS: LiteStore) =
   let rawConfig = LS.config.pretty
   if LS.configFile != "":
