@@ -20,3 +20,4 @@ js
 *.db-shm
 *.db-wal
 *.nim.bak
+litestore_linkerArgs.txt
