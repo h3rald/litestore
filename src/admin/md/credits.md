@@ -1,5 +1,11 @@
 ## Credits
 
+LiteStore was created and is maintained by [Fabio Cevasco](https://h3rald.com), with contributions from:
+
+* Piotr Kaminski ([@tomidery](https://github.com/tomidery))
+* Steve Kellock ([@skellock](https://github.com/skellock))
+* [@nightlyworker](https://github.com/nightlyworker)
+
 Special thanks to the following individuals, communities and organizations that made LiteStore possible:
 
 * Dwayne Richard Hipp and all the contributors to [SQLite](http://www.sqlite.org/), the true gem that powers LiteStore.
