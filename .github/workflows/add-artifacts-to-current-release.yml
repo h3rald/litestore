@@ -66,7 +66,7 @@ jobs:
             # Install HastyScribe (Windows)
             - name: Install HastyScribe (Windows)
               run: |
-                  curl https://github.com/h3rald/hastyscribe/releases/download/v1.12.3/hastyscribe_v1.12.3_${{steps.os.outputs.id}}_x64.zip -sSf > hastyscribe.zip
+                  curl https://github.com/h3rald/hastyscribe/releases/download/v1.12.3/hastyscribe_v1.12.3_${{steps.os.outputs.id}}_x64.zip -L -o hastyscribe.zip
                   Expand-Archive -Path hastyscribe.zip -DestinationPath .
               if: matrix.os == 'windows-latest'
 
