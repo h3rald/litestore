@@ -5,7 +5,8 @@ import
   pegs,
   json,
   os,
-  tables
+  tables,
+  strtabs
 
 {.passL: "-Lpackages/hastyscribe/src/hastyscribepkg/vendor".}  
 import  
@@ -44,19 +45,19 @@ proc convertWikiLinks(contents: string, findDocument: proc (name: string): strin
   for wikiLink in contents.findAll(peg_wiki_link1).deduplicate():
     var matches: array[0..2, string]    
     discard wikiLink.match(peg_wiki_link3, matches)
-    LOG.debug("WikiLink '$1' match '$2' '$3' '$4'", wikiLink, matches[0], matches[1], matches[2])
+    #LOG.debug("WikiLink '$1' match '$2' '$3' '$4'", wikiLink, matches[0], matches[1], matches[2])
     var label = matches[0].strip
     var name = matches[1].strip
     var anchor = matches[2].strip
     if label == "" or name == "" or anchor == "":
       discard wikiLink.match(peg_wiki_link2, matches)      
-      LOG.debug("WikiLink '$1' match '$2' '$3'", wikiLink, matches[0], matches[1])
+      #LOG.debug("WikiLink '$1' match '$2' '$3'", wikiLink, matches[0], matches[1])
       label = matches[0].strip
       name = matches[1].strip
       anchor = ""
       if label == "" or name == "":
         discard wikiLink.match(peg_wiki_link1, matches)      
-        LOG.debug("WikiLink '$1' match '$2'", wikiLink, matches[0])
+        #LOG.debug("WikiLink '$1' match '$2'", wikiLink, matches[0])
         label = matches[0].strip
         name = label.replace(" ", "-")        
     var docId = findDocument(name)
@@ -355,15 +356,26 @@ proc findSpecialFile(dir, name:string): string =
     searchDir = searchDir.parentDir
   return ""  
 
-
-proc findFile(root, name:string): string =
-  ## Search for a markdown file of given name 
-  ## and return the relative file path (without root) converted to URL and with the extension changed to .htm
+proc buildCache(root:string): StringTableRef =
+  ## Search for all markdown files in given directory (and subdirectories)
+  ## and build a cache of name (without extension) to path with .htm extension changed
+  ## used to speed up finding WikiLinks
+  var cache = newStringTable()
   for file in walkDirRec(root):
     let parts = file.splitFile
-    if parts.name == name and parts.ext.cmpIgnoreCase(".md") == 0:
-       return file.changeFileExt(".htm").replace("\\", "/")[len(root) .. ^1]       
-  return ""       
+    if parts.ext.cmpIgnoreCase(".md") == 0:
+      let targetName = file.changeFileExt(".htm").replace("\\", "/")[len(root) .. ^1]
+      if not cache.hasKey(parts.name):
+        cache[parts.name] = targetName    
+  return cache       
+
+proc findFile(cache:StringTableRef, name:string): string =
+  ## Search for a markdown file of given name in the cache
+  ## and return the relative file path (without root) converted to URL and with the extension changed to .htm
+  if cache.hasKey(name):
+    result = cache[name]
+  else:
+    result = ""
 
 
 proc getSpecialFileContent(dir, name: string): string =
@@ -445,8 +457,9 @@ proc tryRenderMarkdownFile*(LS: LiteStore, path: string, req: LSRequest): LSResp
 
   try:
     let markdown = mdPath.readFile
+    let cache = buildCache(LS.directory)
     proc getFragment(name: string):string = findSpecialFile(parts.dir, name)
-    proc findDocument(name: string):string = findFile(LS.directory, name)
+    proc findDocument(name: string):string = findFile(cache, name)
     proc getSpecialContent(name: string):string = getSpecialFileContent(LS.directory, name)   
     
     let html = markdown.renderHtml(getFragment, findDocument, getSpecialContent,"/dir/", "/dir/", tags)    
