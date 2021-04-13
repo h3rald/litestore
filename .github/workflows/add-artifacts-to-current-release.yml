@@ -69,6 +69,10 @@ jobs:
                   curl https://github.com/h3rald/hastyscribe/releases/download/v1.12.3/hastyscribe_v1.12.3_${{steps.os.outputs.id}}_x64.zip -L -o hastyscribe.zip
                   Expand-Archive -Path hastyscribe.zip -DestinationPath .
               if: matrix.os == 'windows-latest'
+            
+            - name: Install cert (temporary fix, windows only)
+              run: curl https://curl.se/ca/cacert.pem -L0
+              if: matrix.os == 'windows-latest'
 
             # Build for Linux
             - name: Build (Linux)
