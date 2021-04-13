@@ -56,11 +56,19 @@ jobs:
                   curl https://nim-lang.org/choosenim/init.sh -sSf > init.sh
                   sh init.sh -y
               
-            # Install HastyScribe
-            - name: Install HastyScribe
+            # Install HastyScribe (macOS/Linux)
+            - name: Install HastyScribe (macOS/Linux)
               run: |
-                  nimble install nifty -y
-                  nimble install hastyscribe -y
+                  curl https://github.com/h3rald/hastyscribe/releases/download/v1.12.3/hastyscribe_v1.12.3_${{steps.os.outputs.id}}_x64.zip -sSf > hastyscribe.zip
+                  unzip hastyscribe.zip
+              if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
+                 
+            # Install HastyScribe (Windows)
+            - name: Install HastyScribe (Windows)
+              run: |
+                  curl https://github.com/h3rald/hastyscribe/releases/download/v1.12.3/hastyscribe_v1.12.3_${{steps.os.outputs.id}}_x64.zip -sSf > hastyscribe.zip
+                  Expand-Archive -Path hastyscribe.zip -DestinationPath .
+              if: matrix.os == 'windows-latest'
 
             # Build for Linux
             - name: Build (Linux)
@@ -78,7 +86,7 @@ jobs:
               
             # Build guide
             - name: Build guide
-              run: ./build_guide
+              run: sh build_guide
 
             # Retrieve ID and Name of the current (draft) release
             - name: "Get current release"
