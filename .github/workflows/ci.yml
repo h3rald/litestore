@@ -1,0 +1,43 @@
+name: CI
+
+# Controls when the action will run.
+on:
+    # Triggers the workflow on push or pull request events but only for the master branch
+    push:
+        branches: [master]
+        tags-ignore: ["**"]
+    pull_request:
+        branches: [master]
+        tags-ignore: ["**"]
+
+    # Allows you to run this workflow manually from the Actions tab
+    workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+    # This workflow contains a single job called "ci"
+    ci:
+        # The type of runner that the job will run on
+        runs-on: ubuntu-20.04
+        env:
+            CHOOSENIM_CHOOSE_VERSION: stable
+            CHOOSENIM_NO_ANALYTICS: 1
+
+        # Steps represent a sequence of tasks that will be executed as part of the job
+        steps:
+            # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+            - uses: actions/checkout@v2
+
+            - name: install musl-gcc
+              run: sudo apt-get install -y musl-tools
+
+            - name: Update $PATH
+              run: echo "$HOME/.nimble/bin" >> $GITHUB_PATH
+
+            - name: Install Nim
+              run: |
+                  curl https://nim-lang.org/choosenim/init.sh -sSf > init.sh
+                  sh init.sh -y
+
+            - name: Build
+              run: nim c -d:release --gcc.exe:musl-gcc --gcc.linkerexe:musl-gcc src/litestore
