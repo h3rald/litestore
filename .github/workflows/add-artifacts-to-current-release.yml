@@ -71,7 +71,7 @@ jobs:
               if: matrix.os == 'windows-latest'
             
             - name: Install cert (temporary fix, windows only)
-              run: curl https://curl.se/ca/cacert.pem -L -o accertato.pem 
+              run: curl https://curl.se/ca/cacert.pem -L -o cacert.pem 
               if: matrix.os == 'windows-latest'
 
             # Build for Linux
