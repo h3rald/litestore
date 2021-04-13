@@ -40,4 +40,4 @@ jobs:
                   sh init.sh -y
 
             - name: Build
-              run: nim c -d:release --gcc.exe:musl-gcc --gcc.linkerexe:musl-gcc src/litestore
+              run: nimble build -d:release --gcc.exe:musl-gcc --gcc.linkerexe:musl-gcc
