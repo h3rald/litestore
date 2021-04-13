@@ -59,6 +59,7 @@ jobs:
             # Install HastyScribe
             - name: Install HastyScribe
               run: |
+                  nimble install nifty -y
                   nimble install hastyscribe -y
 
             # Build for Linux
