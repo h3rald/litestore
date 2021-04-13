@@ -55,16 +55,29 @@ jobs:
               run: |
                   curl https://nim-lang.org/choosenim/init.sh -sSf > init.sh
                   sh init.sh -y
+              
+            # Install HastyScribe
+            - name: Install HastyScribe
+              run: |
+                  nimble install hastyscribe -y
 
             # Build for Linux
             - name: Build (Linux)
-              run: nim c -d:release --gcc.exe:musl-gcc --gcc.linkerexe:musl-gcc --gc:orc --opt:size litestore
+              run: nimble build -v -y -d:release --gcc.exe:musl-gcc --gcc.linkerexe:musl-gcc --gc:orc --opt:size litestore
               if: matrix.os == 'ubuntu-latest'
 
             # Build for macOS/Windows
             - name: Build (macOS, Windows)
-              run: nim c -d:release --gc:orc --opt:size litestore
+              run: nimble build -v -y -d:release --gc:orc --opt:size litestore
               if: matrix.os == 'macos-latest' || matrix.os == 'windows-latest'
+              
+            # Import admin directory and create default db
+            - name: Import Admin
+              run: litestore -d:admin import
+              
+            # Build guide
+            - name: Build guide
+              run: ./build_guide
 
             # Retrieve ID and Name of the current (draft) release
             - name: "Get current release"
@@ -77,12 +90,12 @@ jobs:
 
             # Package the resulting Linux/macOS binary
             - name: Create artifact (Linux, macOS)
-              run: zip litestore_${{steps.current-release.outputs.tag_name}}_${{steps.os.outputs.id}}_x64.zip litestore
+              run: zip litestore_${{steps.current-release.outputs.tag_name}}_${{steps.os.outputs.id}}_x64.zip litestore data.db LiteStore_UserGuide.htm
               if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
 
             # Package the resulting Windows binary
             - name: Create artifact (Windows)
-              run: Compress-Archive -Path litestore.exe -DestinationPath litestore_${{steps.current-release.outputs.tag_name}}_windows_x64.zip
+              run: Compress-Archive -Path litestore.exe, data.db, LiteStore_UserGuide.htm -DestinationPath litestore_${{steps.current-release.outputs.tag_name}}_windows_x64.zip
               if: matrix.os == 'windows-latest'
 
             # Upload artifacts to current draft release
