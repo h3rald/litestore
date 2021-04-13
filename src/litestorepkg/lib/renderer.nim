@@ -387,32 +387,24 @@ proc getSpecialFileContent(dir, name: string): string =
       result = path.readFile      
     except:
       discard
-
-
-proc tryRenderMarkdownDocument*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequest): LSResponse =  
-  ## render given document to HTML when the requested document had HTML extension
-  ## and the corresponding markdown document exists
   
-  let parts = id.splitFile()
-  if parts.ext.cmpIgnoreCase(".htm") != 0 and parts.ext.cmpIgnoreCase(".html") != 0:
-    return resDocumentNotFound(id)    
+proc renderMarkdownDocument*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequest): LSResponse =
+  ## render given markdown document to HTML 
 
-  # if requested document was HTML then check if the corresponding MD document exists
-  let mdId = id.changeFileExt("md")
-  let mdDoc = LS.store.retrieveRawDocument(mdId, options)
+  let mdDoc = LS.store.retrieveRawDocument(id, options)
   if mdDoc == "":
     return resDocumentNotFound(id)
   let jdoc = mdDoc.parseJson
+
   let data = jdoc["data"].getStr
   var tags = newSeq[string]()
   for tag in jdoc["tags"].items:
     tags.add(tag.str)
-  
   # detect if the URL contained store id
   var storeId = ""
-  for id, ls in pairs(LSDICT):
+  for sId, ls in pairs(LSDICT):
     if (ls == LS):
-      storeId = id
+      storeId = sId
       break;
   var baseUrl = ""
   if storeId != "":
@@ -428,6 +420,7 @@ proc tryRenderMarkdownDocument*(LS: LiteStore, id: string, options = newQueryOpt
 
   try:
     let markdown = data
+    let parts = id.splitFile()
     proc getFragment(name: string):string = findSpecialDocument(LS, parts.dir, name)
     proc findDocument(name: string):string = findDocumentId(LS, name)      
     proc getSpecialContent(name: string):string = getSpecialDocumentContent(specialStore, name)   
@@ -438,25 +431,34 @@ proc tryRenderMarkdownDocument*(LS: LiteStore, id: string, options = newQueryOpt
     result.content = html
     result.code = Http200
   except:
-    return resError(Http500, "Unable to render document '$1'." % mdId)
+    return resError(Http500, "Unable to render document '$1'." % id)
 
 
-proc tryRenderMarkdownFile*(LS: LiteStore, path: string, req: LSRequest): LSResponse =  
-  ## render given file to HTML when the requested file had HTML extension
-  ## and the corresponding markdown file exists
+proc tryRenderMarkdownDocument*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequest): LSResponse =  
+  ## render given document to HTML when the requested document had HTML extension
+  ## and the corresponding markdown document exists
+  
+  let parts = id.splitFile()
+  if parts.ext.cmpIgnoreCase(".htm") != 0 and parts.ext.cmpIgnoreCase(".html") != 0:
+    return resDocumentNotFound(id)    
+
+   # if requested document was HTML then check if the corresponding MD document exists
+  let mdId = id.changeFileExt("md") 
+  return renderMarkdownDocument(LS, mdId, options, req)
+
+
+
+proc renderMarkdownFile*(LS: LiteStore, path: string, req: LSRequest): LSResponse =  
+  ## render given markdown file to HTML 
 
   let parts = path.splitFile()
-  if parts.ext.cmpIgnoreCase(".htm") != 0 and parts.ext.cmpIgnoreCase(".html") != 0:
+  
+  if not path.fileExists:
     return resError(Http404, "File '$1' not found." % path)
-
-  # if requested file was HTML then check if the corresponding MD file exists
-  let mdPath = path.changeFileExt(".md")
-  if not mdPath.fileExists:
-    return resError(Http404, "File '$1' not found." % path)
-  let tags = getTagsForFile(mdPath)  
+  let tags = getTagsForFile(path)  
 
   try:
-    let markdown = mdPath.readFile
+    let markdown = path.readFile
     let cache = buildCache(LS.directory)
     proc getFragment(name: string):string = findSpecialFile(parts.dir, name)
     proc findDocument(name: string):string = findFile(cache, name)
@@ -468,4 +470,16 @@ proc tryRenderMarkdownFile*(LS: LiteStore, path: string, req: LSRequest): LSResp
     result.content = html
     result.code = Http200    
   except:
-    return resError(Http500, "Unable to read and render file '$1'." % mdPath)
+    return resError(Http500, "Unable to read and render file '$1'." % path)
+
+proc tryRenderMarkdownFile*(LS: LiteStore, path: string, req: LSRequest): LSResponse =  
+  ## render given file to HTML when the requested file had HTML extension
+  ## and the corresponding markdown file exists
+
+  let parts = path.splitFile()
+  if parts.ext.cmpIgnoreCase(".htm") != 0 and parts.ext.cmpIgnoreCase(".html") != 0:
+    return resError(Http404, "File '$1' not found." % path)
+  else:
+    # if requested file was HTML then check if the corresponding MD file exists
+    let mdPath = path.changeFileExt(".md")
+    return renderMarkdownFile(LS, mdPath, req)    
