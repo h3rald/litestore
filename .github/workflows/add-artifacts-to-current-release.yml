@@ -59,7 +59,7 @@ jobs:
             # Install HastyScribe (macOS/Linux)
             - name: Install HastyScribe (macOS/Linux)
               run: |
-                  curl https://github.com/h3rald/hastyscribe/releases/download/v1.12.3/hastyscribe_v1.12.3_${{steps.os.outputs.id}}_x64.zip -sSf > hastyscribe.zip
+                  curl https://github.com/h3rald/hastyscribe/releases/download/v1.12.3/hastyscribe_v1.12.3_${{steps.os.outputs.id}}_x64.zip -L -o hastyscribe.zip
                   unzip hastyscribe.zip
               if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
                  
