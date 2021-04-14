@@ -102,8 +102,7 @@ jobs:
               
             # Build guide
             - name: Build guide
-              shell: bash
-              run: ./build_guide
+              run: sh build_guide
 
             # Retrieve ID and Name of the current (draft) release
             - name: "Get current release"
