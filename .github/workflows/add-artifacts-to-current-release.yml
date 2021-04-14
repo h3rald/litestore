@@ -67,6 +67,7 @@ jobs:
               run: |
                   curl https://github.com/h3rald/hastyscribe/releases/download/v1.12.3/hastyscribe_v1.12.3_${{steps.os.outputs.id}}_x64.zip -L -o hastyscribe.zip
                   unzip hastyscribe.zip
+                  mv src/hastyscribe .
               if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
                  
             # Install HastyScribe (Windows)
@@ -118,12 +119,12 @@ jobs:
             - name: Create artifact (Linux, macOS)
               shell: bash
               run: zip litestore_${{steps.current-release.outputs.tag_name}}_${{steps.os.outputs.id}}_x64.zip litestore data.db LiteStore_UserGuide.htm
-              #if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+              if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
 
             # Package the resulting Windows binary
-            #- name: Create artifact (Windows)
-            # run: Compress-Archive -Path litestore.exe, data.db, LiteStore_UserGuide.htm -DestinationPath litestore_${{steps.current-release.outputs.tag_name}}_windows_x64.zip
-            # if: matrix.os == 'windows-latest'
+            - name: Create artifact (Windows)
+             run: Compress-Archive -Path litestore.exe, data.db, LiteStore_UserGuide.htm -DestinationPath litestore_${{steps.current-release.outputs.tag_name}}_windows_x64.zip
+             if: matrix.os == 'windows-latest'
 
             # Upload artifacts to current draft release
             - name: "Upload to current release"
