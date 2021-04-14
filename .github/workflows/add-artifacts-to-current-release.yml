@@ -73,7 +73,7 @@ jobs:
             - name: Install cert (temporary fix, windows only)
               run: |
                   curl https://curl.se/ca/cacert.pem -L -o cacert.pem 
-                  move cacert.pem %HOME%\.nimble\bin\cacert.pem
+                  move cacert.pem "${HOME}\.nimble\bin\cacert.pem"
               if: matrix.os == 'windows-latest'
 
             # Build for Linux
