@@ -1,3 +1,5 @@
+name: Add Artifacts to Current Release
+
 # Controls when the action will run.
 on:
     # Allows you to run this workflow manually from the Actions tab
