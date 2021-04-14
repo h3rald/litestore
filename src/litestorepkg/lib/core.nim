@@ -776,7 +776,7 @@ proc initStore*(LS: var LiteStore) =
     fail(111, "--operation option not specified")
 
   if LS.importTags and LS.operation != opImport:
-    fail(116, "--importTags option alowed only for import operation.")
+    fail(116, "--import-tags option alowed only for import operation.")
 proc updateConfig*(LS: LiteStore) =
   let rawConfig = LS.config.pretty
   if LS.configFile != "":

@@ -1,6 +1,6 @@
 ## Configuration File
 
-As of version 1.8.0, you can specify a configuration file containing settings, middleware and authorization configuration using the  **--config** or **-c** command  line option:
+As of version 1.8.0, you can specify a configuration file containing settings, middleware and authorization configuration using the  **-\-config** or **-c** command  line option:
 
 [litestore -c:config.json](class:cmd)
 

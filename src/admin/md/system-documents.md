@@ -14,7 +14,7 @@ At present, only the following system documents are recognized by LiteStore:
 
 ### Importing, exporting and deleting System Documents
 
-You can import, export, and delete system documents with the respective commands, but you must specify the [--system](class:kwd) command line flag.
+You can import, export, and delete system documents with the respective commands, but you must specify the [-\-system](class:kwd) command line flag.
 
 For example, suppose you have a [sysdocs](class:dir) folder containing the following file hierarchy:
 
@@ -28,13 +28,13 @@ For example, suppose you have a [sysdocs](class:dir) folder containing the follo
 
 To import all the documents stored within the [sysdocs](class:dir) folder, you must run the following command:
 
-[litestore -d:sysdocs --system import](class:kwd)
+[litestore -d:sysdocs -\-system import](class:kwd)
 
-Similarly, the [export](class:kwd) and [delete](class:kwd) commands can be used to export and delete system documents respectively, always specifying the [--system](class:kwd) flag.
+Similarly, the [export](class:kwd) and [delete](class:kwd) commands can be used to export and delete system documents respectively, always specifying the [-\-system](class:kwd) flag.
 
 ### How LiteStore uses System Documents
 
-While at development time you may want to be able to edit your system documents and therefore keep them outside your data store as ordinary text files (and load them using the **--auth**, **--config** and **--middleware** options), in production you may want to ship them within the data store along with your application data.
+While at development time you may want to be able to edit your system documents and therefore keep them outside your data store as ordinary text files (and load them using the **-\-auth**, **-\-config** and **-\s-middleware** options), in production you may want to ship them within the data store along with your application data.
 
 At run time, LiteStore will attempt to retrieve settings/middleware/authorization configuration using the following order of precedence (first listed have higher precedence):
 

@@ -160,9 +160,9 @@ proc run*() =
           of "mount", "m":
             mount = true
             cliSettings["mount"] = %mount
-          of "importTags":
+          of "import-tags":
             importTags = true
-            cliSettings["importTags"] = %importTags
+            cliSettings["import-tags"] = %importTags
           of "version", "v":
             echo pkgVersion
             quit(0)

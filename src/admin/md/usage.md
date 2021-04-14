@@ -17,24 +17,24 @@
 #### Options
 
 * **-a**, **-\-address** &mdash; Specify server address (default: 127.0.0.1).
-* **--auth** &mdash; Specify an authorization configuration file.
-* **-b**, **--body** &mdash; Specify a string containing input data for an operation to be executed.
-* **-c**, **--config** &mdash; Specify a configuration file.
+* **-\-auth** &mdash; Specify an authorization configuration file.
+* **-b**, **-\-body** &mdash; Specify a string containing input data for an operation to be executed.
+* **-c**, **-\-config** &mdash; Specify a configuration file.
 * **-d**, **-\-directory** &mdash; Specify a directory to serve, import, export, delete, or mount.
-* **-f**, **--file** &mdash; Specify a file containing input data for an operation to be executed.
+* **-f**, **-\-file** &mdash; Specify a file containing input data for an operation to be executed.
 * **-h**, **-\-help** &mdash; Display program usage.
 * **-l**, **-\-log** &mdash; Specify the log level: debug, info, warn, error, none (default: info)
 * **-m**, **-\-mount** &mdash; Mirror database changes to the specified directory on the filesystem.
-* **-o**, **--operation** &mdash; Specify an operation to execute via the execute command: get, put, delete, patch, post, head, options.
+* **-o**, **-\-operation** &mdash; Specify an operation to execute via the execute command: get, put, delete, patch, post, head, options.
 * **-p**, **-\-port** &mdash;Specify server port number (default: 9500).
 * **-r**, **-\-readonly** &mdash; Allow only data retrieval operations.
 * **-s**, **-\-store** &mdash; Specify a datastore file (default: data.db)
-* **--system**  &mdash; Set the system flag for import, export, and delete operations
-* **--importTags**  &mdash; During import read tags from '_tags' file and apply them to imported documents from the same directory.
-* **-t**, **--type** &mdash; Specify a content type for the body an operation to be executed via the execute command.
-* **-u**, **--uri** &mdash; Specify an uri to execute an operation through the execute command.
+* **-\-system**  &mdash; Set the system flag for import, export, and delete operations
+* **-\-import-tags**  &mdash; During import read tags from '_tags' file and apply them to imported documents from the same directory.
+* **-t**, **-\-type** &mdash; Specify a content type for the body an operation to be executed via the execute command.
+* **-u**, **-\-uri** &mdash; Specify an uri to execute an operation through the execute command.
 * **-v**, **-\-version** &mdash; Display the program version.
-* **-w**, **--middleware** &mdash; Specify a path to a folder containing middleware definitions
+* **-w**, **-\-middleware** &mdash; Specify a path to a folder containing middleware definitions
 
 ### Examples
 
@@ -78,14 +78,15 @@ Import a directory called **admin**:
 
 Import all documents stored in a directory called **system** as system documents:
 
-[litestore import -d:system --system](class:cmd)
+[litestore import -d:system -\-system](class:cmd)
 
 Import all documents stored in a directory called **media** (including subdirectories):
+
 ```
 + media
   + cars
   | + _tags
-  | + Lamborgini.jpg
+  | + Lamborghini.jpg
   | + VW.jpg
   | ` BMW.jpg
   + planes
@@ -98,11 +99,11 @@ Import all documents stored in a directory called **media** (including subdirect
     ` Eurostar.jpg
 ```   
 
-[litestore import -d:media --importTags](class:cmd)
+[litestore import -d:media -\-import-tags](class:cmd)
 
 Every **_tags** file contains a list of tags, one per line, which are applied to all imported documents from the same directory. In the example above all cars and planes images will be tagged on import. The trains images, not as there is not **_tags** file in the **trains** directory.
 
-The individual **_tags** files are also imported. When the **--importTags** option is not set the **_tags** files are ignored and not imported.
+The individual **_tags** files are also imported. When the **\-\-import\-tags** option is not set the **_tags** files are ignored and not imported.
 
 #### Exporting a directory
 
