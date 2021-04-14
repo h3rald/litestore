@@ -42,10 +42,11 @@ jobs:
 
             # Sets path (Linux, macOS)
             - name: Update $PATH
+              shell: bash
               run: |
                   echo "$HOME/.nimble/bin" >> $GITHUB_PATH
                   echo $GITHUB_WORKSPACE >> $GITHUB_PATH
-              if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
+              #if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
 
             # Sets path (Windows)
             - name: Update %PATH%
@@ -62,33 +63,34 @@ jobs:
               
             # Install HastyScribe (macOS/Linux)
             - name: Install HastyScribe (macOS/Linux)
+              shell: bash
               run: |
                   curl https://github.com/h3rald/hastyscribe/releases/download/v1.12.3/hastyscribe_v1.12.3_${{steps.os.outputs.id}}_x64.zip -L -o hastyscribe.zip
                   unzip hastyscribe.zip
               if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
                  
             # Install HastyScribe (Windows)
-            - name: Install HastyScribe (Windows)
-              run: |
-                  curl https://github.com/h3rald/hastyscribe/releases/download/v1.12.3/hastyscribe_v1.12.3_${{steps.os.outputs.id}}_x64.zip -L -o hastyscribe.zip
-                  Expand-Archive -Path hastyscribe.zip -DestinationPath .
-              if: matrix.os == 'windows-latest'
+            #- name: Install HastyScribe (Windows)
+            #  run: |
+            #     curl https://github.com/h3rald/hastyscribe/releases/download/v1.12.3/hastyscribe_v1.12.3_${{steps.os.outputs.id}}_x64.zip -L -o hastyscribe.zip
+            #     Expand-Archive -Path hastyscribe.zip -DestinationPath .
+            # if: matrix.os == 'windows-latest'
             
             - name: Install cert (temporary fix, windows only)
               run: |
                   curl https://curl.se/ca/cacert.pem -L -o cacert.pem 
-                  move cacert.pem "${HOME}\.nimble\bin\cacert.pem"
+                  #move cacert.pem "${HOME}\.nimble\bin\cacert.pem"
               if: matrix.os == 'windows-latest'
 
             # Build for Linux
             - name: Build (Linux)
               run: nimble build -v -y -d:release --gcc.exe:musl-gcc --gcc.linkerexe:musl-gcc --gc:orc --opt:size litestore
-              if: matrix.os == 'ubuntu-latest'
+              #if: matrix.os == 'ubuntu-latest'
 
             # Build for macOS/Windows
-            - name: Build (macOS, Windows)
-              run: nimble build -v -y -d:release --gc:orc --opt:size litestore
-              if: matrix.os == 'macos-latest' || matrix.os == 'windows-latest'
+            #- name: Build (macOS, Windows)
+            #  run: nimble build -v -y -d:release --gc:orc --opt:size litestore
+            #  if: matrix.os == 'macos-latest' || matrix.os == 'windows-latest'
               
             # Import admin directory and create default db
             - name: Import Admin
