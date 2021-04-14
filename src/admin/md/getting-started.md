@@ -8,6 +8,23 @@ The easiest way to get LiteStore is by downloading one of the prebuilt binaries 
   * [LiteStore for Mac OS X (x64)](https://github.com/h3rald/litestore/releases/download/{{$version}}/litestore_{{$version}}_macosx_x64.zip) 
   * [LiteStore for Windows (x64)](https://github.com/h3rald/litestore/releases/download/{{$version}}/litestore_{{$version}}_windows_x64.zip)
   * [LiteStore for Linux (x64)](https://github.com/h3rald/litestore/releases/download/{{$version}}/litestore_{{$version}}_linux_x64.zip)
+  
+### Running a Docker image
+
+Official Docker images are available [on Docker Hub](https://hub.docker.com/repository/docker/h3rald/litestore).
+
+Just pull the latest version:
+
+[docker pull h3rald/litestore:{{$version}}](class:cmd)
+
+then start a container to run the image on port 9500:
+
+[docker run -p 9500:9500 martin/litestore:{{$version}} -a:0.0.0.0](class:cmd)
+
+> %tip%
+> Tip
+> 
+> The [Dockerfile](https://github.com/h3rald/litestore/blob/master/Dockerfile) used to create tbe image is available in root of tbe LiteStore Github repository.
 
 ### Installing using Nimble
 
