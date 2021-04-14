@@ -94,7 +94,7 @@ jobs:
             - name: Import Admin
               shell: bash
               run: |
-                  cp src/admin/ admin/
+                  cp -r src/admin/ admin/
                   litestore -d:admin import
               
             # Build guide
