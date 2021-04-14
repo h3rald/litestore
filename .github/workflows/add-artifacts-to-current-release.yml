@@ -60,14 +60,13 @@ jobs:
                   curl https://nim-lang.org/choosenim/init.sh -sSf > init.sh
                   sh init.sh -y
               
-            # Install HastyScribe (macOS/Linux)
+            # Install HastyScribe
             - name: Install HastyScribe (macOS/Linux)
               shell: bash
               run: |
                   curl https://github.com/h3rald/hastyscribe/releases/download/v1.12.3/hastyscribe_v1.12.3_${{steps.os.outputs.id}}_x64.zip -L -o hastyscribe.zip
                   unzip hastyscribe.zip
                   mv src/hastyscribe .
-              if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
                  
             # Temporary Windows-specific fix (missing certificates for nimble)
             - name: Install cert (temporary fix, windows only)
@@ -96,7 +95,7 @@ jobs:
             # Build guide
             - name: Build guide
               shell: bash
-              run: ./build_guide
+              run: build_guide
 
             # Retrieve ID and Name of the current (draft) release
             - name: "Get current release"
