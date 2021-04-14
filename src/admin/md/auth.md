@@ -40,8 +40,8 @@ However, users with the **admin:wiki** scope will be able to access documents lo
 
 Finally, specify the public signature to be used to validate JWT tokens using the **signature** property. Typically, its value should be set to the first value of the [x.509 certificate chain](https://auth0.com/docs/tokens/reference/jwt/jwks-properties) specified in the [JSON Web Key Set](https://auth0.com/docs/jwks) of your API.
 
-To use this configuration at runtime, specify it through the **--auth** option, like this:
+To use this configuration at runtime, specify it through the **-\-auth** option, like this:
 
-`litestore --auth:auth.json`
+`litestore -\-auth:auth.json`
 
 Once enabled, LiteStore will return HTTP 401 error codes if an invalid token or no token is included in the HTTP Authorization header of the request accessing the resource or HTTP 403 error codes in case an authenticated user does not have a valid scope to access a specified resource.

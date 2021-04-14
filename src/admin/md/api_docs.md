@@ -88,7 +88,7 @@ Creates a new document with a randomly-generated ID.
 ##### Example
 
 ```
-$ curl -i -X POST -d 'A document with a randomly-generated ID.' 'http://127.0.0.1:9500/docs' --header "Content-Type:text/plain"
+$ curl -i -X POST -d 'A document with a randomly-generated ID.' 'http://127.0.0.1:9500/docs' -\-header "Content-Type:text/plain"
 HTTP/1.1 201 Created
 Content-Length: 197
 Content-Type: application/json
