@@ -1,4 +1,3 @@
-# Adds artifacts to the current (draft) release
 name: Add Artifacts to Current Release
 
 # Controls when the action will run.
@@ -124,8 +123,8 @@ jobs:
 
             # Package the resulting Windows binary
             - name: Create artifact (Windows)
-             run: Compress-Archive -Path litestore.exe, data.db, LiteStore_UserGuide.htm -DestinationPath litestore_${{steps.current-release.outputs.tag_name}}_windows_x64.zip
-             if: matrix.os == 'windows-latest'
+              run: Compress-Archive -Path litestore.exe, data.db, LiteStore_UserGuide.htm -DestinationPath litestore_${{steps.current-release.outputs.tag_name}}_windows_x64.zip
+              if: matrix.os == 'windows-latest'
 
             # Upload artifacts to current draft release
             - name: "Upload to current release"
