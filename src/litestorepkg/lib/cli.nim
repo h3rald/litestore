@@ -19,6 +19,7 @@ var
   logLevel = "warn"
   system = false
   importTags = false
+  notSerachable = false
   mount = false
   auth = newJNull()
   middleware = newStringTable()
@@ -63,7 +64,8 @@ let
     -r, --readonly      Allow only data retrieval operations.
     -s, --store         Specify a datastore file (default: data.db)
     --system            Set the system flag for import, export, and delete operations
-    --tags              During import read tags from '_tags' file and apply them to imported documents from the same directory.
+    --import-tags       During import read tags from '_tags' file and apply them to imported documents from the same directory.
+    --not-searchable    During import exclude content of files and folders starting with '_' from full text search.
     -t, --type          Specify a content type for the body an operation to be executed via the execute command.
     -u, --uri           Specify an uri to execute an operation through the execute command.
     -v, --version       Display the program version.
@@ -163,6 +165,9 @@ proc run*() =
           of "import-tags":
             importTags = true
             cliSettings["import-tags"] = %importTags
+          of "not-searchable":
+            notSerachable = true
+            cliSettings["not-searchable"] = %notSerachable
           of "version", "v":
             echo pkgVersion
             quit(0)
@@ -193,6 +198,7 @@ proc run*() =
   LS.config = configuration
   LS.configFile = configFile
   LS.importTags = importTags
+  LS.notSerachable = notSerachable
   LS.mount = mount
   LS.execution.file = exFile
   LS.execution.body = exBody
