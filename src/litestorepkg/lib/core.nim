@@ -1,13 +1,13 @@
 import
   x_sqlite3,
   x_db_sqlite as db,
-  strutils,
   os,
   oids,
   json,
   pegs,
   strtabs,
   strutils,
+  sequtils,
   base64,
   math
 import
@@ -590,10 +590,11 @@ proc importDir*(store: Datastore, dir: string, system = false, importTags = fals
   for f in dir.walkDirRec():
     if f.dirExists:
       continue
-    let fileName = f.splitFile.name
-    if fileName.startsWith("."):
-      # Ignore hidden files
-      continue
+    let dirs = f.split(DirSep)  
+    if dirs.any(proc (s: string): bool = return s.startsWith(".")):
+      # Ignore hidden directories and files
+      continue  
+    let fileName = f.splitFile.name    
     if fileName == "_tags" and not importTags:
       # Ignore tags file unless the CLI flag was set
       continue
