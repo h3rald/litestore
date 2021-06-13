@@ -1,0 +1,42 @@
+{
+  "storage": "packages",
+  "commands": {
+    "build": {
+      "name+configure.sh": {
+        "pwd": "{{name}}",
+        "cmd": "./configure.sh --github-checkbox=input && make"
+      }
+    },
+    "install": {
+      "git+src": {
+        "cmd": "git clone {{src}} --depth 1"
+      },
+      "git+src+tag": {
+        "cmd": "git clone --branch {{tag}} {{src}} --depth 1"
+      },
+      "curl+src+name": {
+        "cmd": "curl {{src}} -o {{name}}"
+      },
+      "_syntax": "install [<package>]",
+      "_description": "Installs the specified package (or all mapped packages) to the storage directory."
+    },
+    "upgrade": {
+      "_syntax": "upgrade [<package>]",
+      "_description": "Upgrades the specified previously-installed package (or all packages).",
+      "git+name": {
+        "cmd": "git pull",
+        "pwd": "{{name}}"
+      },
+      "curl+src+name": {
+        "cmd": "curl {{src}} -o {{name}}"
+      }
+    }
+  },
+  "packages": {
+    "hastystyles": {
+      "name": "hastyscribe",
+      "src": "https://github.com/h3rald/hastyscribe.git",
+      "git": true
+    }
+  }
+}

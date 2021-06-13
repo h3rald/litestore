@@ -16,7 +16,8 @@ import
   core,
   utils,
   logger,
-  duktape
+  duktape,
+  renderer
 
 # Helper procs
 
@@ -394,15 +395,21 @@ proc getRawDocument*(LS: LiteStore, id: string, options = newQueryOptions(), req
     result.content = doc
     result.code = Http200
 
-proc getDocument*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequest): LSResponse =
-  let doc = LS.store.retrieveDocument(id, options)
-  if doc.data == "":
-    result = resDocumentNotFound(id)
-  else:
-    result.headers = doc.contenttype.ctHeader
-    setOrigin(LS, req, result.headers)
-    result.content = doc.data
-    result.code = Http200
+proc getDocument*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequest): LSResponse =  
+  if LS.renderMarkdown and id.endsWith(".md"):
+    result = renderMarkdownDocument(LS, id, options, req)
+  else:      
+    let doc = LS.store.retrieveDocument(id, options)
+    if doc.data == "":       
+      if LS.renderMarkdown:
+        result = tryRenderMarkdownDocument(LS, id, options, req)      
+      else:
+        result = resDocumentNotFound(id)
+    else:
+      result.headers = doc.contenttype.ctHeader
+      setOrigin(LS, req, result.headers)
+      result.content = doc.data
+      result.code = Http200
 
 proc deleteDocument*(LS: LiteStore, id: string, req: LSRequest): LSResponse =
   let doc = LS.store.retrieveDocument(id)
@@ -988,6 +995,8 @@ proc serveFile*(req: LSRequest, LS: LiteStore, id: string): LSResponse =
       return validate(req, LS, "dir", id, options)
     of "GET":
       if path.fileExists:
+        if LS.renderMarkdown and path.endsWith(".md"):
+          return renderMarkdownFile(LS, path, req)
         try:
           let contents = path.readFile
           let parts = path.splitFile
@@ -1001,7 +1010,10 @@ proc serveFile*(req: LSRequest, LS: LiteStore, id: string): LSResponse =
         except:
           return resError(Http500, "Unable to read file '$1'." % path)
       else:
-        return resError(Http404, "File '$1' not found." % path)
+        if LS.renderMarkdown:
+          return tryRenderMarkdownFile(LS, path, req)
+        else:      
+          return resError(Http404, "File '$1' not found." % path)
     else:
       return resError(Http405, "Method not allowed: $1" % $req.reqMethod)
 

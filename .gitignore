@@ -21,3 +21,4 @@ js
 *.db-wal
 *.nim.bak
 litestore_linkerArgs.txt
+packages

@@ -461,6 +461,7 @@ proc findDocumentId*(store: Datastore, pattern: string): string =
     result = raw_document[0]
     LOG.debug("Found id: $1" % result)
 
+
 proc retrieveDocument*(store: Datastore, id: string,
     options: QueryOptions = newQueryOptions()): tuple[data: string,
     contenttype: string] =
@@ -712,6 +713,8 @@ proc processConfigSettings(LS: var LiteStore) =
     if not cliSettings.hasKey("log") and settings.hasKey("log"):
       LS.logLevel = settings["log"].getStr
       setLogLevel(LS.logLevel)
+    if not cliSettings.hasKey("renderMarkdown") and settings.hasKey("renderMarkdown"):
+      LS.renderMarkdown = settings["renderMarkdown"].getBool
     if not cliSettings.hasKey("mount") and settings.hasKey("mount"):
       LS.mount = settings["mount"].getBool
     if not cliSettings.hasKey("readonly") and settings.hasKey("readonly"):
@@ -740,7 +743,7 @@ proc setup*(LS: var LiteStore, open = true) {.gcsafe.} =
     except:
       fail(201, "Unable to open datastore '$1'" % [LS.file])
 
-proc initStore*(LS: var LiteStore) =
+proc initStore*(LS: var LiteStore, storeConfig = newJNull()) =
   if LS.configFile == "":
     # Attempt to retrieve config.json from system documents
     let options = newQueryOptions(true)
@@ -762,6 +765,11 @@ proc initStore*(LS: var LiteStore) =
     if rawDoc != "":
       LS.auth = rawDoc.parseJson()["data"]
 
+  if storeConfig != newJNull():
+    # Process store specific settings which can overwrite general settings
+    if storeConfig.hasKey("renderMarkdown"):
+      LS.renderMarkdown = storeConfig["renderMarkdown"].getBool
+  
   # Validation
   if LS.directory == "" and (LS.operation in [opDelete, opImport, opExport] or LS.mount):
     fail(105, "--directory option not specified.")
@@ -777,6 +785,7 @@ proc initStore*(LS: var LiteStore) =
 
   if LS.importTags and LS.operation != opImport:
     fail(116, "--import-tags option alowed only for import operation.")
+
 proc updateConfig*(LS: LiteStore) =
   let rawConfig = LS.config.pretty
   if LS.configFile != "":
@@ -799,7 +808,7 @@ proc addStore*(LS: LiteStore, id, file: string, config = newJNull()): LiteStore 
   if config != newJNull():
     result.config = config
   result.setup(true)
-  result.initStore()
+  result.initStore(config)
   if not LS.config.hasKey("stores"):
     LS.config["stores"] = newJObject()
   LS.config["stores"][id] = newJObject()
