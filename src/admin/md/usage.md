@@ -31,6 +31,7 @@
 * **-s**, **-\-store** &mdash; Specify a datastore file (default: data.db)
 * **-\-system**  &mdash; Set the system flag for import, export, and delete operations
 * **-\-import-tags**  &mdash; During import read tags from '_tags' file and apply them to imported documents from the same directory.
+* **-\-not-searchable**  &mdash; During import exclude content of files and folders starting with '_' from full text search.
 * **-t**, **-\-type** &mdash; Specify a content type for the body an operation to be executed via the execute command.
 * **-u**, **-\-uri** &mdash; Specify an uri to execute an operation through the execute command.
 * **-v**, **-\-version** &mdash; Display the program version.
@@ -80,6 +81,8 @@ Import all documents stored in a directory called **system** as system documents
 
 [litestore import -d:system -\-system](class:cmd)
 
+#### Importing a directory and tagging files
+
 Import all documents stored in a directory called **media** (including subdirectories):
 
 ```
@@ -104,6 +107,38 @@ Import all documents stored in a directory called **media** (including subdirect
 Every **_tags** file contains a list of tags, one per line, which are applied to all imported documents from the same directory. In the example above all cars and planes images will be tagged on import. The trains images, not as there is not **_tags** file in the **trains** directory.
 
 The individual **_tags** files are also imported. When the **\-\-import\-tags** option is not set the **_tags** files are ignored and not imported.
+
+#### Excluding files from full text search
+
+Import all documents stored in a directory called **media** (including subdirectories):
+
+```
++ media
+  + _css
+  | + style1.css
+  | ` style2.css
+  + cars
+  | + _index.html
+  | + Lamborghini.md
+  | + VW.md
+  | ` BMW.md
+  + planes
+  | + _index.html
+  | + 767.md
+  | + F-16.md
+  | ` B-1.md
+  ` trains
+    + _index.html
+    * _script.js
+    + TGV.md
+    ` Eurostar.md
+```   
+
+[litestore import -d:media -\-not-searchable](class:cmd)
+
+All documents are imported but the files starting which name starts with **underscore** and files inside a folder which name starts with **underscore** are excluded from full text serach. The idea is that these files have special meaning for the application:
+* they should be accessible via regular URLs (unlike **system** files)
+* but they content should not be searchable.
 
 #### Exporting a directory
 
