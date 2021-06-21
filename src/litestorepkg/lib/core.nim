@@ -1,13 +1,13 @@
 import
   x_sqlite3,
   x_db_sqlite as db,
-  strutils,
   os,
   oids,
   json,
   pegs,
   strtabs,
   strutils,
+  sequtils,
   base64,
   math
 import
@@ -302,7 +302,7 @@ proc createDocument*(store: Datastore, id = "", rawdata = "",
         binary, searchable, time, time)
     if res > 0:
       store.db.exec(SQL_INCREMENT_DOCS)
-      if binary <= 0 and searchable >= 0:
+      if binary <= 0 and searchable > 0:
         # Add to search index
         store.db.exec(SQL_INSERT_SEARCHCONTENT, res, id, data.toPlainText)
       store.addDocumentSystemTags(id, contenttype)
@@ -406,7 +406,7 @@ proc updateDocument*(store: Datastore, id: string, rawdata: string,
     var res = store.db.execAffectedRows(SQL_UPDATE_DOCUMENT, data, contenttype,
         binary, searchable, currentTime(), id)
     if res > 0:
-      if binary <= 0 and searchable >= 0:
+      if binary <= 0 and searchable > 0:
         store.db.exec(SQL_UPDATE_SEARCHCONTENT, data.toPlainText, id)
       store.destroyDocumentSystemTags(id)
       store.addDocumentSystemTags(id, contenttype)
@@ -496,10 +496,10 @@ proc retrieveRawDocuments*(store: Datastore,
 proc countDocuments*(store: Datastore): int64 =
   return store.db.getRow(SQL_COUNT_DOCUMENTS)[0].parseInt
 
-proc importFile*(store: Datastore, f: string, dir = "/", system = false): string  =
+proc importFile*(store: Datastore, f: string, dir = "/", system = false, notSearchable = false): string  =
   if not f.fileExists:
     raise newException(EFileNotFound, "File '$1' not found." % f)
-  let ext = f.splitFile.ext
+  let split = f.splitFile
   var d_id: string
   if system:
     # Do not save original directory name
@@ -508,10 +508,15 @@ proc importFile*(store: Datastore, f: string, dir = "/", system = false): string
     d_id = f.replace("\\", "/");
   var d_contents = f.readFile
   var d_ct = "application/octet-stream"
-  if CONTENT_TYPES.hasKey(ext):
-    d_ct = CONTENT_TYPES[ext].replace("\"", "")
+  if CONTENT_TYPES.hasKey(split.ext):
+    d_ct = CONTENT_TYPES[split.ext].replace("\"", "")
   var d_binary = 0
   var d_searchable = 1
+  if notSearchable and (split.name.startsWith("_") or split.dir.startsWith("_")):
+    # Don't search in special files (and files in special folders)
+    # when the flag was set
+    d_searchable = 0
+    LOG.debug("Importing not-searchable file $1", f)
   if d_ct.isBinary:
     d_binary = 1
     d_searchable = 0
@@ -578,17 +583,18 @@ proc getTagsForFile*(f: string): seq[string] =
       result.add(tag) 
 
 
-proc importDir*(store: Datastore, dir: string, system = false, importTags = false) =
+proc importDir*(store: Datastore, dir: string, system = false, importTags = false, notSearchable = false) =
   var files = newSeq[string]()
   if not dir.dirExists:
     raise newException(EDirectoryNotFound, "Directory '$1' not found." % dir)
   for f in dir.walkDirRec():
     if f.dirExists:
       continue
-    let fileName = f.splitFile.name
-    if fileName.startsWith("."):
-      # Ignore hidden files
-      continue
+    let dirs = f.split(DirSep)  
+    if dirs.any(proc (s: string): bool = return s.startsWith(".")):
+      # Ignore hidden directories and files
+      continue  
+    let fileName = f.splitFile.name    
     if fileName == "_tags" and not importTags:
       # Ignore tags file unless the CLI flag was set
       continue
@@ -604,7 +610,7 @@ proc importDir*(store: Datastore, dir: string, system = false, importTags = fals
   store.db.dropIndexes()
   for f in files:
     try:
-      let docId = store.importFile(f, dir, system)
+      let docId = store.importFile(f, dir, system, notSearchable)
       if not system and importTags:
         let tags = getTagsForFile(f)
         if tags.len > 0:
@@ -777,6 +783,9 @@ proc initStore*(LS: var LiteStore) =
 
   if LS.importTags and LS.operation != opImport:
     fail(116, "--import-tags option alowed only for import operation.")
+  if LS.notSerachable and LS.operation != opImport:
+    fail(116, "--not-searchable option alowed only for import operation.")
+
 proc updateConfig*(LS: LiteStore) =
   let rawConfig = LS.config.pretty
   if LS.configFile != "":
