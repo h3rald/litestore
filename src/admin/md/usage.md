@@ -104,7 +104,7 @@ Import all documents stored in a directory called **media** (including subdirect
 
 [litestore import -d:media -\-import-tags](class:cmd)
 
-Every **_tags** file contains a list of tags, one per line, which are applied to all imported documents from the same directory. In the example above all cars and planes images will be tagged on import. The trains images, not as there is not **_tags** file in the **trains** directory.
+Every **_tags** file contains a list of tags, one per line, which are applied to all imported documents from the same directory. In the example above all cars and planes images will be tagged on import. The trains images however will not as there is no **_tags** file in the **trains** directory.
 
 The individual **_tags** files are also imported. When the **\-\-import\-tags** option is not set the **_tags** files are ignored and not imported.
 
@@ -136,7 +136,7 @@ Import all documents stored in a directory called **media** (including subdirect
 
 [litestore import -d:media -\-not-searchable](class:cmd)
 
-All documents are imported but the files starting which name starts with **underscore** and files inside a folder which name starts with **underscore** are excluded from full text serach. The idea is that these files have special meaning for the application:
+All documents are imported but the files whose name starts with **underscore** and files inside a folder which name starts with **underscore** are excluded from full text search. The idea is that these files have special meaning for the application:
 * they should be accessible via regular URLs (unlike **system** files)
 * but they content should not be searchable.
 
