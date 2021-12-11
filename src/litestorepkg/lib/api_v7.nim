@@ -1089,7 +1089,7 @@ proc registerStoreApi(LS: LiteStore, ctx: DTContext, origResource, origId: strin
     var res_idx = ctx.duk_push_object()
     ctx.duk_push_int(cast[cint](resp.code))
     discard ctx.duk_put_prop_string(res_idx, "code")
-    discard ctx.duk_push_string(resp.content)
+    discard ctx.duk_push_string(resp.content.cstring)
     discard ctx.duk_put_prop_string(res_idx, "content")
     return 1
   )
@@ -1105,7 +1105,7 @@ proc registerStoreApi(LS: LiteStore, ctx: DTContext, origResource, origId: strin
     var res_idx = ctx.duk_push_object()
     ctx.duk_push_int(cast[cint](resp.code))
     discard ctx.duk_put_prop_string(res_idx, "code")
-    discard ctx.duk_push_string(resp.content)
+    discard ctx.duk_push_string(resp.content.cstring)
     discard ctx.duk_put_prop_string(res_idx, "content")
     return 1
   )
@@ -1121,7 +1121,7 @@ proc registerStoreApi(LS: LiteStore, ctx: DTContext, origResource, origId: strin
     var res_idx = ctx.duk_push_object()
     ctx.duk_push_int(cast[cint](resp.code))
     discard ctx.duk_put_prop_string(res_idx, "code")
-    discard ctx.duk_push_string(resp.content)
+    discard ctx.duk_push_string(resp.content.cstring)
     discard ctx.duk_put_prop_string(res_idx, "content")
     return 1
   )
@@ -1136,7 +1136,7 @@ proc registerStoreApi(LS: LiteStore, ctx: DTContext, origResource, origId: strin
     var res_idx = ctx.duk_push_object()
     ctx.duk_push_int(cast[cint](resp.code))
     discard ctx.duk_put_prop_string(res_idx, "code")
-    discard ctx.duk_push_string(resp.content)
+    discard ctx.duk_push_string(resp.content.cstring)
     discard ctx.duk_put_prop_string(res_idx, "content")
     return 1
   )
@@ -1150,7 +1150,7 @@ proc registerStoreApi(LS: LiteStore, ctx: DTContext, origResource, origId: strin
     var res_idx = ctx.duk_push_object()
     ctx.duk_push_int(cast[cint](resp.code))
     discard ctx.duk_put_prop_string(res_idx, "code")
-    discard ctx.duk_push_string(resp.content)
+    discard ctx.duk_push_string(resp.content.cstring)
     discard ctx.duk_put_prop_string(res_idx, "content")
     return 1
   )
@@ -1164,7 +1164,7 @@ proc registerStoreApi(LS: LiteStore, ctx: DTContext, origResource, origId: strin
     var res_idx = ctx.duk_push_object()
     ctx.duk_push_int(cast[cint](resp.code))
     discard ctx.duk_put_prop_string(res_idx, "code")
-    discard ctx.duk_push_string(resp.content)
+    discard ctx.duk_push_string(resp.content.cstring)
     discard ctx.duk_put_prop_string(res_idx, "content")
     return 1
   )
@@ -1236,13 +1236,13 @@ proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSRespon
   duk_console_init(ctx)
   duk_print_alert_init(ctx)
   LS.registerStoreApi(ctx, resource, id)
-  if ctx.duk_peval_string("($1)" % $jReq) != 0:
+  if ctx.duk_peval_string(cstring("($1)" % $jReq)) != 0:
     return jError(ctx)
   discard ctx.duk_put_global_string("$req")
-  if ctx.duk_peval_string("($1)" % $jRes) != 0:
+  if ctx.duk_peval_string(cstring("($1)" % $jRes)) != 0:
     return jError(ctx)
   discard ctx.duk_put_global_string("$res")
-  if ctx.duk_peval_string("($1)" % $context) != 0:
+  if ctx.duk_peval_string(cstring("($1)" % $context)) != 0:
     return jError(ctx)
   discard ctx.duk_put_global_string("$ctx")
   # Middleware-specific functions
@@ -1251,7 +1251,7 @@ proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSRespon
   while abort != 1 and i < middleware.len:
     let code = LS.getMiddleware(middleware[i])
     LOG.debug("Evaluating middleware '$1'" %  middleware[i])
-    if ctx.duk_peval_string(code) != 0:
+    if ctx.duk_peval_string(code.cstring) != 0:
       return jError(ctx)
     abort = ctx.duk_get_boolean(-1)
     i.inc
