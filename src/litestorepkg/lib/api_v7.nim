@@ -883,7 +883,7 @@ proc get*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse 
       try:
         parseQueryOptions(req.url.query, options);
         if id != "" and options.folder == "":
-          if req.url.query.contains("raw=true") or req.headers.hasKey("Accept") and req.headers["Accept"] == "application/json":
+          if req.url.query.contains("raw=true"):
             return LS.getRawDocument(id, options, req)
           else:
             return LS.getDocument(id, options, req)
