@@ -23,7 +23,8 @@ import
   api_v4,
   api_v5,
   api_v6,
-  api_v7
+  api_v7,
+  api_v8
 
 export
   api_v5
@@ -144,6 +145,19 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
         if access.hasKey(uri):
           auth(uri, jwt, LS)
         break
+  if info.version == "v8":
+    if info.resource.match(peg"^assets / docs / info / tags / indexes / stores$"):
+      var nReq = req
+      if jwt.signature.len != 0:
+        nReq.jwt = jwt
+      return api_v8.execute(nReq, LS, info.resource, info.id)
+    elif info.resource.match(peg"^dir$"):
+      if LS.directory.len > 0:
+        return api_v8.serveFile(req, LS, info.id)
+      else:
+        return resError(Http400, "Bad Request - Not serving any directory." % info.version)
+    else:
+      return resError(Http404, "Resource Not Found: $1" % info.resource)
   if info.version == "v7":
     if info.resource.match(peg"^docs / info / tags / indexes / stores$"):
       var nReq = req
@@ -237,7 +251,7 @@ proc process*(req: LSRequest, LS: LiteStore): LSResponse {.gcsafe.}=
   try:
     var info: ResourceInfo
     req.route peg"^\/?$":
-      info.version = "v7"
+      info.version = "v8"
       info.resource = "info"
       return req.processApiUrl(LS, info)
     req.route peg"^\/favicon.ico$":
@@ -246,7 +260,7 @@ proc process*(req: LSRequest, LS: LiteStore): LSResponse {.gcsafe.}=
       result.headers = ctHeader("image/x-icon")
       return result
     req.route PEG_DEFAULT_URL:
-      info.version = "v7"
+      info.version = "v8"
       info.resource = matches[0]
       info.id = matches[1].decodeUrl
       return req.processApiUrl(LS, info)
