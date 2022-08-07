@@ -31,6 +31,7 @@
         {path: "/guide/api_tags", title: caret+"tags (LiteStore Tags)"},
         {path: "/guide/api_indexes", title: caret+"indexes (LiteStore Indexes)"},
         {path: "/guide/api_stores", title: caret+"stores (LiteStore Stores)"},
+        {path: "/guide/api_assets", title: caret+"assets (LiteStore Assets)"},
         {path: "/guide/nim-api", title: "Nim API Reference"},
         {path: "/guide/nim-api_high", title: caret+"High-Level Nim API"},
         {path: "/guide/nim-api_low", title: caret+"Low-Level Nim API"},
