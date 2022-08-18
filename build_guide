@@ -17,6 +17,7 @@ pages=(
     md/api_info.md
     md/api_dir.md
     md/api_docs.md
+    md/api_assets.md
     md/api_tags.md
     md/api_indexes.md
     md/api_stores.md

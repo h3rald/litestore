@@ -6,7 +6,7 @@
 > This resource has been introduced in version 5 of the LiteStore API.
 
 Assets represents another way to query LiteStore Documents. All documents can also be retrieved via `/assets/` instead of docs, but when doing so:
-* a non-row version of the document will always be returned
+* a non-raw version of the document will always be returned
 * when querying a folder without specifying a document ID, LiteStore will attempt to retrieve an `index.html` or `index.htm` file within that folder
 
 This is particularly useful when your documents have been imported from the filesystem and you need to effectively serve files.
@@ -45,14 +45,14 @@ Access-Control-Allow-Origin: *
 Server: LiteStore/1.12.0
 ```
 
-#### OPTIONS docs/:folder/
+#### OPTIONS assets/:folder/
 
 Returns the allowed HTTP verbs for this resource.
 
 ##### Example
 
 ```
-$ curl -i -X OPTIONS 'http://127.0.0.1:9500/docs/test/'
+$ curl -i -X OPTIONS 'http://127.0.0.1:9500/assets/test/'
 HTTP/1.1 200 OK
 Content-Length: 0
 Access-Control-Allow-Methods: GET,OPTIONS
@@ -70,23 +70,22 @@ Retrieves the file `assets/index.html` or `assets/index.htm` if not found.
 #### GET assets/:folder/
 
 
-Retrieves a list of documents in JSON format starting with the specified folder path (it must end with '/').
-
+Retrieves the file `assets/:folder/index.html` or `assets/:folder/index.htm` if not found.
 
 #### GET assets/:id
 
-Retrieves the specified document. By default the response is returned in the document's content type; however, it is possible to retrieve the raw document (including metadata) in JSON format by setting the **raw** query string option to true.
+Retrieves the specified document. The response is returned in the document's content type (even for JSON files).
 
-##### Example: original content type
+##### Example
 
 ```
-$ curl -i 'http://127.0.0.1:9500/docs/test'
+$ curl -i 'http://127.0.0.1:9500/docs/test.txt'
 HTTP/1.1 200 OK
 Content-Length: 24
 Content-Type: text/plain
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Origin: *
-Server: LiteStore/1.0.3
+Server: LiteStore/1.12.0
 
 This is a test document.
 ```
