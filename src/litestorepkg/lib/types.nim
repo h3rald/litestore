@@ -245,7 +245,7 @@ PEG_USER_TAG = peg"""^[a-zA-Z0-9_\-?~:.@#^!+]+$"""
 PEG_INDEX = peg"""^[a-zA-Z0-9_]+$"""
 PEG_STORE = peg"""^[a-zA-Z0-9_]+$"""
 PEG_JSON_FIELD = peg"""'$' ('.' [a-z-A-Z0-9_]+)+"""
-PEG_DEFAULT_URL = peg"""^\/{(docs / info / dir / tags / indexes / stores)} (\/ {(.+)} / \/?)$"""
+PEG_DEFAULT_URL = peg"""^\/{(assets / docs / info / dir / tags / indexes / stores)} (\/ {(.+)} / \/?)$"""
 PEG_STORE_URL = peg"""^\/stores \/ {([a-z0-9_]+)} (\/ {(.+)} / \/?)$"""
 PEG_URL = peg"""^\/({(v\d+)} \/) {([^\/]+)} (\/ {(.+)} / \/?)$"""
 

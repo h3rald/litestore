@@ -467,6 +467,7 @@ proc retrieveDocument*(store: Datastore, id: string,
   var options = options
   options.single = true
   var select = prepareSelectDocumentsQuery(options)
+  echo "-------"
   var raw_document = store.db.getRow(select.sql, id)
   LOG.debug("Retrieving document '$1'" % id)
   if raw_document[0] == "":
