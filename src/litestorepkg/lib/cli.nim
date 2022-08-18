@@ -182,10 +182,15 @@ proc run*() =
       else:
         discard
 
+  LS.config = configuration
+  LS.configFile = configFile
   LS.operation = operation
   LS.address = address
   LS.port = port
   LS.file = file
+  if LS.config != newJNull() and LS.config.hasKey("settings") and LS.config["settings"].hasKey("store"):
+    # Need to be overridden before setup (called before config is initialized)
+    LS.file = LS.config["settings"]["store"].getStr
   LS.directory = directory
   LS.readonly = readonly
   LS.favicon = favicon
@@ -195,8 +200,6 @@ proc run*() =
   LS.manageSystemData = system
   LS.middleware = middleware
   LS.authFile = authFile
-  LS.config = configuration
-  LS.configFile = configFile
   LS.importTags = importTags
   LS.notSerachable = notSerachable
   LS.mount = mount
