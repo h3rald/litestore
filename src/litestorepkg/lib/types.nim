@@ -10,7 +10,6 @@ import
   sequtils,
   nativesockets,
   jwt,
-  uri,
   tables
 import
   config
