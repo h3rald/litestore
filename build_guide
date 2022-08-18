@@ -21,6 +21,7 @@ pages=(
     md/api_tags.md
     md/api_indexes.md
     md/api_stores.md
+    md/api_assets.md
   md/nim-api.md
     md/nim-api_high.md
     md/nim-api_low.md

@@ -79,10 +79,6 @@
           title: caret + "docs (LiteStore Documents)"
         },
         {
-          path: "/guide/api_assets",
-          title: caret + "assets (LiteStore Assets)"
-        },
-        {
           path: "/guide/api_tags",
           title: caret + "tags (LiteStore Tags)"
         },
