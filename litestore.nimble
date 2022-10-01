@@ -1,7 +1,7 @@
 import
   strutils
 
-from os import parentDir, `/`
+import os
 
 template thisModuleFile: string = instantiationInfo(fullPaths = true).filename
 
@@ -61,7 +61,7 @@ task release, "Release LiteStore":
   shell "./build_guide"
   echo "Preparing Data Store preloaded with Admin App..."
   cd "src"
-  if db.existsFile:
+  if db.fileExists():
     db.rmFile
   shell "litestore -d:admin import"
   echo "\n\n\n WINDOWS - x64:\n\n"
