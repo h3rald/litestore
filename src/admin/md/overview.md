@@ -21,7 +21,7 @@ Despite being fairly small and self-contained, LiteStore comes with many useful 
 
 #### Multi-format Documents
 
-LiteStore can be used to store documents in virtually any format, as long as you specify an appropriate content type for them. Textual documents are stored as-is, while binary documents are base64-encoded (not the best thing in the world, but definitely the easiest and most portal option).
+LiteStore can be used to store documents in virtually any format, as long as you specify an appropriate content type for them. Textual documents are stored as-is, while binary documents are base64-encoded (not the best thing in the world, but definitely the easiest and most portable option).
 
 #### Document Tagging
 
@@ -41,7 +41,7 @@ Every operation can be performed on the data store using a simple but powerful R
 
 #### JWT-based Authorization
 
-LiteStore can be configure validate [JWT](https://jwt.io/) tokens and configure access to specific resources based on specific [OAuth2 scopes](https://oauth.net/2/scope/).
+LiteStore can be configured to validate [JWT](https://jwt.io/) tokens and configure access to specific resources based on specific [OAuth2 scopes](https://oauth.net/2/scope/).
 
 #### Middleware
 
