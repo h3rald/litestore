@@ -248,7 +248,7 @@ proc toPlainText*(s: string): string =
   var special_chars = peg"""\*\*+ / \_\_+ / \-\-+ / \#\#+ / \+\++ / \~\~+ / \`\`+ """
   try:
     json = s.parseJson()
-  except:
+  except CatchableError:
     discard
   if not json.isNil:
     if json.kind == JObject:
@@ -336,7 +336,7 @@ proc validate*(req: LSRequest, LS: LiteStore, resource: string, id: string, cb: 
         of "application/json":
           try:
             discard body.parseJson()
-          except:
+          except CatchableError:
             return resError(Http400, "Invalid JSON content - $1" % getCurrentExceptionMsg())
         else:
           discard

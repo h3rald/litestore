@@ -80,7 +80,7 @@ template auth(uri: string, jwt: JWT, LS: LiteStore): void =
       if authorized == "":
         return resError(Http403, "Forbidden - You are not permitted to access this resource")
       LOG.debug("Authorization successful: " & authorized)
-    except:
+    except CatchableError:
       echo getCurrentExceptionMsg()
       writeStackTrace()
       return resError(Http401, "Unauthorized - Invalid token")
@@ -274,7 +274,7 @@ proc process*(req: LSRequest, LS: LiteStore): LSResponse {.gcsafe.}=
     let e = (ref EInvalidRequest)(getCurrentException())
     let trace = e.getStackTrace()
     return resError(Http404, "Resource Not Found: $1" % getCurrentExceptionMsg().split(" ")[2], trace)
-  except:
+  except CatchableError:
     let e = getCurrentException()
     let trace = e.getStackTrace()
     return resError(Http500, "Internal Server Error: $1" % getCurrentExceptionMsg(), trace)

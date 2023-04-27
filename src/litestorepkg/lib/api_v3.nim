@@ -141,7 +141,7 @@ proc parseQueryOption*(fragment: string, options: var QueryOptions) =
     raise newException(EInvalidRequest, "Invalid query string fragment '$1'" % fragment)
   try:
     pair[1] = pair[1].replace("+", "%2B").decodeURL
-  except:
+  except CatchableError:
     raise newException(EInvalidRequest, "Unable to decode query string fragment '$1'" % fragment)
   case pair[0]:
     of "filter":
@@ -159,12 +159,12 @@ proc parseQueryOption*(fragment: string, options: var QueryOptions) =
     of "limit":
       try:
         options.limit = pair[1].parseInt
-      except:
+      except CatchableError:
         raise newException(EInvalidRequest, "Invalid limit value: $1" % getCurrentExceptionMsg())
     of "offset":
       try:
         options.offset = pair[1].parseInt
-      except:
+      except CatchableError:
         raise newException(EInvalidRequest, "Invalid offset value: $1" % getCurrentExceptionMsg())
     of "sort":
       let orderby = pair[1].orderByClauses()
@@ -192,7 +192,7 @@ proc validate*(req: LSRequest, LS: LiteStore, resource: string, id: string, cb: 
         of "application/json":
           try:
             discard body.parseJson()
-          except:
+          except CatchableError:
             return resError(Http400, "Invalid JSON content - $1" % getCurrentExceptionMsg())
         else:
           discard
@@ -263,7 +263,7 @@ proc patchData*(data: var JsonNode, origData: JsonNode, op: string, path: string
         else:
           d = d[index]
           dorig = dorig[index]
-      except:
+      except CatchableError:
         raise newException(EInvalidRequest, "invalid index key '$1' in path '$2'" % [key, path])
     else:
       if c >= keys.len:
@@ -350,7 +350,7 @@ proc deleteDocument*(LS: LiteStore, id: string): LSResponse =
         result.headers["Content-Length"] = "0"
         result.content = ""
         result.code = Http204
-    except:
+    except CatchableError:
       result = resError(Http500, "Unable to delete document '$1'" % id)
 
 proc getRawDocuments*(LS: LiteStore, options: QueryOptions = newQueryOptions()): LSResponse =
@@ -420,7 +420,7 @@ proc postDocument*(LS: LiteStore, body: string, ct: string, folder=""): LSRespon
       result.code = Http201
     else:
       result = resError(Http500, "Unable to create document.")
-  except:
+  except CatchableError:
     result = resError(Http500, "Unable to create document.")
 
 proc putDocument*(LS: LiteStore, id: string, body: string, ct: string): LSResponse =
@@ -446,7 +446,7 @@ proc putDocument*(LS: LiteStore, id: string, body: string, ct: string): LSRespon
         result.code = Http200
       else:
         result = resError(Http500, "Unable to update document '$1'." % id)
-    except:
+    except CatchableError:
       result = resError(Http500, "Unable to update document '$1'." % id)
 
 proc patchDocument*(LS: LiteStore, id: string, body: string): LSResponse =
@@ -471,7 +471,7 @@ proc patchDocument*(LS: LiteStore, id: string, body: string): LSResponse =
     try:
       origData = jdoc["data"].getStr.parseJson
       data = origData.copy
-    except:
+    except CatchableError:
       discard
   var c = 1
   for item in jbody.items:
@@ -482,7 +482,7 @@ proc patchDocument*(LS: LiteStore, id: string, body: string): LSResponse =
         apply = applyPatchOperation(data, origData, tags, item["op"].str, item["path"].str, item["value"])
         if not apply:
           break
-      except:
+      except CatchableError:
         return resError(Http400, "Bad request - $1" % getCurrentExceptionMsg())
     else:
         return resError(Http400, "Bad request: patch operation #$1 is malformed." % $c)
@@ -493,7 +493,7 @@ proc patchDocument*(LS: LiteStore, id: string, body: string): LSResponse =
         var doc = LS.store.updateDocument(id, data.pretty, "application/json")
         if doc == "":
           return resError(Http500, "Unable to patch document '$1'." % id)
-      except:
+      except CatchableError:
         return resError(Http500, "Unable to patch document '$1' - $2" % id, getCurrentExceptionMsg())
     if origTags != tags:
       try:
@@ -502,7 +502,7 @@ proc patchDocument*(LS: LiteStore, id: string, body: string): LSResponse =
         for t2 in tags:
           if t2 != "":
             LS.store.createTag(t2, id, true)
-      except:
+      except CatchableError:
         return resError(Http500, "Unable to patch document '$1' - $2" % [id, getCurrentExceptionMsg()])
   return LS.getRawDocument(id)
 
@@ -579,7 +579,7 @@ proc head*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse
     else:
       result = LS.getRawDocuments(options)
       result.content = ""
-  except:
+  except CatchableError:
     return resError(Http400, "Bad request - $1" % getCurrentExceptionMsg())
 
 proc get*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse =
@@ -600,7 +600,7 @@ proc get*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse 
             return LS.getDocument(id, options)
         else:
           return LS.getRawDocuments(options)
-      except:
+      except CatchableError:
         return resError(Http400, "Bad Request - $1" % getCurrentExceptionMsg())
     of "info":
       if id != "":
@@ -656,7 +656,7 @@ proc serveFile*(req: LSRequest, LS: LiteStore, id: string): LSResponse =
             result.headers = ctHeader("text/plain")
           result.content = contents
           result.code = Http200
-        except:
+        except CatchableError:
           return resError(Http500, "Unable to read file '$1'." % path)
       else:
         return resError(Http404, "File '$1' not found." % path)

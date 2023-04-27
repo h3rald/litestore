@@ -52,7 +52,7 @@ proc createDatastore*(file: string) =
 proc closeDatastore*(store: Datastore) =
   try:
     db.close(store.db)
-  except:
+  except CatchableError:
     raise newException(EDatastoreUnavailable,
         "Datastore '$1' cannot be closed." % store.path)
 
@@ -61,7 +61,7 @@ proc destroyDatastore*(store: Datastore) =
     if store.path.fileExists():
       store.closeDataStore()
       store.path.removeFile()
-  except:
+  except CatchableError:
     raise newException(EDatastoreUnavailable,
         "Datastore '$1' cannot destroyed." % store.path)
 
@@ -79,7 +79,7 @@ proc upgradeDatastore*(store: Datastore) =
       store.db.exec(SQL_CREATE_SYSTEM_DOCUMENTS_TABLE)
       store.db.exec(SQL_UPDATE_VERSION, 2)
       LOG.debug("Done.")
-    except:
+    except CatchableError:
       store.closeDatastore()
       store.path.removeFile()
       copyFile(bkp_path, store.path)
@@ -106,7 +106,7 @@ proc openDatastore*(file: string): Datastore {.gcsafe.} =
     LOG.debug("Done.")
     result.path = file
     result.mount = ""
-  except:
+  except CatchableError:
     raise newException(EDatastoreUnavailable,
         "Datastore '$1' cannot be opened." % file)
 
@@ -286,7 +286,7 @@ proc createDocument*(store: Datastore, id = "", rawdata = "",
     # Validate JSON data
     try:
       discard data.parseJson
-    except:
+    except CatchableError:
       raise newException(JsonParsingError, "Invalid JSON content - " &
           getCurrentExceptionMsg())
   if id == "":
@@ -318,7 +318,7 @@ proc createDocument*(store: Datastore, id = "", rawdata = "",
     if singleOp:
       store.commit()
     return $store.retrieveRawDocument(id)
-  except:
+  except CatchableError:
     store.rollback()
     eWarn()
     raise
@@ -334,7 +334,7 @@ proc createSystemDocument*(store: Datastore, id = "", rawdata = "",
     # Validate JSON data
     try:
       discard data.parseJson
-    except:
+    except CatchableError:
       raise newException(JsonParsingError, "Invalid JSON content - " &
           getCurrentExceptionMsg())
   if id == "":
@@ -350,7 +350,7 @@ proc createSystemDocument*(store: Datastore, id = "", rawdata = "",
     if singleOp:
       store.commit()
     return $store.retrieveRawDocument(id)
-  except:
+  except CatchableError:
     store.rollback()
     eWarn()
     raise
@@ -365,7 +365,7 @@ proc updateSystemDocument*(store: Datastore, id: string, rawdata: string,
     # Validate JSON data
     try:
       discard data.parseJson
-    except:
+    except CatchableError:
       raise newException(JsonParsingError, "Invalid JSON content - " &
           getCurrentExceptionMsg())
   try:
@@ -379,7 +379,7 @@ proc updateSystemDocument*(store: Datastore, id: string, rawdata: string,
       result = ""
     if singleOp:
       store.commit()
-  except:
+  except CatchableError:
     eWarn()
     store.rollback()
     raise
@@ -394,7 +394,7 @@ proc updateDocument*(store: Datastore, id: string, rawdata: string,
     # Validate JSON data
     try:
       discard data.parseJson
-    except:
+    except CatchableError:
       raise newException(JsonParsingError, "Invalid JSON content - " &
           getCurrentExceptionMsg())
   var searchable = searchable
@@ -421,7 +421,7 @@ proc updateDocument*(store: Datastore, id: string, rawdata: string,
       result = ""
     if singleOp:
       store.commit()
-  except:
+  except CatchableError:
     eWarn()
     store.rollback()
     raise
@@ -446,7 +446,7 @@ proc destroyDocument*(store: Datastore, id: string): int64 =
           raise newException(EFileNotFound, "File not found: $1" % filename)
     if singleOp:
       store.commit()
-  except:
+  except CatchableError:
     eWarn()
     store.rollback()
 
@@ -530,7 +530,7 @@ proc importFile*(store: Datastore, f: string, dir = "/", system = false, notSear
       discard store.createDocument(d_id, d_contents, d_ct, d_binary, d_searchable)
     if dir != "/" and not system:
       store.db.exec(SQL_INSERT_TAG, "$dir:"&dir, d_id)
-  except:
+  except CatchableError:
     store.rollback()
     eWarn()
     raise
@@ -544,7 +544,7 @@ proc importTags*(store: Datastore, d_id: string, tags: openArray[string]) =
   try:
     for tag in tags:
       store.db.exec(SQL_INSERT_TAG, tag, d_id)
-  except:
+  except CatchableError:
     store.rollback()
     eWarn()
     raise
@@ -562,7 +562,7 @@ proc optimize*(store: Datastore) =
     store.db.exec(SQL_OPTIMIZE)
     store.commit()
     LOG.debug("Done")
-  except:
+  except CatchableError:
     eWarn()
 
 proc vacuum*(file: string) =
@@ -570,7 +570,7 @@ proc vacuum*(file: string) =
   try:
     data.exec(SQL_VACUUM)
     db.close(data)
-  except:
+  except CatchableError:
     eWarn()
     quit(203)
   quit(0)
@@ -621,7 +621,7 @@ proc importDir*(store: Datastore, dir: string, system = false, importTags = fals
         store.commit()
         LOG.info("Importing batch $1/$2...", cBatches, nBatches)
         store.begin()
-    except:
+    except CatchableError:
       LOG.warn("Unable to import file: $1", f)
       eWarn()
       store.rollback()
@@ -727,7 +727,7 @@ proc setup*(LS: var LiteStore, open = true) {.gcsafe.} =
   if not LS.file.fileExists:
     try:
       LS.file.createDatastore()
-    except:
+    except CatchableError:
       eWarn()
       fail(200, "Unable to create datastore '$1'" % [LS.file])
   if (open):
@@ -735,15 +735,15 @@ proc setup*(LS: var LiteStore, open = true) {.gcsafe.} =
       LS.store = LS.file.openDatastore()
       try:
         LS.store.upgradeDatastore()
-      except:
+      except CatchableError:
         fail(203, "Unable to upgrade datastore '$1'" % [LS.file])
       if LS.mount:
         try:
           LS.store.mountDir(LS.directory)
-        except:
+        except CatchableError:
           eWarn()
           fail(202, "Unable to mount directory '$1'" % [LS.directory])
-    except:
+    except CatchableError:
       fail(201, "Unable to open datastore '$1'" % [LS.file])
 
 proc initStore*(LS: var LiteStore) =

@@ -187,7 +187,7 @@ proc exec*(db: DbConn, query: SqlQuery, args: varargs[string, `$`])  {.
   ##    try:
   ##      db.exec(sql"INSERT INTO my_table (id, name) VALUES (?, ?)",
   ##              1, "item#1")
-  ##    except:
+  ##    except CatchableError:
   ##      stderr.writeLine(getCurrentExceptionMsg())
   ##    finally:
   ##      db.close()
@@ -602,7 +602,7 @@ proc open*(connection, user, password, database: string): DbConn {.
   ##      ## do something...
   ##      ## db.getAllRows(sql"SELECT * FROM my_table")
   ##      db.close()
-  ##    except:
+  ##    except CatchableError:
   ##      stderr.writeLine(getCurrentExceptionMsg())
   var db: DbConn
   if sqlite3.open(connection, db) == SQLITE_OK:
