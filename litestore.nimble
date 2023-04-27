@@ -25,7 +25,7 @@ installExt    = @["nim", "c", "h", "json", "ico"]
 
 # Dependencies
 
-requires "nim >= 1.4.4", "https://github.com/h3rald/nim-jwt", "nimgen", "duktape"
+requires "nim >= 1.6.12", "https://github.com/h3rald/nim-jwt", "nimgen", "duktape"
 
 # Build
 
