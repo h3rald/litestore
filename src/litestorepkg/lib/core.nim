@@ -1,6 +1,6 @@
 import
-  x_sqlite3,
-  x_db_sqlite as db,
+  db_connector/sqlite3,
+  db_connector/db_sqlite as db,
   os,
   oids,
   json,

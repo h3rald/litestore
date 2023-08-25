@@ -909,7 +909,7 @@ proc route*(req: LSRequest, LS: LiteStore, resource = "docs", id = ""): LSRespon
     else:
       return resError(Http405, "Method not allowed: $1" % $req.reqMethod)
 
-proc newSimpleLSRequest(meth: HttpMethod, resource, id,  body = "", params = "", headers = newHttpHeaders()): LSRequest =
+proc newSimpleLSRequest(meth: HttpMethod, resource = "", id = "",  body = "", params = "", headers = newHttpHeaders()): LSRequest =
   result.reqMethod = meth
   result.body = body
   result.headers = headers

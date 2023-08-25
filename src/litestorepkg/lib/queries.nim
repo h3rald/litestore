@@ -1,4 +1,4 @@
-import x_db_sqlite
+import db_connector/db_sqlite
 
 
 # SQL QUERIES

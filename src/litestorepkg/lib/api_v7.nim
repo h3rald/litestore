@@ -1046,7 +1046,7 @@ proc multiRoute(req: LSRequest, resource, id: string): LSResponse =
     return req.route(LSDICT[id], matches[1], matches[2])
   return req.route(LS, resource, id)
 
-proc newSimpleLSRequest(meth: HttpMethod, resource, id,  body = "", params = "", headers = newHttpHeaders()): LSRequest =
+proc newSimpleLSRequest(meth: HttpMethod, resource = "", id = "",  body = "", params = "", headers = newHttpHeaders()): LSRequest =
   result.reqMethod = meth
   result.body = body
   result.headers = headers
