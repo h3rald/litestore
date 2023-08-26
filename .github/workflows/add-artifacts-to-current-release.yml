@@ -82,7 +82,7 @@ jobs:
       # Build for macOS/Windows
       - name: Build (macOS, Windows)
         shell: bash
-        run: nimble build -v -y -d:release --mm:ref --opt:size litestore
+        run: nimble build -v -y -d:release --mm:refc --opt:size litestore
         if: matrix.os == 'macos-latest' || matrix.os == 'windows-latest'
 
       # Import admin directory and create default db
