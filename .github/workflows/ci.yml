@@ -40,4 +40,4 @@ jobs:
                   sh init.sh -y
 
             - name: Build
-              run: nimble build -y -d:release --gcc.exe:musl-gcc --gcc.linkerexe:musl-gcc
+              run: nimble build -y -d:release --gcc.exe:musl-gcc --gcc.linkerexe:musl-gcc -mm:refc --dynLibOverride:sqlite3
