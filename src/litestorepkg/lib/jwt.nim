@@ -26,7 +26,7 @@ proc getX5c*(token: JWT): string =
     let file = getCurrentDir() / "jwks.json"
     if not file.fileExists:
         raise newException(ValueError, "JWKS file not found: " & file)
-    let keys = file.readFile.parseJson
+    let keys = file.readFile.parseJson["keys"]
     if token.header.hasKey("kid"):
         let kid = token.header["kid"].getStr
         return keys.filterIt(it["kid"].getStr == kid)[0]["x5c"].getStr

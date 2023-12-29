@@ -699,13 +699,13 @@ proc downloadJwks*(uri: string) =
 
 proc processAuthConfig(configuration: var JsonNode, auth: var JsonNode) =
   if auth == newJNull() and configuration != newJNull():
+    auth = newJObject();
+    auth["access"] = newJObject();
     if configuration.hasKey("jwks_uri"):
       LOG.debug("Authentication: Downloading JWKS file.")
       downloadJwks(configuration["jwks_uri"].getStr)
     elif configuration.hasKey("signature"):
       LOG.debug("Authentication: Signature found, processing authentication rules in configuration.")
-      auth = newJObject();
-      auth["access"] = newJObject();
       auth["signature"] = configuration["signature"].getStr.replace(
           "-----BEGIN CERTIFICATE-----\n", "").replace(
           "\n-----END CERTIFICATE-----").strip().newJString

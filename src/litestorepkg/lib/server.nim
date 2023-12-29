@@ -50,14 +50,20 @@ template auth(uri: string, LS: LiteStore): void =
     try:
       let jwt = token.newJwt
       var x5c: string
-      if cfg.hasKey("jwks_uri"):
+      if LS.config.hasKey("jwks_uri"):
+        LOG.debug("Selecting x5c...")
         x5c = jwt.getX5c()
       else:
-        x5c = cfg["signature"].getStr
+        LOG.debug("Using stored signature...")
+        x5c = LS.config["signature"].getStr
+      LOG.debug("Verifying algorithm...")
       jwt.verifyAlgorithm()
+      LOG.debug("Verifying signature...")
       jwt.verifySignature(x5c)
+      LOG.debug("Verifying claims...")
       jwt.verifyTimeClaims()
-      let scope = cfg[reqMethod].getStr.split(peg"\s+")
+      let scope = cfg[reqMethod].mapIt(it.getStr)
+      LOG.debug("Verifying scope...")
       jwt.verifyScope(scope)
       LOG.debug("Authorization successful")
     except EUnauthorizedError:
