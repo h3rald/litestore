@@ -29,8 +29,8 @@ proc getX5c*(token: JWT): string =
     let keys = file.readFile.parseJson["keys"]
     if token.header.hasKey("kid"):
         let kid = token.header["kid"].getStr
-        return keys.filterIt(it["kid"].getStr == kid)[0]["x5c"].getStr
-    return keys[0]["x5c"].getStr
+        return keys.filterIt(it["kid"].getStr == kid)[0]["x5c"][0].getStr
+    return keys[0]["x5c"][0].getStr
 
 proc base64UrlDecode(encoded: string): string =
     let padding = 4 - (encoded.len mod 4)
