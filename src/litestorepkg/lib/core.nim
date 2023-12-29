@@ -8,6 +8,7 @@ import
   strtabs,
   strutils,
   sequtils,
+  httpclient,
   base64,
   math
 import
@@ -136,7 +137,8 @@ proc rollback(store: Datastore) =
 # Manage Indexes
 
 proc createIndex*(store: Datastore, indexId, field: string) =
-  let query = sql("CREATE INDEX json_index_$1 ON documents(json_extract(data, ?) COLLATE NOCASE) WHERE json_valid(data)" % [indexId])
+  let query = sql("CREATE INDEX json_index_$1 ON documents(json_extract(data, ?) COLLATE NOCASE) WHERE json_valid(data)" %
+      [indexId])
   store.begin()
   store.db.exec(query, field)
   store.commit()
@@ -147,7 +149,8 @@ proc dropIndex*(store: Datastore, indexId: string) =
   store.db.exec(query)
   store.commit()
 
-proc retrieveIndex*(store: Datastore, id: string, options: QueryOptions = newQueryOptions()): JsonNode =
+proc retrieveIndex*(store: Datastore, id: string,
+    options: QueryOptions = newQueryOptions()): JsonNode =
   var options = options
   options.single = true
   let query = prepareSelectIndexesQuery(options)
@@ -167,7 +170,7 @@ proc retrieveIndexes*(store: Datastore, options: QueryOptions = newQueryOptions(
       let str = "json_index_" & options.like.substr(0, options.like.len-2)
       raw_indexes = store.db.getAllRows(query.sql, str, str & "{")
     else:
-      let str =  "json_index_" & options.like.replace("*", "%")
+      let str = "json_index_" & options.like.replace("*", "%")
       raw_indexes = store.db.getAllRows(query.sql, str)
   else:
     raw_indexes = store.db.getAllRows(query.sql)
@@ -176,7 +179,8 @@ proc retrieveIndexes*(store: Datastore, options: QueryOptions = newQueryOptions(
     var matches: array[0..0, string]
     let fieldPeg = peg"'CREATE INDEX json_index_test ON documents(json_extract(data, \'' {[^']+}"
     discard index[1].match(fieldPeg, matches)
-    indexes.add(%[("id", %index[0].replace("json_index_", "")), ("field", %matches[0])])
+    indexes.add(%[("id", %index[0].replace("json_index_", "")), ("field",
+        %matches[0])])
   return %indexes
 
 proc countIndexes*(store: Datastore, q = "", like = ""): int64 =
@@ -371,8 +375,8 @@ proc updateSystemDocument*(store: Datastore, id: string, rawdata: string,
   try:
     LOG.debug("Updating system document '$1'" % id)
     store.begin()
-    var res = store.db.execAffectedRows(SQL_UPDATE_SYSTEM_DOCUMENT, data, contenttype,
-        binary, currentTime(), id)
+    var res = store.db.execAffectedRows(SQL_UPDATE_SYSTEM_DOCUMENT, data,
+        contenttype, binary, currentTime(), id)
     if res > 0:
       result = $store.retrieveRawDocument(id)
     else:
@@ -450,7 +454,7 @@ proc destroyDocument*(store: Datastore, id: string): int64 =
     eWarn()
     store.rollback()
 
-proc findDocumentId*(store: Datastore, pattern: string): string =  
+proc findDocumentId*(store: Datastore, pattern: string): string =
   var select = "SELECT id FROM documents WHERE id LIKE ? ESCAPE '\\' "
   var raw_document = store.db.getRow(select.sql, pattern)
   LOG.debug("Retrieving document '$1'" % pattern)
@@ -496,7 +500,8 @@ proc retrieveRawDocuments*(store: Datastore,
 proc countDocuments*(store: Datastore): int64 =
   return store.db.getRow(SQL_COUNT_DOCUMENTS)[0].parseInt
 
-proc importFile*(store: Datastore, f: string, dir = "/", system = false, notSearchable = false): string  =
+proc importFile*(store: Datastore, f: string, dir = "/", system = false,
+    notSearchable = false): string =
   if not f.fileExists:
     raise newException(EFileNotFound, "File '$1' not found." % f)
   let split = f.splitFile
@@ -580,21 +585,22 @@ proc getTagsForFile*(f: string): seq[string] =
   let tags_file = f.splitFile.dir / "_tags"
   if tags_file.fileExists:
     for tag in tags_file.lines:
-      result.add(tag) 
+      result.add(tag)
 
 
-proc importDir*(store: Datastore, dir: string, system = false, importTags = false, notSearchable = false) =
+proc importDir*(store: Datastore, dir: string, system = false,
+    importTags = false, notSearchable = false) =
   var files = newSeq[string]()
   if not dir.dirExists:
     raise newException(EDirectoryNotFound, "Directory '$1' not found." % dir)
   for f in dir.walkDirRec():
     if f.dirExists:
       continue
-    let dirs = f.split(DirSep)  
+    let dirs = f.split(DirSep)
     if dirs.any(proc (s: string): bool = return s.startsWith(".")):
       # Ignore hidden directories and files
-      continue  
-    let fileName = f.splitFile.name    
+      continue
+    let fileName = f.splitFile.name
     if fileName == "_tags" and not importTags:
       # Ignore tags file unless the CLI flag was set
       continue
@@ -685,12 +691,24 @@ proc setLogLevel*(val: string) =
     else:
       fail(103, "Invalid log level '$1'" % val)
 
-proc processAuthConfig(configuration: JsonNode, auth: var JsonNode) =
-  if auth == newJNull() and configuration != newJNull() and configuration.hasKey("signature"):
-    LOG.debug("Authentication: Signature found, processing authentication rules in configuration.")
-    auth = newJObject();
-    auth["access"] = newJObject();
-    auth["signature"] = configuration["signature"]
+
+proc downloadJwks*(uri: string) =
+  let file = getCurrentDir() / "jwks.json"
+  let client = newHttpClient()
+  client.downloadFile(uri, file)
+
+proc processAuthConfig(configuration: var JsonNode, auth: var JsonNode) =
+  if auth == newJNull() and configuration != newJNull():
+    if configuration.hasKey("jwks_uri"):
+      LOG.debug("Authentication: Downloading JWKS file.")
+      downloadJwks(configuration["jwks_uri"].getStr)
+    elif configuration.hasKey("signature"):
+      LOG.debug("Authentication: Signature found, processing authentication rules in configuration.")
+      auth = newJObject();
+      auth["access"] = newJObject();
+      auth["signature"] = configuration["signature"].getStr.replace(
+          "-----BEGIN CERTIFICATE-----\n", "").replace(
+          "\n-----END CERTIFICATE-----").strip().newJString
     for k, v in configuration["resources"].pairs:
       auth["access"][k] = newJObject()
       for meth, content in v.pairs:
