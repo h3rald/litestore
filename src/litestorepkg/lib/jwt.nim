@@ -20,7 +20,8 @@ proc EVP_DigestVerifyFinal(ctx: EVP_MD_CTX; data: pointer;
         len: cuint): cint {.cdecl, importc.}
 
 proc raiseJwtError(msg: string) =
-    raise newException(EJwtValidationError, msg)
+    let err = $ERR_error_string(ERR_get_error(),  nil)
+    raise newException(EJwtValidationError, msg&"\n"&err)
 
 proc getX5c*(token: JWT): string =
     let file = getCurrentDir() / "jwks.json"
@@ -83,7 +84,6 @@ proc verifySignature*(jwt: JWT; x5c: string) =
     let alg = EVP_sha256();
     var x509: PX509
     var pubkey: EVP_PKEY
-    var pkeyctx: EVP_PKEY_CTX
 
     ### Validate Signature (Only RS256 supported)
     x509 = d2i_X509(cert)
@@ -97,6 +97,10 @@ proc verifySignature*(jwt: JWT; x5c: string) =
     let mdctx = EVP_MD_CTX_create()
     if mdctx.isNil:
         raiseJwtError("Unable to initialize MD CTX")
+
+    let pkeyctx = EVP_PKEY_CTX_new(pubkey, nil)
+    if pkeyctx.isNil:
+        raiseJwtError("Unable to initialize PKEY CTX")
 
     if EVP_DigestVerifyInit(mdctx, addr pkeyctx, alg, nil, pubkey) != 1:
         raiseJwtError("Unable to initialize digest verification")
@@ -117,11 +121,13 @@ proc verifySignature*(jwt: JWT; x5c: string) =
         X509_free(x509)
 
 
+when isMainModule:
 
+  let token = "token.txt".readFile
+  let x5c = "x5c.cert".readFile
+  let jwt = token.newJwt
 
-
-
-
-
-
-
+  echo token
+  echo "---"
+  echo x5c
+  jwt.verifySignature(x5c)

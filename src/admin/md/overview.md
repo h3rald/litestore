@@ -65,4 +65,4 @@ To make serving a single-page application _from LiteStore_ even easier and faste
 
 #### Directory Mounting and Mirroring
 
-After importing the contents of a directory into a LiteStore data store, you can _mount it_ on LiteStore and mirror all data store changes to the filesystem. Incidentally, that's how most of the LiteStore Admin test app was built [](class:fa-smile-o).
+After importing the contents of a directory into a LiteStore data store, you can _mount it_ on LiteStore and mirror all data store changes to the filesystem. Incidentally, that's how most of the LiteStore Admin test app was built [](class:fa-face-smile).
