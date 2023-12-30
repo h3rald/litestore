@@ -59,7 +59,11 @@ template auth(uri: string, LS: LiteStore): void =
       LOG.debug("Verifying algorithm...")
       jwt.verifyAlgorithm()
       LOG.debug("Verifying signature...")
-      jwt.verifySignature(x5c)
+      try:
+        jwt.verifySignature(x5c)
+      except EX509Error:
+        LOG.warn getCurrentExceptionMsg()
+        writeStackTrace()
       LOG.debug("Verifying claims...")
       jwt.verifyTimeClaims()
       let scope = cfg[reqMethod].mapIt(it.getStr)
@@ -67,11 +71,11 @@ template auth(uri: string, LS: LiteStore): void =
       jwt.verifyScope(scope)
       LOG.debug("Authorization successful")
     except EUnauthorizedError:
-      echo getCurrentExceptionMsg()
+      LOG.warn getCurrentExceptionMsg()
       writeStackTrace()
       return resError(Http403, "Forbidden - You are not permitted to access this resource")
     except CatchableError:
-      echo getCurrentExceptionMsg()
+      LOG.warn getCurrentExceptionMsg()
       writeStackTrace()
       return resError(Http401, "Unauthorized - Invalid token")
 

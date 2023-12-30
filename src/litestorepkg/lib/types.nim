@@ -24,6 +24,7 @@ type
   EInvalidRequest* = object of CatchableError
   EJwtValidationError* = object of CatchableError
   EUnauthorizedError* = object of CatchableError
+  EX509Error* = object of CatchableError
   ConfigFiles* = object
     auth*: string
     config*: string

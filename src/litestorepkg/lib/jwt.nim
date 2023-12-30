@@ -27,6 +27,10 @@ proc raiseJwtError(msg: string) =
     let err = getLastError()
     raise newException(EJwtValidationError, msg&"\n"&err)
 
+proc raiseX509Error(msg: string) =
+    let err = getLastError()
+    raise newException(EX509Error, msg&"\n"&err)
+
 proc getX5c*(token: JWT): string =
     let file = getCurrentDir() / "jwks.json"
     if not file.fileExists:
@@ -92,19 +96,19 @@ proc verifySignature*(jwt: JWT; x5c: string) =
     ### Validate Signature (Only RS256 supported)
     x509 = d2i_X509(cert)
     if x509.isNil:
-        raiseJwtError("Invalid X509 certificate")
+        raiseX509Error("Invalid X509 certificate")
 
     pubkey = X509_get_pubkey(x509)
     if pubkey.isNil:
-        raiseJwtError("An error occurred while retrieving the public key")
+        raiseX509Error("An error occurred while retrieving the public key")
 
     var mdctx = EVP_MD_CTX_create()
     if mdctx.isNil:
-        raiseJwtError("Unable to initialize MD CTX")
+        raiseX509Error("Unable to initialize MD CTX")
 
     var pkeyctx = EVP_PKEY_CTX_new(pubkey, nil)
     if pkeyctx.isNil:
-        raiseJwtError("Unable to initialize PKEY CTX")
+        raiseX509Error("Unable to initialize PKEY CTX")
 
     if EVP_DigestVerifyInit(mdctx, addr pkeyctx, alg, nil, pubkey) != 1:
         raiseJwtError("Unable to initialize digest verification")
