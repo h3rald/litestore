@@ -1,7 +1,9 @@
 import
   db_connector/sqlite3,
   db_connector/db_sqlite as db,
+  std/[
   os,
+  paths,
   oids,
   json,
   pegs,
@@ -10,7 +12,7 @@ import
   sequtils,
   httpclient,
   base64,
-  math
+  math]
 import
   types,
   contenttypes,
@@ -691,29 +693,28 @@ proc setLogLevel*(val: string) =
     else:
       fail(103, "Invalid log level '$1'" % val)
 
-
-proc downloadJwks*(uri: string) =
-  let file = getCurrentDir() / "jwks.json"
+proc downloadJwks*(LS: LiteStore, uri: string) =
+  let file = LS.jwksPath
   let client = newHttpClient()
   client.downloadFile(uri, file)
 
-proc processAuthConfig(configuration: var JsonNode, auth: var JsonNode) =
-  if auth == newJNull() and configuration != newJNull():
-    auth = newJObject();
-    auth["access"] = newJObject();
-    if configuration.hasKey("jwks_uri"):
+proc processAuthConfig(LS: var LiteStore) =
+  if LS.auth == newJNull() and LS.config != newJNull():
+    LS.auth = newJObject();
+    LS.auth["access"] = newJObject();
+    if LS.config.hasKey("jwks_uri"):
       LOG.debug("Authentication: Downloading JWKS file.")
-      downloadJwks(configuration["jwks_uri"].getStr)
-    elif configuration.hasKey("signature"):
+      LS.downloadJwks(LS.config["jwks_uri"].getStr)
+    elif LS.config.hasKey("signature"):
       LOG.debug("Authentication: Signature found, processing authentication rules in configuration.")
-      auth["signature"] = configuration["signature"].getStr.replace(
+      LS.auth["signature"] = LS.config["signature"].getStr.replace(
           "-----BEGIN CERTIFICATE-----\n", "").replace(
           "\n-----END CERTIFICATE-----").strip().newJString
-    for k, v in configuration["resources"].pairs:
-      auth["access"][k] = newJObject()
+    for k, v in LS.config["resources"].pairs:
+      LS.auth["access"][k] = newJObject()
       for meth, content in v.pairs:
         if content.hasKey("auth"):
-          auth["access"][k][meth] = content["auth"]
+          LS.auth["access"][k][meth] = content["auth"]
 
 proc processConfigSettings(LS: var LiteStore) =
   # Process config settings if present and if no cli settings are set
@@ -777,7 +778,7 @@ proc initStore*(LS: var LiteStore) =
     LS.processConfigSettings()
     # Process auth from config settings
     LOG.debug("Authentication: Checking configuration for auth rules - Store file: " & LS.file)
-    processAuthConfig(LS.config, LS.auth)
+    LS.processAuthConfig()
 
   if LS.auth == newJNull():
     # Attempt to retrieve auth.json from system documents

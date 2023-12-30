@@ -1,15 +1,16 @@
 import
   db_connector/db_sqlite,
-  asynchttpserver,
+  std/[asynchttpserver,
   asyncnet,
   uri,
   pegs,
   json,
   strtabs,
+  os,
   strutils,
   sequtils,
   nativesockets,
-  tables
+  tables]
 import
   config
 
@@ -123,6 +124,9 @@ type
     id: string,
     version: string
   ]
+
+proc jwksPath*(LS: LiteStore): string =
+  return "$#/$#_jwks.json" % [getCurrentDir(), LS.file.splitFile.name]
 
 proc initLiteStore*(): LiteStore =
   result.config = newJNull()

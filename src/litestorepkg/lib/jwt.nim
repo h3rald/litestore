@@ -1,7 +1,7 @@
 import std/[
     openssl, base64, strutils, macros, json, times, pegs, sequtils, os
     ]
-import types
+import types, core
 
 when defined(windows) and defined(amd64):
     {.passL: "-static -L"&getProjectPath()&"/litestorepkg/vendor/openssl/windows -lssl -lcrypto -lbcrypt".}
@@ -31,8 +31,8 @@ proc raiseX509Error(msg: string) =
     let err = getLastError()
     raise newException(EX509Error, msg&"\n"&err)
 
-proc getX5c*(token: JWT): string =
-    let file = getCurrentDir() / "jwks.json"
+proc getX5c*(LS: LiteStore; token: JWT): string =
+    let file = LS.jwksPath
     if not file.fileExists:
         raise newException(ValueError, "JWKS file not found: " & file)
     let keys = file.readFile.parseJson["keys"]

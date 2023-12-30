@@ -52,7 +52,7 @@ template auth(uri: string, LS: LiteStore): void =
       var x5c: string
       if LS.config.hasKey("jwks_uri"):
         LOG.debug("Selecting x5c...")
-        x5c = jwt.getX5c()
+        x5c = LS.getX5c(jwt)
       else:
         LOG.debug("Using stored signature...")
         x5c = LS.config["signature"].getStr

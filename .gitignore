@@ -17,7 +17,7 @@ jester_integration
 js
 *_backup
 config.json
-jwks.json
+*jwks.json
 *.db-shm
 *.db-wal
 *.nim.bak
