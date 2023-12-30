@@ -21,7 +21,7 @@ proc EVP_DigestVerifyFinal(ctx: EVP_MD_CTX; data: pointer;
         len: cuint): cint {.cdecl, importc.}
 
 proc getLastError(): string =
-    return $ERR_error_string(ERR_get_error(),  nil)
+    return $ERR_error_string(ERR_get_error(), nil)
 
 proc raiseJwtError(msg: string) =
     let err = getLastError()
@@ -120,18 +120,18 @@ proc verifySignature*(jwt: JWT; x5c: string) =
     #if not pkeyctx.isNil:
     #    EVP_PKEY_CTX_free(pkeyctx)
     if not pubkey.isNil:
-      EVP_PKEY_free(pubkey)
+        EVP_PKEY_free(pubkey)
     if not x509.isNil:
         X509_free(x509)
 
 
 when isMainModule:
 
-  let token = "token.txt".readFile
-  let x5c = "x5c.cert".readFile
-  let jwt = token.newJwt
+    let token = "token.txt".readFile
+    let x5c = "x5c.cert".readFile
+    let jwt = token.newJwt
 
-  echo token
-  echo "---"
-  echo x5c
-  jwt.verifySignature(x5c)
+    echo token
+    echo "---"
+    echo x5c
+    jwt.verifySignature(x5c)

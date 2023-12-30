@@ -22,6 +22,6 @@ jwks.json
 *.db-wal
 *.nim.bak
 litestore_linkerArgs.txt
-token.txt
-x5c.cert
+token*.txt
+x5c*.cert
 jwt
