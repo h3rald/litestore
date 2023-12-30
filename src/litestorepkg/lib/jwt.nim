@@ -121,8 +121,8 @@ proc verifySignature*(jwt: JWT; x5c: string) =
 
     if not mdctx.isNil:
         EVP_MD_CTX_destroy(mdctx)
-    #if not pkeyctx.isNil:
-    #    EVP_PKEY_CTX_free(pkeyctx)
+    if not pkeyctx.isNil:
+        EVP_PKEY_CTX_free(pkeyctx)
     if not pubkey.isNil:
         EVP_PKEY_free(pubkey)
     if not x509.isNil:
