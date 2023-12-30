@@ -11,6 +11,7 @@ elif defined(macosx) and defined(amd64):
     {.passL: "-Bstatic -L"&getProjectPath()&"/litestorepkg/vendor/openssl/macosx -lssl -lcrypto -Bdynamic".}
 
 
+proc EVP_PKEY_new(): EVP_PKEY {.cdecl, importc.}
 proc X509_get_pubkey(cert: PX509): EVP_PKEY {.cdecl, importc.}
 proc EVP_DigestVerifyInit(ctx: EVP_MD_CTX; pctx: ptr EVP_PKEY_CTX; typ: EVP_MD;
         e: ENGINE; pkey: EVP_PKEY): cint {.cdecl, importc.}
@@ -86,7 +87,7 @@ proc verifySignature*(jwt: JWT; x5c: string) =
     let cert = x5c.decode
     let alg = EVP_sha256();
     var x509: PX509
-    var pubkey: EVP_PKEY
+    var pubkey = EVP_PKEY_new()
 
     ### Validate Signature (Only RS256 supported)
     x509 = d2i_X509(cert)
@@ -104,9 +105,7 @@ proc verifySignature*(jwt: JWT; x5c: string) =
     var pkeyctx = EVP_PKEY_CTX_new(pubkey, nil)
     if pkeyctx.isNil:
         raiseJwtError("Unable to initialize PKEY CTX")
-    #var pkeyctx: EVP_PKEY_CTX 
 
-    echo "****************"
     if EVP_DigestVerifyInit(mdctx, addr pkeyctx, alg, nil, pubkey) != 1:
         raiseJwtError("Unable to initialize digest verification")
 
@@ -120,8 +119,8 @@ proc verifySignature*(jwt: JWT; x5c: string) =
         EVP_MD_CTX_destroy(mdctx)
     #if not pkeyctx.isNil:
     #    EVP_PKEY_CTX_free(pkeyctx)
-    #if not pubkey.isNil:
-    #  EVP_PKEY_free(pubkey)
+    if not pubkey.isNil:
+      EVP_PKEY_free(pubkey)
     if not x509.isNil:
         X509_free(x509)
 
