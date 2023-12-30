@@ -89,44 +89,48 @@ proc verifySignature*(jwt: JWT; x5c: string) =
     let sig = jwt.signature
     let payload = jwt.payload
     let cert = x5c.decode
+    var pkeyctx: EVP_PKEY_CTX
+    var mdctx: EVP_MD_CTX
     let alg = EVP_sha256();
     var x509: PX509
     var pubkey = EVP_PKEY_new()
+    try:
+        ### Validate Signature (Only RS256 supported)
+        x509 = d2i_X509(cert)
+        if x509.isNil:
+            raiseX509Error("Invalid X509 certificate")
 
-    ### Validate Signature (Only RS256 supported)
-    x509 = d2i_X509(cert)
-    if x509.isNil:
-        raiseX509Error("Invalid X509 certificate")
+        pubkey = X509_get_pubkey(x509)
+        if pubkey.isNil:
+            raiseX509Error("An error occurred while retrieving the public key")
 
-    pubkey = X509_get_pubkey(x509)
-    if pubkey.isNil:
-        raiseX509Error("An error occurred while retrieving the public key")
+        mdctx = EVP_MD_CTX_create()
+        if mdctx.isNil:
+            raiseX509Error("Unable to initialize MD CTX")
 
-    var mdctx = EVP_MD_CTX_create()
-    if mdctx.isNil:
-        raiseX509Error("Unable to initialize MD CTX")
+        pkeyctx = EVP_PKEY_CTX_new(pubkey, nil)
+        if pkeyctx.isNil:
+            raiseX509Error("Unable to initialize PKEY CTX")
 
-    var pkeyctx = EVP_PKEY_CTX_new(pubkey, nil)
-    if pkeyctx.isNil:
-        raiseX509Error("Unable to initialize PKEY CTX")
+        if EVP_DigestVerifyInit(mdctx, addr pkeyctx, alg, nil, pubkey) != 1:
+            raiseJwtError("Unable to initialize digest verification")
 
-    if EVP_DigestVerifyInit(mdctx, addr pkeyctx, alg, nil, pubkey) != 1:
-        raiseJwtError("Unable to initialize digest verification")
+        if EVP_DigestVerifyUpdate(mdctx, addr payload[0], payload.len.cuint) != 1:
+            raiseJwtError("Unable to update digest verification")
 
-    if EVP_DigestVerifyUpdate(mdctx, addr payload[0], payload.len.cuint) != 1:
-        raiseJwtError("Unable to update digest verification")
-
-    if EVP_DigestVerifyFinal(mdctx, addr sig[0], sig.len.cuint) != 1:
-        raiseJwtError("Verification failed")
-
-    if not mdctx.isNil:
-        EVP_MD_CTX_destroy(mdctx)
-    if not pkeyctx.isNil:
-        EVP_PKEY_CTX_free(pkeyctx)
-    if not pubkey.isNil:
-        EVP_PKEY_free(pubkey)
-    if not x509.isNil:
-        X509_free(x509)
+        if EVP_DigestVerifyFinal(mdctx, addr sig[0], sig.len.cuint) != 1:
+            raiseJwtError("Verification failed")
+    except CatchableError:
+        let err = getCurrentException()
+        if not mdctx.isNil:
+            EVP_MD_CTX_destroy(mdctx)
+        if not pkeyctx.isNil:
+            EVP_PKEY_CTX_free(pkeyctx)
+        if not pubkey.isNil:
+            EVP_PKEY_free(pubkey)
+        if not x509.isNil:
+            X509_free(x509)
+        raise err
 
 
 when isMainModule:
