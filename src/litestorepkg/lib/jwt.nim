@@ -19,8 +19,11 @@ proc EVP_DigestVerifyUpdate(ctx: EVP_MD_CTX; data: pointer;
 proc EVP_DigestVerifyFinal(ctx: EVP_MD_CTX; data: pointer;
         len: cuint): cint {.cdecl, importc.}
 
+proc getLastError(): string =
+    return $ERR_error_string(ERR_get_error(),  nil)
+
 proc raiseJwtError(msg: string) =
-    let err = $ERR_error_string(ERR_get_error(),  nil)
+    let err = getLastError()
     raise newException(EJwtValidationError, msg&"\n"&err)
 
 proc getX5c*(token: JWT): string =
@@ -94,27 +97,29 @@ proc verifySignature*(jwt: JWT; x5c: string) =
     if pubkey.isNil:
         raiseJwtError("An error occurred while retrieving the public key")
 
-    let mdctx = EVP_MD_CTX_create()
+    var mdctx = EVP_MD_CTX_create()
     if mdctx.isNil:
         raiseJwtError("Unable to initialize MD CTX")
 
-    let pkeyctx = EVP_PKEY_CTX_new(pubkey, nil)
+    var pkeyctx = EVP_PKEY_CTX_new(pubkey, nil)
     if pkeyctx.isNil:
         raiseJwtError("Unable to initialize PKEY CTX")
+    #var pkeyctx: EVP_PKEY_CTX 
 
+    echo "****************"
     if EVP_DigestVerifyInit(mdctx, addr pkeyctx, alg, nil, pubkey) != 1:
         raiseJwtError("Unable to initialize digest verification")
 
-    if EVP_DigestVerify_Update(mdctx, addr payload[0], payload.len.cuint) != 1:
+    if EVP_DigestVerifyUpdate(mdctx, addr payload[0], payload.len.cuint) != 1:
         raiseJwtError("Unable to update digest verification")
 
-    if EVP_DigestVerify_Final(mdctx, addr sig[0], sig.len.cuint) != 1:
+    if EVP_DigestVerifyFinal(mdctx, addr sig[0], sig.len.cuint) != 1:
         raiseJwtError("Verification failed")
 
     if not mdctx.isNil:
         EVP_MD_CTX_destroy(mdctx)
-    if not pkeyctx.isNil:
-        EVP_PKEY_CTX_free(pkeyctx)
+    #if not pkeyctx.isNil:
+    #    EVP_PKEY_CTX_free(pkeyctx)
     #if not pubkey.isNil:
     #  EVP_PKEY_free(pubkey)
     if not x509.isNil:
