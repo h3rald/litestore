@@ -25,3 +25,4 @@ litestore_linkerArgs.txt
 token*.txt
 x5c*.cert
 jwt
+middleware
