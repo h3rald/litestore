@@ -39,7 +39,7 @@ proc handleCtrlC() {.noconv.} =
   LOG.info("Exiting...")
   quit()
 
-template auth(uri: string, LS: LiteStore): void =
+template auth(uri: string, LS: LiteStore, jwt: JWT): void =
   let cfg = access[uri]
   if cfg.hasKey(reqMethod):
     LOG.debug("Authenticating: " & reqMethod & " " & uri)
@@ -48,7 +48,7 @@ template auth(uri: string, LS: LiteStore): void =
     let token = req.headers["Authorization"].replace(peg"^ 'Bearer '", "")
     # Validate token
     try:
-      let jwt = token.newJwt
+      jwt = token.newJwt
       var x5c: string
       if LS.config.hasKey("jwks_uri"):
         LOG.debug("Selecting x5c...")
@@ -123,12 +123,12 @@ proc processApiUrl(req: LSRequest, LS: LiteStore,
     while true:
       # Match exact url
       if access.hasKey(uri):
-        auth(uri, LS)
+        auth(uri, LS, jwt)
         break
       # Match exact url adding /* (e.g. /docs would match also /docs/* in auth.json)
       elif uri[^1] != '*' and uri[^1] != '/':
         if access.hasKey(uri & "/*"):
-          auth(uri & "/*", LS)
+          auth(uri & "/*", LS, jwt)
           break
       var parts = uri.split("/")
       if parts[^1] == "*":
@@ -141,7 +141,7 @@ proc processApiUrl(req: LSRequest, LS: LiteStore,
         # If at the end of the URL, check generic URL
         uri = "/*"
         if access.hasKey(uri):
-          auth(uri, LS)
+          auth(uri, LS, jwt)
         break
   if info.version == "v8":
     if info.resource.match(peg"^assets / docs / info / tags / indexes / stores$"):
