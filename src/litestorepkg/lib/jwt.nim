@@ -32,10 +32,7 @@ proc raiseX509Error(msg: string) =
     raise newException(EX509Error, msg&"\n"&err)
 
 proc getX5c*(LS: LiteStore; token: JWT): string =
-    let file = LS.jwksPath
-    if not file.fileExists:
-        raise newException(ValueError, "JWKS file not found: " & file)
-    let keys = file.readFile.parseJson["keys"]
+    let keys = LS.jwks["keys"]
     if token.header.hasKey("kid"):
         let kid = token.header["kid"].getStr
         return keys.filterIt(it["kid"].getStr == kid)[0]["x5c"][0].getStr

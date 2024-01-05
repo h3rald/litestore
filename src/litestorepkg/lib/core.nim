@@ -704,7 +704,16 @@ proc processAuthConfig(LS: var LiteStore) =
     LS.auth["access"] = newJObject();
     if LS.config.hasKey("jwks_uri"):
       LOG.debug("Authentication: Downloading JWKS file.")
-      LS.downloadJwks(LS.config["jwks_uri"].getStr)
+      try:
+        LS.downloadJwks(LS.config["jwks_uri"].getStr)
+      except CatchableError:
+        LOG.warn "Unable to download JWKS file."
+        eWarn()
+      try:
+        LS.jwks = LS.jwksPath.parseFile
+      except:
+        LOG.warn "Unable to parse JWKS file."
+        eWarn()
     elif LS.config.hasKey("signature"):
       LOG.debug("Authentication: Signature found, processing authentication rules in configuration.")
       LS.auth["signature"] = LS.config["signature"].getStr.replace(

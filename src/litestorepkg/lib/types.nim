@@ -92,6 +92,7 @@ type
     operation*: Operation
     config*: JsonNode
     configFile*: string
+    jwks*: JsonNode
     cliSettings*: JsonNode
     directory*: string
     manageSystemData*: bool
