@@ -125,7 +125,7 @@ proc verifySignature*(jwt: JWT; x5c: string) =
             EVP_PKEY_CTX_free(pkeyctx)
         if not pubkey.isNil:
             EVP_PKEY_free(pubkey)
-        if not x509.isNil:
+        if not x509.isNil and defined(X509_free):
             X509_free(x509)
         raise err
 
