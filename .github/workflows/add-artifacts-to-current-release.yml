@@ -98,23 +98,21 @@ jobs:
         run: build_guide
 
       # Retrieve ID and Name of the current (draft) release
-      - name: 'Get current release'
-        id: current-release
-        uses: InsonusK/get-latest-release@v1.0.1
+      - name: "Get current release"
+        id: current-relese
+        uses: pozetroninc/github-action-get-latest-release@master
         with:
-          myToken: ${{ github.token }}
-          exclude_types: 'release'
-          view_top: 1
+          repository: h3rald/litestore
 
       # Package the resulting Linux/macOS binary
       - name: Create artifact (Linux, macOS)
         shell: bash
-        run: zip litestore_${{steps.current-release.outputs.tag_name}}_${{steps.os.outputs.id}}_x64.zip litestore data.db LiteStore_UserGuide.htm
+        run: zip litestore_${{steps.current-release.outputs.release}}_${{steps.os.outputs.id}}_x64.zip litestore data.db LiteStore_UserGuide.htm
         if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
 
       # Package the resulting Windows binary
       - name: Create artifact (Windows)
-        run: Compress-Archive -Path litestore.exe, data.db, LiteStore_UserGuide.htm -DestinationPath litestore_${{steps.current-release.outputs.tag_name}}_windows_x64.zip
+        run: Compress-Archive -Path litestore.exe, data.db, LiteStore_UserGuide.htm -DestinationPath litestore_${{steps.current-release.outputs.release}}_windows_x64.zip
         if: matrix.os == 'windows-latest'
 
       # Upload artifacts to current draft release
@@ -125,6 +123,6 @@ jobs:
         with:
           file: 'litestore_v*.zip'
           overwrite: true
-          tag_name: ${{steps.current-release.outputs.tag_name}}
+          tag_name: ${{steps.current-release.outputs.release}}
           release_id: ${{steps.current-release.outputs.id }}
           verbose: true
