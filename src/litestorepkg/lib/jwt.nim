@@ -1,14 +1,14 @@
 import std/[
-    openssl, base64, strutils, macros, json, times, pegs, sequtils, os
+    openssl, base64, strutils, json, times, pegs, sequtils
     ]
-import types, core
+import types
 
 when defined(windows) and defined(amd64):
-    {.passL: "-static -L"&getProjectPath()&"/litestorepkg/vendor/openssl/windows -lssl -lcrypto -lbcrypt".}
+    {.passL: "-static -L./src/litestorepkg/vendor/openssl/windows -lssl -lcrypto -lbcrypt".}
 elif defined(linux) and defined(amd64):
-    {.passL: "-static -L"&getProjectPath()&"/litestorepkg/vendor/openssl/linux -lssl -lcrypto".}
+    {.passL: "-static -L./src/litestorepkg/vendor/openssl/linux -lssl -lcrypto".}
 elif defined(macosx) and defined(amd64):
-    {.passL: "-Bstatic -L"&getProjectPath()&"/litestorepkg/vendor/openssl/macosx -lssl -lcrypto -Bdynamic".}
+    {.passL: "-Bstatic -L./src/litestorepkg/vendor/openssl/macosx -lssl -lcrypto -Bdynamic".}
 
 
 proc EVP_PKEY_new(): EVP_PKEY {.cdecl, importc.}
