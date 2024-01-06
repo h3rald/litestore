@@ -40,6 +40,11 @@ However, users with the **admin:wiki** scope will be able to access documents lo
 
 Finally, specify the public signature to be used to validate JWT tokens using the **signature** property. Typically, its value should be set to the first value of the [x.509 certificate chain](https://auth0.com/docs/tokens/reference/jwt/jwks-properties) specified in the [JSON Web Key Set](https://auth0.com/docs/jwks) of your API.
 
+> %tip%
+> signature vs. jwks_uri
+> 
+> As of version 1.13.0, it is recommended to use the **jwks_uri** property in a LiteStore configuration file instead of the **signature** property.
+
 To use this configuration at runtime, specify it through the **-\-auth** option, like this:
 
 `litestore -\-auth:auth.json`
