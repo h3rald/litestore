@@ -13,6 +13,7 @@ elif defined(macosx) and defined(amd64):
 
 proc EVP_PKEY_new(): EVP_PKEY {.cdecl, importc.}
 proc X509_get_pubkey(cert: PX509): EVP_PKEY {.cdecl, importc.}
+proc X509_free(cert: PX509) {.cdecl, importc.}
 proc EVP_DigestVerifyInit(ctx: EVP_MD_CTX; pctx: ptr EVP_PKEY_CTX; typ: EVP_MD;
         e: ENGINE; pkey: EVP_PKEY): cint {.cdecl, importc.}
 proc EVP_DigestVerifyUpdate(ctx: EVP_MD_CTX; data: pointer;
@@ -125,7 +126,7 @@ proc verifySignature*(jwt: JWT; x5c: string) =
             EVP_PKEY_CTX_free(pkeyctx)
         if not pubkey.isNil:
             EVP_PKEY_free(pubkey)
-        if not x509.isNil and defined(X509_free):
+        if not x509.isNil:
             X509_free(x509)
         raise err
 
