@@ -10,8 +10,6 @@ An empty object that can be used to temporarily store data to pass across differ
 
 The current HTTP request sent to access the current resource.
 
-#### Properties
-
 <dl>
 <dt>method: string</dt>
 <dd>The HTTP method used by the request, all uppercase (GET, POST, DELETE, PUT, PATCH, OPTIOONS, or HEAD).</dd>
@@ -67,7 +65,7 @@ All methods return a response object containing two String properties, **code** 
 
 <dl>
 <dt>function get(resource: string, id: string, parameters: string): object</dt>
-<dd>Retrieves the specified resource(s.). 
+<dd>Retrieves the specified resource(s).
 <p>
 Examples:
 <ul>
@@ -122,6 +120,72 @@ Examples:
 <ul>
 <li><code>$store.head('docs', 'test-folder/test1.txt')</code></li>
 <li><code>$store.head('docs')</code></li>
+</ul>
+</p>
+</dd>
+</dl>
+
+### $http
+
+Simple synchronous API to perform HTTP requests. 
+
+All methods return a response object containing the following properties:
+* **code** (string)
+* **content** (string)
+* **headers** (object)
+
+<dl>
+<dt>function get(url: string, headers: object): object</dt>
+<dd>Executes a GET request.
+<p>
+Example:
+<ul>
+<li><code>$http.get('https://reqres.in/api/users', {})</code></li>
+</ul>
+</p>
+</dd>
+<dt>function post(url: string, headers: object body: string): object</dt>
+<dd>Executes a POST request.
+<p>
+Example:
+<ul>
+<li><code>$http.post(https://reqres.in/api/users', {'Content-Type': 'application/json'}, '{"name": "Test", "job": "Tester"}')</code></li>
+</ul>
+</p>
+</dd>
+<dt>function put(url: string, headers: object body: string): object</dt>
+<dd>Executes a PUT request.
+<p>
+Example:
+<ul>
+<li><code>$http.put(https://reqres.in/api/users/2', {'Content-Type': 'application/json'}, '{"name": "Test", "job": "Tester"}')</code></li>
+</ul>
+</p>
+</dd>
+<dt>function patch(url: string, headers: object body: string): object</dt>
+<dd>Executes a PATCH request.
+<p>
+Example:
+<ul>
+<li><code>$http.patch(https://reqres.in/api/users/2', {'Content-Type': 'application/json'}, '{"name": "Test", "job": "Tester"}')</code></li>
+</ul>
+</p>
+</dd>
+<dt>function delete(url: string, headers: object): object</dt>
+<dd>Executes a DELETE request.
+<p>
+Example:
+<ul>
+<li><code>$http.delete('https://reqres.in/api/users/2', {})</code></li>
+</ul>
+</p>
+</dd>
+<dt>function head(url: string, headers: object): object</dt>
+<dd>Executes a HEAD request.
+<p>
+Example:
+<ul>
+<li><code>$http.head('https://reqres.in/api/users', {})</code></li>
 </ul>
 </p>
 </dd>
