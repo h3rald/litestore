@@ -1174,14 +1174,23 @@ proc toJson(headers: HttpHeaders): JsonNode =
   for k, v in headers.pairs:
     result[k] = newJString(v)
 
+proc getHeadersArg(ctx: DTContext): HttpHeaders =
+  duk_enum(ctx, 1, 0)
+  var headers = newSeq[tuple[key: string, val: string]](0)
+  while duk_next(ctx, -1, 1) == 1:
+    let key = $duk_safe_to_string(ctx, -2)
+    let val = $duk_safe_to_string(ctx, -1)
+    duk_pop_2(ctx)
+    headers.add (key: key, val: val)
+  return newHttpHeaders(headers)
+
+
 proc registerHttpApi(LS: LiteStore, ctx: DTContext) =
   var api_idx = ctx.duk_push_object()
   # GET
   var get: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
     let url = $duk_get_string(ctx, 0)
-    let headers = $duk_get_string(ctx, 1)
-    let client = newHttpClient(headers = (
-        headers).parseJson.toHeaders)
+    let client = newHttpClient(headers = ctx.getHeadersArg)
     let resp = client.get(url)
     var res_idx = ctx.duk_push_object()
     ctx.duk_push_int(cast[cint](resp.code))
@@ -1194,6 +1203,89 @@ proc registerHttpApi(LS: LiteStore, ctx: DTContext) =
   )
   discard duk_push_c_function(ctx, get, 2)
   discard ctx.duk_put_prop_string(api_idx, "get")
+  # HEAD
+  var head: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
+    let url = $duk_get_string(ctx, 0)
+    let client = newHttpClient(headers = ctx.getHeadersArg)
+    let resp = client.head(url)
+    var res_idx = ctx.duk_push_object()
+    ctx.duk_push_int(cast[cint](resp.code))
+    discard ctx.duk_put_prop_string(res_idx, "code")
+    discard ctx.duk_push_string(resp.body.cstring)
+    discard ctx.duk_put_prop_string(res_idx, "content")
+    discard ctx.duk_push_string(resp.headers.toJson.pretty.cstring)
+    discard ctx.duk_put_prop_string(res_idx, "headers")
+    return 1
+  )
+  discard duk_push_c_function(ctx, head, 2)
+  discard ctx.duk_put_prop_string(api_idx, "head")
+  # DELETE
+  var delete: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
+    let url = $duk_get_string(ctx, 0)
+    let client = newHttpClient(headers = ctx.getHeadersArg)
+    let resp = client.delete(url)
+    var res_idx = ctx.duk_push_object()
+    ctx.duk_push_int(cast[cint](resp.code))
+    discard ctx.duk_put_prop_string(res_idx, "code")
+    discard ctx.duk_push_string(resp.body.cstring)
+    discard ctx.duk_put_prop_string(res_idx, "content")
+    discard ctx.duk_push_string(resp.headers.toJson.pretty.cstring)
+    discard ctx.duk_put_prop_string(res_idx, "headers")
+    return 1
+  )
+  discard duk_push_c_function(ctx, delete, 2)
+  discard ctx.duk_put_prop_string(api_idx, "head")
+  # POST
+  var post: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
+    let url = $duk_get_string(ctx, 0)
+    let client = newHttpClient(headers = ctx.getHeadersArg)
+    let body = $duk_get_string(ctx, 2)
+    let resp = client.post(url, body)
+    var res_idx = ctx.duk_push_object()
+    ctx.duk_push_int(cast[cint](resp.code))
+    discard ctx.duk_put_prop_string(res_idx, "code")
+    discard ctx.duk_push_string(resp.body.cstring)
+    discard ctx.duk_put_prop_string(res_idx, "content")
+    discard ctx.duk_push_string(resp.headers.toJson.pretty.cstring)
+    discard ctx.duk_put_prop_string(res_idx, "headers")
+    return 1
+  )
+  discard duk_push_c_function(ctx, post, 3)
+  discard ctx.duk_put_prop_string(api_idx, "post")
+  # PUT
+  var put: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
+    let url = $duk_get_string(ctx, 0)
+    let client = newHttpClient(headers = ctx.getHeadersArg)
+    let body = $duk_get_string(ctx, 2)
+    let resp = client.put(url, body)
+    var res_idx = ctx.duk_push_object()
+    ctx.duk_push_int(cast[cint](resp.code))
+    discard ctx.duk_put_prop_string(res_idx, "code")
+    discard ctx.duk_push_string(resp.body.cstring)
+    discard ctx.duk_put_prop_string(res_idx, "content")
+    discard ctx.duk_push_string(resp.headers.toJson.pretty.cstring)
+    discard ctx.duk_put_prop_string(res_idx, "headers")
+    return 1
+  )
+  discard duk_push_c_function(ctx, put, 3)
+  discard ctx.duk_put_prop_string(api_idx, "put")
+  # PATCH
+  var patch: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
+    let url = $duk_get_string(ctx, 0)
+    let client = newHttpClient(headers = ctx.getHeadersArg)
+    let body = $duk_get_string(ctx, 2)
+    let resp = client.patch(url, body)
+    var res_idx = ctx.duk_push_object()
+    ctx.duk_push_int(cast[cint](resp.code))
+    discard ctx.duk_put_prop_string(res_idx, "code")
+    discard ctx.duk_push_string(resp.body.cstring)
+    discard ctx.duk_put_prop_string(res_idx, "content")
+    discard ctx.duk_push_string(resp.headers.toJson.pretty.cstring)
+    discard ctx.duk_put_prop_string(res_idx, "headers")
+    return 1
+  )
+  discard duk_push_c_function(ctx, patch, 3)
+  discard ctx.duk_put_prop_string(api_idx, "patch")
   discard ctx.duk_put_global_string("$http")
 
 proc registerStoreApi(LS: LiteStore, ctx: DTContext, origResource,
