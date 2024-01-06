@@ -102,6 +102,7 @@ jobs:
         id: current-relese
         uses: pozetroninc/github-action-get-latest-release@master
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           repository: h3rald/litestore
 
       # Package the resulting Linux/macOS binary
