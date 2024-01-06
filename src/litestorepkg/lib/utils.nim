@@ -1,6 +1,6 @@
 import
-  x_sqlite3,
-  x_db_sqlite,
+  db_connector/sqlite3,
+  db_connector/db_sqlite,
   json,
   strutils,
   pegs,
@@ -248,7 +248,7 @@ proc toPlainText*(s: string): string =
   var special_chars = peg"""\*\*+ / \_\_+ / \-\-+ / \#\#+ / \+\++ / \~\~+ / \`\`+ """
   try:
     json = s.parseJson()
-  except:
+  except CatchableError:
     discard
   if not json.isNil:
     if json.kind == JObject:
@@ -324,7 +324,7 @@ proc eWarn*() =
   LOG.warn(e.msg)
   LOG.debug(getStackTrace(e))
 
-proc validate*(req: LSRequest, LS: LiteStore, resource: string, id: string, cb: proc(req: LSRequest, LS: LiteStore, resource: string, id: string):LSResponse): LSResponse =
+proc validate*(req: LSRequest, LS: LiteStore, resource: string, id: string, cb: proc(req: LSRequest, LS: LiteStore, resource: string, id: string):LSResponse): LSResponse {.gcsafe.} =
   if req.reqMethod == HttpPost or req.reqMethod == HttpPut or req.reqMethod == HttpPatch:
     var ct =  ""
     let body = req.body.strip
@@ -336,7 +336,7 @@ proc validate*(req: LSRequest, LS: LiteStore, resource: string, id: string, cb: 
         of "application/json":
           try:
             discard body.parseJson()
-          except:
+          except CatchableError:
             return resError(Http400, "Invalid JSON content - $1" % getCurrentExceptionMsg())
         else:
           discard

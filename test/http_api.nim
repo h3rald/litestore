@@ -207,7 +207,7 @@ suite "LiteStore HTTP API":
     check(json["results"][5]["data"]["name"]["first"] == %"Hart")
 
   test "GET documents in range":
-    var rget = jget("docs/?created-after=$1&created-before=$2" % [$t_now, $(t_now+10)])
+    var rget = jget("docs/?created-after=$1&created-before=$2" % [$t_now, $(t_now+100)])
     var json = rget.body.parseJson
     check(json["total"] == %8)
 

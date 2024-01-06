@@ -1,5 +1,6 @@
 import
-  asynchttpserver,
+  std/[asynchttpserver,
+  httpclient,
   strutils,
   sequtils,
   cgi,
@@ -9,7 +10,7 @@ import
   os,
   uri,
   tables,
-  times
+  times]
 import
   types,
   contenttypes,
@@ -148,17 +149,19 @@ proc parseQueryOption*(fragment: string, options: var QueryOptions) =
     raise newException(EInvalidRequest, "Invalid query string fragment '$1'" % fragment)
   try:
     pair[1] = pair[1].replace("+", "%2B").decodeURL
-  except:
+  except CatchableError:
     raise newException(EInvalidRequest, "Unable to decode query string fragment '$1'" % fragment)
   case pair[0]:
     of "filter":
       filterClauses(pair[1], options)
       if options.jsonFilter == "":
-        raise newException(EInvalidRequest, "Invalid filter clause: $1" % pair[1].replace("\"", "\\\""))
+        raise newException(EInvalidRequest, "Invalid filter clause: $1" % pair[
+            1].replace("\"", "\\\""))
     of "select":
       selectClause(pair[1], options)
       if options.jsonSelect.len == 0:
-        raise newException(EInvalidRequest, "Invalid select clause: $1" % pair[1].replace("\"", "\\\""))
+        raise newException(EInvalidRequest, "Invalid select clause: $1" % pair[
+            1].replace("\"", "\\\""))
     of "like":
       options.like = pair[1]
     of "search":
@@ -168,33 +171,39 @@ proc parseQueryOption*(fragment: string, options: var QueryOptions) =
     of "created-after":
       try:
         options.createdAfter = pair[1].parseInt.fromUnix.utc.format("yyyy-MM-dd'T'HH:mm:ss'Z'")
-      except:
-        raise newException(EInvalidRequest, "Invalid created-after value: $1" % getCurrentExceptionMsg())
+      except CatchableError:
+        raise newException(EInvalidRequest, "Invalid created-after value: $1" %
+            getCurrentExceptionMsg())
     of "created-before":
       try:
         options.createdBefore = pair[1].parseInt.fromUnix.utc.format("yyyy-MM-dd'T'HH:mm:ss'Z'")
-      except:
-        raise newException(EInvalidRequest, "Invalid created-before value: $1" % getCurrentExceptionMsg())
+      except CatchableError:
+        raise newException(EInvalidRequest, "Invalid created-before value: $1" %
+            getCurrentExceptionMsg())
     of "modified-after":
       try:
         options.modifiedAfter = pair[1].parseInt.fromUnix.utc.format("yyyy-MM-dd'T'HH:mm:ss'Z'")
-      except:
-        raise newException(EInvalidRequest, "Invalid modified.after value: $1" % getCurrentExceptionMsg())
+      except CatchableError:
+        raise newException(EInvalidRequest, "Invalid modified.after value: $1" %
+            getCurrentExceptionMsg())
     of "modified-before":
       try:
         options.modifiedBefore = pair[1].parseInt.fromUnix.utc.format("yyyy-MM-dd'T'HH:mm:ss'Z'")
-      except:
-        raise newException(EInvalidRequest, "Invalid modified-before value: $1" % getCurrentExceptionMsg())
+      except CatchableError:
+        raise newException(EInvalidRequest,
+            "Invalid modified-before value: $1" % getCurrentExceptionMsg())
     of "limit":
       try:
         options.limit = pair[1].parseInt
-      except:
-        raise newException(EInvalidRequest, "Invalid limit value: $1" % getCurrentExceptionMsg())
+      except CatchableError:
+        raise newException(EInvalidRequest, "Invalid limit value: $1" %
+            getCurrentExceptionMsg())
     of "offset":
       try:
         options.offset = pair[1].parseInt
-      except:
-        raise newException(EInvalidRequest, "Invalid offset value: $1" % getCurrentExceptionMsg())
+      except CatchableError:
+        raise newException(EInvalidRequest, "Invalid offset value: $1" %
+            getCurrentExceptionMsg())
     of "sort":
       let orderby = pair[1].orderByClauses()
       if orderby != "":
@@ -214,9 +223,11 @@ proc parseQueryOptions*(querystring: string, options: var QueryOptions) =
   for f in fragments:
     f.parseQueryOption(options)
 
-proc validate*(req: LSRequest, LS: LiteStore, resource: string, id: string, cb: proc(req: LSRequest, LS: LiteStore, resource: string, id: string):LSResponse): LSResponse =
+proc validate*(req: LSRequest, LS: LiteStore, resource: string, id: string,
+    cb: proc(req: LSRequest, LS: LiteStore, resource: string,
+    id: string): LSResponse): LSResponse =
   if req.reqMethod == HttpPost or req.reqMethod == HttpPut or req.reqMethod == HttpPatch:
-    var ct =  ""
+    var ct = ""
     let body = req.body.strip
     if body == "":
       return resError(Http400, "Bad request: No content specified for document.")
@@ -226,14 +237,17 @@ proc validate*(req: LSRequest, LS: LiteStore, resource: string, id: string, cb: 
         of "application/json":
           try:
             discard body.parseJson()
-          except:
-            return resError(Http400, "Invalid JSON content - $1" % getCurrentExceptionMsg())
+          except CatchableError:
+            return resError(Http400, "Invalid JSON content - $1" %
+                getCurrentExceptionMsg())
         else:
           discard
   return cb(req, LS, resource, id)
 
-proc patchTag(tags: var seq[string], index: int, op, path, value: string): bool =
-  LOG.debug("- PATCH -> $1 tag['$2'] = \"$3\" - Total tags: $4." % [op, $index, $value, $tags.len])
+proc patchTag(tags: var seq[string], index: int, op, path,
+    value: string): bool =
+  LOG.debug("- PATCH -> $1 tag['$2'] = \"$3\" - Total tags: $4." % [op, $index,
+      $value, $tags.len])
   case op:
     of "remove":
       let tag = tags[index]
@@ -252,7 +266,8 @@ proc patchTag(tags: var seq[string], index: int, op, path, value: string): bool 
     of "replace":
       if value.match(PEG_USER_TAG):
         if tags[index].startsWith("$"):
-          raise newException(EInvalidRequest, "cannot replace system tag: $1" % tags[index])
+          raise newException(EInvalidRequest, "cannot replace system tag: $1" %
+              tags[index])
         else:
           tags[index] = value
       else:
@@ -267,7 +282,8 @@ proc patchTag(tags: var seq[string], index: int, op, path, value: string): bool 
       raise newException(EInvalidRequest, "invalid patch operation: $1" % op)
   return true
 
-proc patchData*(data: var JsonNode, origData: JsonNode, op: string, path: string, value: JsonNode): bool =
+proc patchData*(data: var JsonNode, origData: JsonNode, op: string,
+    path: string, value: JsonNode): bool =
   LOG.debug("- PATCH -> $1 path $2 with $3" % [op, path, $value])
   var keys = path.replace(peg"^\/data\/", "").split("/")
   if keys.len == 0:
@@ -292,12 +308,14 @@ proc patchData*(data: var JsonNode, origData: JsonNode, op: string, path: string
               if d.elems[index] != value:
                 return false
             else:
-              raise newException(EInvalidRequest, "invalid patch operation: $1" % op)
+              raise newException(EInvalidRequest,
+                  "invalid patch operation: $1" % op)
         else:
           d = d[index]
           dorig = dorig[index]
-      except:
-        raise newException(EInvalidRequest, "invalid index key '$1' in path '$2'" % [key, path])
+      except CatchableError:
+        raise newException(EInvalidRequest,
+            "invalid index key '$1' in path '$2'" % [key, path])
     else:
       if c >= keys.len:
         case op:
@@ -305,20 +323,23 @@ proc patchData*(data: var JsonNode, origData: JsonNode, op: string, path: string
             if d.hasKey(key):
               d.delete(key)
             else:
-              raise newException(EInvalidRequest, "key '$1' not found in path '$2'" % [key, path])
+              raise newException(EInvalidRequest,
+                  "key '$1' not found in path '$2'" % [key, path])
           of "add":
             d[key] = value
           of "replace":
             if d.hasKey(key):
               d[key] = value
             else:
-              raise newException(EInvalidRequest, "key '$1' not found in path '$2'" % [key, path])
+              raise newException(EInvalidRequest,
+                  "key '$1' not found in path '$2'" % [key, path])
           of "test":
             if dorig.hasKey(key):
               if dorig[key] != value:
                 return false
             else:
-              raise newException(EInvalidRequest, "key '$1' not found in path '$2'" % [key, path])
+              raise newException(EInvalidRequest,
+                  "key '$1' not found in path '$2'" % [key, path])
           else:
             raise newException(EInvalidRequest, "invalid patch operation: $1" % op)
       else:
@@ -328,7 +349,8 @@ proc patchData*(data: var JsonNode, origData: JsonNode, op: string, path: string
   return true
 
 
-proc applyPatchOperation*(data: var JsonNode, origData: JsonNode, tags: var seq[string], op: string, path: string, value: JsonNode): bool =
+proc applyPatchOperation*(data: var JsonNode, origData: JsonNode, tags: var seq[
+    string], op: string, path: string, value: JsonNode): bool =
   var matches = @[""]
   let p = peg"""
     path <- ^tagPath / fieldPath$
@@ -351,7 +373,8 @@ proc applyPatchOperation*(data: var JsonNode, origData: JsonNode, tags: var seq[
 
 # Low level procs
 
-proc getTag*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequest): LSResponse =
+proc getTag*(LS: LiteStore, id: string, options = newQueryOptions(),
+    req: LSRequest): LSResponse =
   let doc = LS.store.retrieveTag(id, options)
   result.headers = ctJsonHeader()
   setOrigin(LS, req, result.headers)
@@ -361,7 +384,8 @@ proc getTag*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequ
     result.content = $doc
     result.code = Http200
 
-proc getStore*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequest): LSResponse =
+proc getStore*(LS: LiteStore, id: string, options = newQueryOptions(),
+    req: LSRequest): LSResponse =
   if (not LSDICT.hasKey(id)):
     return resStoreNotFound(id)
   let store = LSDICT[id]
@@ -374,7 +398,8 @@ proc getStore*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRe
   result.content = $doc
   result.code = Http200
 
-proc getIndex*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequest): LSResponse =
+proc getIndex*(LS: LiteStore, id: string, options = newQueryOptions(),
+    req: LSRequest): LSResponse =
   let doc = LS.store.retrieveIndex(id, options)
   result.headers = ctJsonHeader()
   setOrigin(LS, req, result.headers)
@@ -384,7 +409,8 @@ proc getIndex*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRe
     result.content = $doc
     result.code = Http200
 
-proc getRawDocument*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequest): LSResponse =
+proc getRawDocument*(LS: LiteStore, id: string, options = newQueryOptions(),
+    req: LSRequest): LSResponse =
   let doc = LS.store.retrieveRawDocument(id, options)
   result.headers = ctJsonHeader()
   setOrigin(LS, req, result.headers)
@@ -394,7 +420,8 @@ proc getRawDocument*(LS: LiteStore, id: string, options = newQueryOptions(), req
     result.content = doc
     result.code = Http200
 
-proc getDocument*(LS: LiteStore, id: string, options = newQueryOptions(), req: LSRequest): LSResponse =
+proc getDocument*(LS: LiteStore, id: string, options = newQueryOptions(),
+    req: LSRequest): LSResponse =
   let doc = LS.store.retrieveDocument(id, options)
   if doc.data == "":
     result = resDocumentNotFound(id)
@@ -419,10 +446,11 @@ proc deleteDocument*(LS: LiteStore, id: string, req: LSRequest): LSResponse =
         result.headers["Content-Length"] = "0"
         result.content = ""
         result.code = Http204
-    except:
+    except CatchableError:
       result = resError(Http500, "Unable to delete document '$1'" % id)
 
-proc getTags*(LS: LiteStore, options: QueryOptions = newQueryOptions(), req: LSRequest): LSResponse =
+proc getTags*(LS: LiteStore, options: QueryOptions = newQueryOptions(),
+    req: LSRequest): LSResponse =
   var options = options
   let t0 = cpuTime()
   let docs = LS.store.retrieveTags(options)
@@ -431,7 +459,8 @@ proc getTags*(LS: LiteStore, options: QueryOptions = newQueryOptions(), req: LSR
   options.limit = 0
   options.offset = 0
   options.select = @["COUNT(tag_id)"]
-  let total = LS.store.countTags(prepareSelectTagsQuery(options), options.like.replace("*", "%"))
+  let total = LS.store.countTags(prepareSelectTagsQuery(options),
+      options.like.replace("*", "%"))
   var content = newJObject()
   if options.like != "":
     content["like"] = %(options.like.decodeURL)
@@ -447,7 +476,8 @@ proc getTags*(LS: LiteStore, options: QueryOptions = newQueryOptions(), req: LSR
   result.content = content.pretty
   result.code = Http200
 
-proc getStores(LS: LiteStore, options: QueryOptions = newQueryOptions(), req: LSRequest): LSResponse =
+proc getStores(LS: LiteStore, options: QueryOptions = newQueryOptions(),
+    req: LSRequest): LSResponse =
   let t0 = cpuTime()
   var docs = newJArray()
   for k, v in LSDICT.pairs:
@@ -465,7 +495,8 @@ proc getStores(LS: LiteStore, options: QueryOptions = newQueryOptions(), req: LS
   result.content = content.pretty
   result.code = Http200
 
-proc getIndexes*(LS: LiteStore, options: QueryOptions = newQueryOptions(), req: LSRequest): LSResponse =
+proc getIndexes*(LS: LiteStore, options: QueryOptions = newQueryOptions(),
+    req: LSRequest): LSResponse =
   var options = options
   let t0 = cpuTime()
   let docs = LS.store.retrieveIndexes(options)
@@ -474,7 +505,8 @@ proc getIndexes*(LS: LiteStore, options: QueryOptions = newQueryOptions(), req: 
   options.limit = 0
   options.offset = 0
   options.select = @["COUNT(name)"]
-  let total = LS.store.countIndexes(prepareSelectIndexesQuery(options), options.like.replace("*", "%"))
+  let total = LS.store.countIndexes(prepareSelectIndexesQuery(options),
+      options.like.replace("*", "%"))
   var content = newJObject()
   if options.like != "":
     content["like"] = %(options.like.decodeURL)
@@ -490,7 +522,8 @@ proc getIndexes*(LS: LiteStore, options: QueryOptions = newQueryOptions(), req: 
   result.content = content.pretty
   result.code = Http200
 
-proc getRawDocuments*(LS: LiteStore, options: QueryOptions = newQueryOptions(), req: LSRequest): LSResponse =
+proc getRawDocuments*(LS: LiteStore, options: QueryOptions = newQueryOptions(),
+    req: LSRequest): LSResponse =
   var options = options
   let t0 = cpuTime()
   let docs = LS.store.retrieveRawDocuments(options)
@@ -533,7 +566,8 @@ proc getInfo*(LS: LiteStore, req: LSRequest): LSResponse =
   content["version"] = %(LS.appname & " v" & LS.appversion)
   content["datastore_version"] = %version
   content["api_version"] = %7
-  content["size"] = %($((LS.file.getFileSize().float/(1024*1024)).formatFloat(ffDecimal, 2)) & " MB")
+  content["size"] = %($((LS.file.getFileSize().float/(1024*1024)).formatFloat(
+      ffDecimal, 2)) & " MB")
   content["read_only"] = %LS.readonly
   content["log_level"] = %LS.loglevel
   if LS.directory.len == 0:
@@ -541,7 +575,8 @@ proc getInfo*(LS: LiteStore, req: LSRequest): LSResponse =
   else:
     content["directory"] = %LS.directory
   content["mount"] = %LS.mount
-  if LS.config != newJNull() and LS.config.hasKey("stores") and LS.config["stores"].len > 0:
+  if LS.config != newJNull() and LS.config.hasKey("stores") and LS.config[
+      "stores"].len > 0:
     content["additional_stores"] = %toSeq(LS.config["stores"].keys)
   else:
     content["additional_stores"] = newJArray()
@@ -570,11 +605,12 @@ proc putIndex*(LS: LiteStore, id, field: string, req: LSRequest): LSResponse =
     setOrigin(LS, req, result.headers)
     result.content = "{\"id\": \"$1\", \"field\": \"$2\"}" % [id, field]
     result.code = Http201
-  except:
+  except CatchableError:
     eWarn()
     result = resError(Http500, "Unable to create index.")
 
-proc putStore*(LS: LiteStore, id: string, config: JsonNode, req: LSRequest): LSResponse =
+proc putStore*(LS: LiteStore, id: string, config: JsonNode,
+    req: LSRequest): LSResponse =
   try:
     if (not id.match(PEG_STORE) or id == "master"):
       return resError(Http400, "invalid store ID: $1" % id)
@@ -585,7 +621,7 @@ proc putStore*(LS: LiteStore, id: string, config: JsonNode, req: LSRequest): LSR
     LSDICT[id] = store
     result = getStore(LS, id, newQueryOptions(), req)
     result.code = Http201
-  except:
+  except CatchableError:
     eWarn()
     result = resError(Http500, "Unable to create store.")
 
@@ -601,7 +637,7 @@ proc deleteIndex*(LS: LiteStore, id: string, req: LSRequest): LSResponse =
     result.headers["Content-Length"] = "0"
     result.content = ""
     result.code = Http204
-  except:
+  except CatchableError:
     eWarn()
     result = resError(Http500, "Unable to delete index.")
 
@@ -620,11 +656,12 @@ proc deleteStore*(LS: LiteStore, id: string, req: LSRequest): LSResponse =
     result.headers["Content-Length"] = "0"
     result.content = ""
     result.code = Http204
-  except:
+  except CatchableError:
     eWarn()
     result = resError(Http500, "Unable to delete index.")
 
-proc postDocument*(LS: LiteStore, body: string, ct: string, folder="", req: LSRequest): LSResponse =
+proc postDocument*(LS: LiteStore, body: string, ct: string, folder = "",
+    req: LSRequest): LSResponse =
   if not folder.isFolder:
     return resError(Http400, "Invalid folder specified when creating document: $1" % folder)
   try:
@@ -636,11 +673,12 @@ proc postDocument*(LS: LiteStore, body: string, ct: string, folder="", req: LSRe
       result.code = Http201
     else:
       result = resError(Http500, "Unable to create document.")
-  except:
+  except CatchableError:
     eWarn()
     result = resError(Http500, "Unable to create document.")
 
-proc putDocument*(LS: LiteStore, id: string, body: string, ct: string, req: LSRequest): LSResponse =
+proc putDocument*(LS: LiteStore, id: string, body: string, ct: string,
+    req: LSRequest): LSResponse =
   if id.isFolder:
     return resError(Http400, "Invalid ID '$1' (Document IDs cannot end with '/')." % id)
   let doc = LS.store.retrieveDocument(id)
@@ -665,10 +703,11 @@ proc putDocument*(LS: LiteStore, id: string, body: string, ct: string, req: LSRe
         result.code = Http200
       else:
         result = resError(Http500, "Unable to update document '$1'." % id)
-    except:
+    except CatchableError:
       result = resError(Http500, "Unable to update document '$1'." % id)
 
-proc patchDocument*(LS: LiteStore, id: string, body: string, req: LSRequest): LSResponse =
+proc patchDocument*(LS: LiteStore, id: string, body: string,
+    req: LSRequest): LSResponse =
   var apply = true
   let jbody = body.parseJson
   if jbody.kind != JArray:
@@ -690,7 +729,7 @@ proc patchDocument*(LS: LiteStore, id: string, body: string, req: LSRequest): LS
     try:
       origData = jdoc["data"].getStr.parseJson
       data = origData.copy
-    except:
+    except CatchableError:
       discard
   var c = 1
   for item in jbody.items:
@@ -698,13 +737,14 @@ proc patchDocument*(LS: LiteStore, id: string, body: string, req: LSRequest): LS
       if not item.hasKey("value"):
         item["value"] = %""
       try:
-        apply = applyPatchOperation(data, origData, tags, item["op"].str, item["path"].str, item["value"])
+        apply = applyPatchOperation(data, origData, tags, item["op"].str, item[
+            "path"].str, item["value"])
         if not apply:
           break
-      except:
+      except CatchableError:
         return resError(Http400, "Bad request - $1" % getCurrentExceptionMsg())
     else:
-        return resError(Http400, "Bad request: patch operation #$1 is malformed." % $c)
+      return resError(Http400, "Bad request: patch operation #$1 is malformed." % $c)
     c.inc
   if apply:
     # when document is not JSON the origData is not defined
@@ -714,8 +754,9 @@ proc patchDocument*(LS: LiteStore, id: string, body: string, req: LSRequest): LS
         var doc = LS.store.updateDocument(id, data.pretty, "application/json")
         if doc == "":
           return resError(Http500, "Unable to patch document '$1'." % id)
-      except:
-        return resError(Http500, "Unable to patch document '$1' - $2" % id, getCurrentExceptionMsg())
+      except CatchableError:
+        return resError(Http500, "Unable to patch document '$1' - $2" % id,
+            getCurrentExceptionMsg())
     if origTags != tags:
       try:
         for t1 in jdoc["tags"].items:
@@ -723,13 +764,15 @@ proc patchDocument*(LS: LiteStore, id: string, body: string, req: LSRequest): LS
         for t2 in tags:
           if t2 != "":
             LS.store.createTag(t2, id, true)
-      except:
-        return resError(Http500, "Unable to patch document '$1' - $2" % [id, getCurrentExceptionMsg()])
+      except CatchableError:
+        return resError(Http500, "Unable to patch document '$1' - $2" % [id,
+            getCurrentExceptionMsg()])
   return LS.getRawDocument(id, newQueryOptions(), req)
 
 # Main routing
 
-proc options*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse =
+proc options*(req: LSRequest, LS: LiteStore, resource: string,
+    id = ""): LSResponse =
   case resource:
     of "info":
       result.headers = newHttpHeaders(TAB_HEADERS)
@@ -863,7 +906,8 @@ proc options*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSRespo
     else:
       discard # never happens really.
 
-proc head*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse =
+proc head*(req: LSRequest, LS: LiteStore, resource: string,
+    id = ""): LSResponse =
   var options = newQueryOptions()
   options.select = @["documents.id AS id", "created", "modified"]
   if id.isFolder:
@@ -876,10 +920,11 @@ proc head*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse
     else:
       result = LS.getRawDocuments(options, req)
       result.content = ""
-  except:
+  except CatchableError:
     return resError(Http400, "Bad request - $1" % getCurrentExceptionMsg())
 
-proc get*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse =
+proc get*(req: LSRequest, LS: LiteStore, resource: string,
+    id = ""): LSResponse =
   case resource:
     of "docs":
       var options = newQueryOptions()
@@ -890,13 +935,14 @@ proc get*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse 
       try:
         parseQueryOptions(req.url.query, options);
         if id != "" and options.folder == "":
-          if req.url.query.contains("raw=true") or req.headers.hasKey("Accept") and req.headers["Accept"] == "application/json":
+          if req.url.query.contains("raw=true") or req.headers.hasKey(
+              "Accept") and req.headers["Accept"] == "application/json":
             return LS.getRawDocument(id, options, req)
           else:
             return LS.getDocument(id, options, req)
         else:
           return LS.getRawDocuments(options, req)
-      except:
+      except CatchableError:
         let e = getCurrentException()
         let trace = e.getStackTrace()
         echo trace
@@ -913,9 +959,9 @@ proc get*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse 
           options.folder = ""
           result = LS.getDocument(id & "index.html", options, req)
           if result.code == Http404:
-            result = LS.getDocument(id & "index.htm", options, req) 
+            result = LS.getDocument(id & "index.htm", options, req)
           return result
-      except:
+      except CatchableError:
         let e = getCurrentException()
         let trace = e.getStackTrace()
         echo trace
@@ -928,7 +974,7 @@ proc get*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse 
           return LS.getTag(id, options, req)
         else:
           return LS.getTags(options, req)
-      except:
+      except CatchableError:
         return resError(Http400, "Bad Request - $1" % getCurrentExceptionMsg())
     of "indexes":
       var options = newQueryOptions()
@@ -938,7 +984,7 @@ proc get*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse 
           return LS.getIndex(id, options, req)
         else:
           return LS.getIndexes(options, req)
-      except:
+      except CatchableError:
         return resError(Http400, "Bad Request - $1" % getCurrentExceptionMsg())
     of "stores":
       var options = newQueryOptions()
@@ -948,7 +994,7 @@ proc get*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse 
           return LS.getStore(id, options, req)
         else:
           return LS.getStores(options, req)
-      except:
+      except CatchableError:
         return resError(Http400, "Bad Request - $1" % getCurrentExceptionMsg())
     of "info":
       if id != "":
@@ -957,27 +1003,31 @@ proc get*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse 
     else:
       discard # never happens really.
 
-proc post*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse =
+proc post*(req: LSRequest, LS: LiteStore, resource: string,
+    id = ""): LSResponse =
   var ct = "text/plain"
   if req.headers.hasKey("Content-Type"):
     ct = req.headers["Content-Type"]
   return LS.postDocument(req.body.strip, ct, id, req)
 
-proc put*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse =
+proc put*(req: LSRequest, LS: LiteStore, resource: string,
+    id = ""): LSResponse =
   if id != "":
     if resource == "indexes":
       var field = ""
       try:
         field = parseJson(req.body.strip)["field"].getStr
-      except:
-        return resError(Http400, "Bad Request - Invalid JSON body - $1" % getCurrentExceptionMsg())
+      except CatchableError:
+        return resError(Http400, "Bad Request - Invalid JSON body - $1" %
+            getCurrentExceptionMsg())
       return LS.putIndex(id, field, req)
     elif resource == "stores":
       var config = newJNull()
       try:
         config = parseJson(req.body)
-      except:
-        return resError(Http400, "Bad Request - Invalid JSON body - $1" % getCurrentExceptionMsg())
+      except CatchableError:
+        return resError(Http400, "Bad Request - Invalid JSON body - $1" %
+            getCurrentExceptionMsg())
       return LS.putStore(id, config, req)
     else: # Assume docs
       var ct = "text/plain"
@@ -987,7 +1037,8 @@ proc put*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse 
   else:
     return resError(Http400, "Bad request: document ID must be specified in PUT requests.")
 
-proc delete*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse =
+proc delete*(req: LSRequest, LS: LiteStore, resource: string,
+    id = ""): LSResponse =
   if id != "":
     if resource == "indexes":
       return LS.deleteIndex(id, req)
@@ -998,7 +1049,8 @@ proc delete*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSRespon
   else:
     return resError(Http400, "Bad request: document ID must be specified in DELETE requests.")
 
-proc patch*(req: LSRequest, LS: LiteStore, resource: string, id = ""): LSResponse =
+proc patch*(req: LSRequest, LS: LiteStore, resource: string,
+    id = ""): LSResponse =
   if id != "":
     return LS.patchDocument(id, req.body, req)
   else:
@@ -1024,14 +1076,15 @@ proc serveFile*(req: LSRequest, LS: LiteStore, id: string): LSResponse =
           setOrigin(LS, req, result.headers)
           result.content = contents
           result.code = Http200
-        except:
+        except CatchableError:
           return resError(Http500, "Unable to read file '$1'." % path)
       else:
         return resError(Http404, "File '$1' not found." % path)
     else:
       return resError(Http405, "Method not allowed: $1" % $req.reqMethod)
 
-proc route*(req: LSRequest, LS: LiteStore, resource = "docs", id = ""): LSResponse =
+proc route*(req: LSRequest, LS: LiteStore, resource = "docs",
+    id = ""): LSResponse =
   var reqMethod = $req.reqMethod
   if req.headers.hasKey("X-HTTP-Method-Override"):
     reqMethod = req.headers["X-HTTP-Method-Override"]
@@ -1072,31 +1125,37 @@ proc multiRoute(req: LSRequest, resource, id: string): LSResponse =
     return req.route(LSDICT[id], matches[1], matches[2])
   return req.route(LS, resource, id)
 
-proc newSimpleLSRequest(meth: HttpMethod, resource, id,  body = "", params = "", headers = newHttpHeaders()): LSRequest =
+proc newSimpleLSRequest(meth: HttpMethod, resource = "", id = "", body = "",
+    params = "", headers = newHttpHeaders()): LSRequest =
   result.reqMethod = meth
   result.body = body
   result.headers = headers
-  result.url = parseUri("$1://$2:$3/$4/$5?$6" % @["http", "localhost", "9500", resource, id, params])
-  
+  result.url = parseUri("$1://$2:$3/$4/$5?$6" % @["http", "localhost", "9500",
+      resource, id, params])
+
 proc get(resource, id: string, params = ""): LSResponse =
-  return newSimpleLSRequest(HttpGet, resource, id, "", params).multiRoute(resource, id)
+  return newSimpleLSRequest(HttpGet, resource, id, "", params).multiRoute(
+      resource, id)
 
 proc post(resource, folder, body: string, ct = ""): LSResponse =
   var headers = newHttpHeaders()
   if ct != "":
     headers["Content-Type"] = ct
-  return newSimpleLSRequest(HttpPost, resource, folder, body, "", headers).multiRoute(resource, folder & "/")
+  return newSimpleLSRequest(HttpPost, resource, folder, body, "",
+      headers).multiRoute(resource, folder & "/")
 
 proc put(resource, id, body: string, ct = ""): LSResponse =
   var headers = newHttpHeaders()
   if ct != "":
     headers["Content-Type"] = ct
-  return newSimpleLSRequest(HttpPut, resource, id, body, "", headers).multiRoute(resource, id)
+  return newSimpleLSRequest(HttpPut, resource, id, body, "",
+      headers).multiRoute(resource, id)
 
 proc patch(resource, id, body: string): LSResponse =
   var headers = newHttpHeaders()
   headers["Content-Type"] = "application/json"
-  return newSimpleLSRequest(HttpPatch, resource, id, body, "", headers).multiRoute(resource, id)
+  return newSimpleLSRequest(HttpPatch, resource, id, body, "",
+      headers).multiRoute(resource, id)
 
 proc delete(resource, id: string): LSResponse =
   return newSimpleLSRequest(HttpDelete, resource, id).multiRoute(resource, id)
@@ -1104,7 +1163,133 @@ proc delete(resource, id: string): LSResponse =
 proc head(resource, id: string): LSResponse =
   return newSimpleLSRequest(HttpHead, resource, id).multiRoute(resource, id)
 
-proc registerStoreApi(LS: LiteStore, ctx: DTContext, origResource, origId: string) =
+proc toHeaders(obj: JsonNode): HttpHeaders =
+  var headers = newSeq[tuple[key: string, val: string]](0)
+  for k, v in obj.pairs:
+    headers.add (key: k, val: v.getstr)
+  return newHttpHeaders(headers)
+
+proc toJson(headers: HttpHeaders): JsonNode =
+  result = newJObject()
+  for k, v in headers.pairs:
+    result[k] = newJString(v)
+
+proc getHeadersArg(ctx: DTContext): HttpHeaders =
+  duk_enum(ctx, 1, 0)
+  var headers = newSeq[tuple[key: string, val: string]](0)
+  while duk_next(ctx, -1, 1) == 1:
+    let key = $duk_safe_to_string(ctx, -2)
+    let val = $duk_safe_to_string(ctx, -1)
+    duk_pop_2(ctx)
+    headers.add (key: key, val: val)
+  return newHttpHeaders(headers)
+
+
+proc registerHttpApi(LS: LiteStore, ctx: DTContext) =
+  var api_idx = ctx.duk_push_object()
+  # GET
+  var get: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
+    let url = $duk_get_string(ctx, 0)
+    let client = newHttpClient(headers = ctx.getHeadersArg)
+    let resp = client.get(url)
+    var res_idx = ctx.duk_push_object()
+    ctx.duk_push_int(cast[cint](resp.code))
+    discard ctx.duk_put_prop_string(res_idx, "code")
+    discard ctx.duk_push_string(resp.body.cstring)
+    discard ctx.duk_put_prop_string(res_idx, "content")
+    discard ctx.duk_push_string(resp.headers.toJson.pretty.cstring)
+    discard ctx.duk_put_prop_string(res_idx, "headers")
+    return 1
+  )
+  discard duk_push_c_function(ctx, get, 2)
+  discard ctx.duk_put_prop_string(api_idx, "get")
+  # HEAD
+  var head: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
+    let url = $duk_get_string(ctx, 0)
+    let client = newHttpClient(headers = ctx.getHeadersArg)
+    let resp = client.head(url)
+    var res_idx = ctx.duk_push_object()
+    ctx.duk_push_int(cast[cint](resp.code))
+    discard ctx.duk_put_prop_string(res_idx, "code")
+    discard ctx.duk_push_string(resp.body.cstring)
+    discard ctx.duk_put_prop_string(res_idx, "content")
+    discard ctx.duk_push_string(resp.headers.toJson.pretty.cstring)
+    discard ctx.duk_put_prop_string(res_idx, "headers")
+    return 1
+  )
+  discard duk_push_c_function(ctx, head, 2)
+  discard ctx.duk_put_prop_string(api_idx, "head")
+  # DELETE
+  var delete: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
+    let url = $duk_get_string(ctx, 0)
+    let client = newHttpClient(headers = ctx.getHeadersArg)
+    let resp = client.delete(url)
+    var res_idx = ctx.duk_push_object()
+    ctx.duk_push_int(cast[cint](resp.code))
+    discard ctx.duk_put_prop_string(res_idx, "code")
+    discard ctx.duk_push_string(resp.body.cstring)
+    discard ctx.duk_put_prop_string(res_idx, "content")
+    discard ctx.duk_push_string(resp.headers.toJson.pretty.cstring)
+    discard ctx.duk_put_prop_string(res_idx, "headers")
+    return 1
+  )
+  discard duk_push_c_function(ctx, delete, 2)
+  discard ctx.duk_put_prop_string(api_idx, "head")
+  # POST
+  var post: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
+    let url = $duk_get_string(ctx, 0)
+    let client = newHttpClient(headers = ctx.getHeadersArg)
+    let body = $duk_get_string(ctx, 2)
+    let resp = client.post(url, body)
+    var res_idx = ctx.duk_push_object()
+    ctx.duk_push_int(cast[cint](resp.code))
+    discard ctx.duk_put_prop_string(res_idx, "code")
+    discard ctx.duk_push_string(resp.body.cstring)
+    discard ctx.duk_put_prop_string(res_idx, "content")
+    discard ctx.duk_push_string(resp.headers.toJson.pretty.cstring)
+    discard ctx.duk_put_prop_string(res_idx, "headers")
+    return 1
+  )
+  discard duk_push_c_function(ctx, post, 3)
+  discard ctx.duk_put_prop_string(api_idx, "post")
+  # PUT
+  var put: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
+    let url = $duk_get_string(ctx, 0)
+    let client = newHttpClient(headers = ctx.getHeadersArg)
+    let body = $duk_get_string(ctx, 2)
+    let resp = client.put(url, body)
+    var res_idx = ctx.duk_push_object()
+    ctx.duk_push_int(cast[cint](resp.code))
+    discard ctx.duk_put_prop_string(res_idx, "code")
+    discard ctx.duk_push_string(resp.body.cstring)
+    discard ctx.duk_put_prop_string(res_idx, "content")
+    discard ctx.duk_push_string(resp.headers.toJson.pretty.cstring)
+    discard ctx.duk_put_prop_string(res_idx, "headers")
+    return 1
+  )
+  discard duk_push_c_function(ctx, put, 3)
+  discard ctx.duk_put_prop_string(api_idx, "put")
+  # PATCH
+  var patch: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
+    let url = $duk_get_string(ctx, 0)
+    let client = newHttpClient(headers = ctx.getHeadersArg)
+    let body = $duk_get_string(ctx, 2)
+    let resp = client.patch(url, body)
+    var res_idx = ctx.duk_push_object()
+    ctx.duk_push_int(cast[cint](resp.code))
+    discard ctx.duk_put_prop_string(res_idx, "code")
+    discard ctx.duk_push_string(resp.body.cstring)
+    discard ctx.duk_put_prop_string(res_idx, "content")
+    discard ctx.duk_push_string(resp.headers.toJson.pretty.cstring)
+    discard ctx.duk_put_prop_string(res_idx, "headers")
+    return 1
+  )
+  discard duk_push_c_function(ctx, patch, 3)
+  discard ctx.duk_put_prop_string(api_idx, "patch")
+  discard ctx.duk_put_global_string("$http")
+
+proc registerStoreApi(LS: LiteStore, ctx: DTContext, origResource,
+    origId: string) =
   var api_idx = ctx.duk_push_object()
   # GET
   var get: DTCFunction = (proc (ctx: DTContext): cint{.stdcall.} =
@@ -1198,7 +1383,7 @@ proc registerStoreApi(LS: LiteStore, ctx: DTContext, origResource, origId: strin
   discard ctx.duk_put_prop_string(api_idx, "head")
   discard ctx.duk_put_global_string("$store")
 
-proc jError(ctx: DTContext): LSResponse  =
+proc jError(ctx: DTContext): LSResponse =
   return resError(Http500, "Middleware Error: " & $ctx.duk_safe_to_string(-1))
 
 proc getMiddleware*(LS: LiteStore, id: string): string =
@@ -1213,9 +1398,9 @@ proc getMiddleware*(LS: LiteStore, id: string): string =
     result = LS.middleware[id]
 
 proc getMiddlewareSeq(LS: LiteStore, resource, id, meth: string): seq[string] =
-  result = newSeq[string]() 
+  result = newSeq[string]()
   if LS.config.kind != JObject or not LS.config.hasKey("resources"):
-    return 
+    return
   var reqUri = "/" & resource & "/" & id
   if reqUri[^1] == '/':
     reqUri.removeSuffix({'/'})
@@ -1226,24 +1411,28 @@ proc getMiddlewareSeq(LS: LiteStore, resource, id, meth: string): seq[string] =
   for p in ancestors:
     currentPath &= "/" & p
     currentPaths = currentPath & "/*"
-    if LS.config["resources"].hasKey(currentPaths) and LS.config["resources"][currentPaths].hasKey(meth) and LS.config["resources"][currentPaths][meth].hasKey("middleware"):
+    if LS.config["resources"].hasKey(currentPaths) and LS.config["resources"][
+        currentPaths].hasKey(meth) and LS.config["resources"][currentPaths][
+        meth].hasKey("middleware"):
       let mw = LS.config["resources"][currentPaths][meth]["middleware"]
       if (mw.kind == JArray):
         for m in mw:
           result.add m.getStr
-  if LS.config["resources"].hasKey(reqUri) and LS.config["resources"][reqUri].hasKey(meth) and LS.config["resources"][reqUri][meth].hasKey("middleware"):
+  if LS.config["resources"].hasKey(reqUri) and LS.config["resources"][
+      reqUri].hasKey(meth) and LS.config["resources"][reqUri][meth].hasKey("middleware"):
     let mw = LS.config["resources"][reqUri][meth]["middleware"]
     if (mw.kind == JArray):
       for m in mw:
         result.add m.getStr
 
-proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSResponse =
+proc execute*(req: var LSRequest, LS: LiteStore, resource,
+    id: string): LSResponse =
   let middleware = getMiddlewareSeq(LS, resource, id, $req.reqMethod)
   if middleware.len > 0:
     LOG.debug("Middleware: " & middleware.join(" -> "));
   if middleware.len == 0:
     return route(req, LS, resource, id)
-  var jReq = $(%* req)
+  var jReq = $( %* req)
   LOG.debug("Request: " & jReq)
   var jRes = """{
     "code": 200,
@@ -1262,6 +1451,7 @@ proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSRespon
   duk_console_init(ctx)
   duk_print_alert_init(ctx)
   LS.registerStoreApi(ctx, resource, id)
+  LS.registerHttpApi(ctx)
   if ctx.duk_peval_string(cstring("($1)" % $jReq)) != 0:
     return jError(ctx)
   discard ctx.duk_put_global_string("$req")
@@ -1276,7 +1466,7 @@ proc execute*(req: var LSRequest, LS: LiteStore, resource, id: string): LSRespon
   var abort = 0
   while abort != 1 and i < middleware.len:
     let code = LS.getMiddleware(middleware[i])
-    LOG.debug("Evaluating middleware '$1'" %  middleware[i])
+    LOG.debug("Evaluating middleware '$1'" % middleware[i])
     if ctx.duk_peval_string(code.cstring) != 0:
       return jError(ctx)
     abort = ctx.duk_get_boolean(-1)

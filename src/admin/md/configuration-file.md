@@ -102,3 +102,12 @@ Within each resource path, you can specify different HTTP methods (all uppercase
 ### signature
 
 This section must be  set to a valid certificate used validate JWT tokens. Note that the certificate must follow a specific format and start with the appropriate begin/end  blocks.
+
+### jwks_uri
+
+As of version 1.13.0, this property can be set to a URI pointing to a valid [JSON Web Key Sets](https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-key-sets) file. If this property is specified, it will be used instead of **signature** to perform signature verification of JWKS tokens.
+
+> %note%
+> How JWKS data is managed
+> 
+> If this property is set, LiteStore will attempt to download the specified JWKS file on startup. This file will be catched to a *store-name*_jwks.json file (e.g. `data_jwks.json`) and its contents stored in memory.

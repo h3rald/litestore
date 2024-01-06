@@ -1,15 +1,18 @@
 import
-  x_sqlite3,
-  x_db_sqlite as db,
+  db_connector/sqlite3,
+  db_connector/db_sqlite as db,
+  std/[
   os,
+  paths,
   oids,
   json,
   pegs,
   strtabs,
   strutils,
   sequtils,
+  httpclient,
   base64,
-  math
+  math]
 import
   types,
   contenttypes,
@@ -52,7 +55,7 @@ proc createDatastore*(file: string) =
 proc closeDatastore*(store: Datastore) =
   try:
     db.close(store.db)
-  except:
+  except CatchableError:
     raise newException(EDatastoreUnavailable,
         "Datastore '$1' cannot be closed." % store.path)
 
@@ -61,7 +64,7 @@ proc destroyDatastore*(store: Datastore) =
     if store.path.fileExists():
       store.closeDataStore()
       store.path.removeFile()
-  except:
+  except CatchableError:
     raise newException(EDatastoreUnavailable,
         "Datastore '$1' cannot destroyed." % store.path)
 
@@ -79,7 +82,7 @@ proc upgradeDatastore*(store: Datastore) =
       store.db.exec(SQL_CREATE_SYSTEM_DOCUMENTS_TABLE)
       store.db.exec(SQL_UPDATE_VERSION, 2)
       LOG.debug("Done.")
-    except:
+    except CatchableError:
       store.closeDatastore()
       store.path.removeFile()
       copyFile(bkp_path, store.path)
@@ -106,7 +109,7 @@ proc openDatastore*(file: string): Datastore {.gcsafe.} =
     LOG.debug("Done.")
     result.path = file
     result.mount = ""
-  except:
+  except CatchableError:
     raise newException(EDatastoreUnavailable,
         "Datastore '$1' cannot be opened." % file)
 
@@ -136,7 +139,8 @@ proc rollback(store: Datastore) =
 # Manage Indexes
 
 proc createIndex*(store: Datastore, indexId, field: string) =
-  let query = sql("CREATE INDEX json_index_$1 ON documents(json_extract(data, ?) COLLATE NOCASE) WHERE json_valid(data)" % [indexId])
+  let query = sql("CREATE INDEX json_index_$1 ON documents(json_extract(data, ?) COLLATE NOCASE) WHERE json_valid(data)" %
+      [indexId])
   store.begin()
   store.db.exec(query, field)
   store.commit()
@@ -147,7 +151,8 @@ proc dropIndex*(store: Datastore, indexId: string) =
   store.db.exec(query)
   store.commit()
 
-proc retrieveIndex*(store: Datastore, id: string, options: QueryOptions = newQueryOptions()): JsonNode =
+proc retrieveIndex*(store: Datastore, id: string,
+    options: QueryOptions = newQueryOptions()): JsonNode =
   var options = options
   options.single = true
   let query = prepareSelectIndexesQuery(options)
@@ -167,7 +172,7 @@ proc retrieveIndexes*(store: Datastore, options: QueryOptions = newQueryOptions(
       let str = "json_index_" & options.like.substr(0, options.like.len-2)
       raw_indexes = store.db.getAllRows(query.sql, str, str & "{")
     else:
-      let str =  "json_index_" & options.like.replace("*", "%")
+      let str = "json_index_" & options.like.replace("*", "%")
       raw_indexes = store.db.getAllRows(query.sql, str)
   else:
     raw_indexes = store.db.getAllRows(query.sql)
@@ -176,7 +181,8 @@ proc retrieveIndexes*(store: Datastore, options: QueryOptions = newQueryOptions(
     var matches: array[0..0, string]
     let fieldPeg = peg"'CREATE INDEX json_index_test ON documents(json_extract(data, \'' {[^']+}"
     discard index[1].match(fieldPeg, matches)
-    indexes.add(%[("id", %index[0].replace("json_index_", "")), ("field", %matches[0])])
+    indexes.add(%[("id", %index[0].replace("json_index_", "")), ("field",
+        %matches[0])])
   return %indexes
 
 proc countIndexes*(store: Datastore, q = "", like = ""): int64 =
@@ -286,7 +292,7 @@ proc createDocument*(store: Datastore, id = "", rawdata = "",
     # Validate JSON data
     try:
       discard data.parseJson
-    except:
+    except CatchableError:
       raise newException(JsonParsingError, "Invalid JSON content - " &
           getCurrentExceptionMsg())
   if id == "":
@@ -318,7 +324,7 @@ proc createDocument*(store: Datastore, id = "", rawdata = "",
     if singleOp:
       store.commit()
     return $store.retrieveRawDocument(id)
-  except:
+  except CatchableError:
     store.rollback()
     eWarn()
     raise
@@ -334,7 +340,7 @@ proc createSystemDocument*(store: Datastore, id = "", rawdata = "",
     # Validate JSON data
     try:
       discard data.parseJson
-    except:
+    except CatchableError:
       raise newException(JsonParsingError, "Invalid JSON content - " &
           getCurrentExceptionMsg())
   if id == "":
@@ -350,7 +356,7 @@ proc createSystemDocument*(store: Datastore, id = "", rawdata = "",
     if singleOp:
       store.commit()
     return $store.retrieveRawDocument(id)
-  except:
+  except CatchableError:
     store.rollback()
     eWarn()
     raise
@@ -365,21 +371,21 @@ proc updateSystemDocument*(store: Datastore, id: string, rawdata: string,
     # Validate JSON data
     try:
       discard data.parseJson
-    except:
+    except CatchableError:
       raise newException(JsonParsingError, "Invalid JSON content - " &
           getCurrentExceptionMsg())
   try:
     LOG.debug("Updating system document '$1'" % id)
     store.begin()
-    var res = store.db.execAffectedRows(SQL_UPDATE_SYSTEM_DOCUMENT, data, contenttype,
-        binary, currentTime(), id)
+    var res = store.db.execAffectedRows(SQL_UPDATE_SYSTEM_DOCUMENT, data,
+        contenttype, binary, currentTime(), id)
     if res > 0:
       result = $store.retrieveRawDocument(id)
     else:
       result = ""
     if singleOp:
       store.commit()
-  except:
+  except CatchableError:
     eWarn()
     store.rollback()
     raise
@@ -394,7 +400,7 @@ proc updateDocument*(store: Datastore, id: string, rawdata: string,
     # Validate JSON data
     try:
       discard data.parseJson
-    except:
+    except CatchableError:
       raise newException(JsonParsingError, "Invalid JSON content - " &
           getCurrentExceptionMsg())
   var searchable = searchable
@@ -421,7 +427,7 @@ proc updateDocument*(store: Datastore, id: string, rawdata: string,
       result = ""
     if singleOp:
       store.commit()
-  except:
+  except CatchableError:
     eWarn()
     store.rollback()
     raise
@@ -446,11 +452,11 @@ proc destroyDocument*(store: Datastore, id: string): int64 =
           raise newException(EFileNotFound, "File not found: $1" % filename)
     if singleOp:
       store.commit()
-  except:
+  except CatchableError:
     eWarn()
     store.rollback()
 
-proc findDocumentId*(store: Datastore, pattern: string): string =  
+proc findDocumentId*(store: Datastore, pattern: string): string =
   var select = "SELECT id FROM documents WHERE id LIKE ? ESCAPE '\\' "
   var raw_document = store.db.getRow(select.sql, pattern)
   LOG.debug("Retrieving document '$1'" % pattern)
@@ -496,7 +502,8 @@ proc retrieveRawDocuments*(store: Datastore,
 proc countDocuments*(store: Datastore): int64 =
   return store.db.getRow(SQL_COUNT_DOCUMENTS)[0].parseInt
 
-proc importFile*(store: Datastore, f: string, dir = "/", system = false, notSearchable = false): string  =
+proc importFile*(store: Datastore, f: string, dir = "/", system = false,
+    notSearchable = false): string =
   if not f.fileExists:
     raise newException(EFileNotFound, "File '$1' not found." % f)
   let split = f.splitFile
@@ -530,7 +537,7 @@ proc importFile*(store: Datastore, f: string, dir = "/", system = false, notSear
       discard store.createDocument(d_id, d_contents, d_ct, d_binary, d_searchable)
     if dir != "/" and not system:
       store.db.exec(SQL_INSERT_TAG, "$dir:"&dir, d_id)
-  except:
+  except CatchableError:
     store.rollback()
     eWarn()
     raise
@@ -544,7 +551,7 @@ proc importTags*(store: Datastore, d_id: string, tags: openArray[string]) =
   try:
     for tag in tags:
       store.db.exec(SQL_INSERT_TAG, tag, d_id)
-  except:
+  except CatchableError:
     store.rollback()
     eWarn()
     raise
@@ -562,7 +569,7 @@ proc optimize*(store: Datastore) =
     store.db.exec(SQL_OPTIMIZE)
     store.commit()
     LOG.debug("Done")
-  except:
+  except CatchableError:
     eWarn()
 
 proc vacuum*(file: string) =
@@ -570,7 +577,7 @@ proc vacuum*(file: string) =
   try:
     data.exec(SQL_VACUUM)
     db.close(data)
-  except:
+  except CatchableError:
     eWarn()
     quit(203)
   quit(0)
@@ -580,21 +587,22 @@ proc getTagsForFile*(f: string): seq[string] =
   let tags_file = f.splitFile.dir / "_tags"
   if tags_file.fileExists:
     for tag in tags_file.lines:
-      result.add(tag) 
+      result.add(tag)
 
 
-proc importDir*(store: Datastore, dir: string, system = false, importTags = false, notSearchable = false) =
+proc importDir*(store: Datastore, dir: string, system = false,
+    importTags = false, notSearchable = false) =
   var files = newSeq[string]()
   if not dir.dirExists:
     raise newException(EDirectoryNotFound, "Directory '$1' not found." % dir)
   for f in dir.walkDirRec():
     if f.dirExists:
       continue
-    let dirs = f.split(DirSep)  
+    let dirs = f.split(DirSep)
     if dirs.any(proc (s: string): bool = return s.startsWith(".")):
       # Ignore hidden directories and files
-      continue  
-    let fileName = f.splitFile.name    
+      continue
+    let fileName = f.splitFile.name
     if fileName == "_tags" and not importTags:
       # Ignore tags file unless the CLI flag was set
       continue
@@ -621,7 +629,7 @@ proc importDir*(store: Datastore, dir: string, system = false, importTags = fals
         store.commit()
         LOG.info("Importing batch $1/$2...", cBatches, nBatches)
         store.begin()
-    except:
+    except CatchableError:
       LOG.warn("Unable to import file: $1", f)
       eWarn()
       store.rollback()
@@ -685,17 +693,37 @@ proc setLogLevel*(val: string) =
     else:
       fail(103, "Invalid log level '$1'" % val)
 
-proc processAuthConfig(configuration: JsonNode, auth: var JsonNode) =
-  if auth == newJNull() and configuration != newJNull() and configuration.hasKey("signature"):
-    LOG.debug("Authentication: Signature found, processing authentication rules in configuration.")
-    auth = newJObject();
-    auth["access"] = newJObject();
-    auth["signature"] = configuration["signature"]
-    for k, v in configuration["resources"].pairs:
-      auth["access"][k] = newJObject()
+proc downloadJwks*(LS: LiteStore, uri: string) =
+  let file = LS.jwksPath
+  let client = newHttpClient()
+  client.downloadFile(uri, file)
+
+proc processAuthConfig(LS: var LiteStore) =
+  if LS.auth == newJNull() and LS.config != newJNull():
+    LS.auth = newJObject();
+    LS.auth["access"] = newJObject();
+    if LS.config.hasKey("jwks_uri"):
+      LOG.debug("Authentication: Downloading JWKS file.")
+      try:
+        LS.downloadJwks(LS.config["jwks_uri"].getStr)
+      except CatchableError:
+        LOG.warn "Unable to download JWKS file."
+        eWarn()
+      try:
+        LS.jwks = LS.jwksPath.parseFile
+      except:
+        LOG.warn "Unable to parse JWKS file."
+        eWarn()
+    elif LS.config.hasKey("signature"):
+      LOG.debug("Authentication: Signature found, processing authentication rules in configuration.")
+      LS.auth["signature"] = LS.config["signature"].getStr.replace(
+          "-----BEGIN CERTIFICATE-----\n", "").replace(
+          "\n-----END CERTIFICATE-----").strip().newJString
+    for k, v in LS.config["resources"].pairs:
+      LS.auth["access"][k] = newJObject()
       for meth, content in v.pairs:
         if content.hasKey("auth"):
-          auth["access"][k][meth] = content["auth"]
+          LS.auth["access"][k][meth] = content["auth"]
 
 proc processConfigSettings(LS: var LiteStore) =
   # Process config settings if present and if no cli settings are set
@@ -727,7 +755,7 @@ proc setup*(LS: var LiteStore, open = true) {.gcsafe.} =
   if not LS.file.fileExists:
     try:
       LS.file.createDatastore()
-    except:
+    except CatchableError:
       eWarn()
       fail(200, "Unable to create datastore '$1'" % [LS.file])
   if (open):
@@ -735,15 +763,15 @@ proc setup*(LS: var LiteStore, open = true) {.gcsafe.} =
       LS.store = LS.file.openDatastore()
       try:
         LS.store.upgradeDatastore()
-      except:
+      except CatchableError:
         fail(203, "Unable to upgrade datastore '$1'" % [LS.file])
       if LS.mount:
         try:
           LS.store.mountDir(LS.directory)
-        except:
+        except CatchableError:
           eWarn()
           fail(202, "Unable to mount directory '$1'" % [LS.directory])
-    except:
+    except CatchableError:
       fail(201, "Unable to open datastore '$1'" % [LS.file])
 
 proc initStore*(LS: var LiteStore) =
@@ -759,7 +787,7 @@ proc initStore*(LS: var LiteStore) =
     LS.processConfigSettings()
     # Process auth from config settings
     LOG.debug("Authentication: Checking configuration for auth rules - Store file: " & LS.file)
-    processAuthConfig(LS.config, LS.auth)
+    LS.processAuthConfig()
 
   if LS.auth == newJNull():
     # Attempt to retrieve auth.json from system documents

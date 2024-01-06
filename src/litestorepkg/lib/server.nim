@@ -1,22 +1,19 @@
 import
   asynchttpserver,
   asyncdispatch,
-  times,
   strutils,
   pegs,
   logger,
   cgi,
-  os,
   json,
   tables,
   strtabs,
-  base64,
   asyncnet,
-  jwt,
   sequtils
-import 
-  types, 
-  utils, 
+import
+  types,
+  utils,
+  jwt,
   api_v1,
   api_v2,
   api_v3,
@@ -27,17 +24,7 @@ import
   api_v8
 
 export
-  api_v5
-
-
-proc decodeUrlSafeAsString*(s: string): string =
-  var s = s.replace('-', '+').replace('_', '/')
-  while s.len mod 4 > 0:
-    s &= "="
-  base64.decode(s)
-
-proc decodeUrlSafe*(s: string): seq[byte] =
-  cast[seq[byte]](decodeUrlSafeAsString(s))
+  api_v8
 
 proc getReqInfo(req: LSRequest): string =
   var url = req.url.path
@@ -51,37 +38,44 @@ proc handleCtrlC() {.noconv.} =
   echo ""
   LOG.info("Exiting...")
   quit()
-  
-template auth(uri: string, jwt: JWT, LS: LiteStore): void =
+
+template auth(uri: string, LS: LiteStore, jwt: JWT): void =
   let cfg = access[uri]
   if cfg.hasKey(reqMethod):
     LOG.debug("Authenticating: " & reqMethod & " " & uri)
-    if not req.headers.hasKey("Authorization"): 
+    if not req.headers.hasKey("Authorization"):
       return resError(Http401, "Unauthorized - No token")
     let token = req.headers["Authorization"].replace(peg"^ 'Bearer '", "")
     # Validate token
     try:
-      jwt = token.toJwt()
-      let parts = token.split(".")
-      var sig = LS.auth["signature"].getStr 
-      discard verifySignature(parts[0] & "." & parts[1], decodeUrlSafe(parts[2]), sig, RS256)
-      verifyTimeClaims(jwt)
-      let scopes = cfg[reqMethod]
-      # Validate scope
-      var authorized = ""
-      let reqScopes = ($jwt.claims["scope"].node.str).split(peg"\s+")
-      LOG.debug("Resource scopes: " & $scopes)
-      LOG.debug("Request scopes: " & $reqScopes)
-      for scope in scopes:
-        for reqScope in reqScopes:
-          if reqScope == scope.getStr:
-            authorized = scope.getStr
-            break
-      if authorized == "":
-        return resError(Http403, "Forbidden - You are not permitted to access this resource")
-      LOG.debug("Authorization successful: " & authorized)
-    except:
-      echo getCurrentExceptionMsg()
+      jwt = token.newJwt
+      var x5c: string
+      if LS.config.hasKey("jwks_uri"):
+        LOG.debug("Selecting x5c...")
+        x5c = LS.getX5c(jwt)
+      else:
+        LOG.debug("Using stored signature...")
+        x5c = LS.config["signature"].getStr
+      LOG.debug("Verifying algorithm...")
+      jwt.verifyAlgorithm()
+      LOG.debug("Verifying signature...")
+      try:
+        jwt.verifySignature(x5c)
+      except EX509Error:
+        LOG.warn getCurrentExceptionMsg()
+        writeStackTrace()
+      LOG.debug("Verifying claims...")
+      jwt.verifyTimeClaims()
+      let scope = cfg[reqMethod].mapIt(it.getStr)
+      LOG.debug("Verifying scope...")
+      jwt.verifyScope(scope)
+      LOG.debug("Authorization successful")
+    except EUnauthorizedError:
+      LOG.warn getCurrentExceptionMsg()
+      writeStackTrace()
+      return resError(Http403, "Forbidden - You are not permitted to access this resource")
+    except CatchableError:
+      LOG.warn getCurrentExceptionMsg()
       writeStackTrace()
       return resError(Http401, "Unauthorized - Invalid token")
 
@@ -100,17 +94,21 @@ proc isAllowed(LS: LiteStore, resource, id, meth: string): bool =
   for p in ancestors:
     currentPath &= "/" & p
     currentPaths = currentPath & "/*"
-    if LS.config["resources"].hasKey(currentPaths) and LS.config["resources"][currentPaths].hasKey(meth) and LS.config["resources"][currentPaths][meth].hasKey("allowed"):
+    if LS.config["resources"].hasKey(currentPaths) and LS.config["resources"][
+        currentPaths].hasKey(meth) and LS.config["resources"][currentPaths][
+        meth].hasKey("allowed"):
       let allowed = LS.config["resources"][currentPaths][meth]["allowed"]
       if (allowed == %false):
         return false;
-  if LS.config["resources"].hasKey(reqUri) and LS.config["resources"][reqUri].hasKey(meth) and LS.config["resources"][reqUri][meth].hasKey("allowed"):
+  if LS.config["resources"].hasKey(reqUri) and LS.config["resources"][
+      reqUri].hasKey(meth) and LS.config["resources"][reqUri][meth].hasKey("allowed"):
     let allowed = LS.config["resources"][reqUri][meth]["allowed"]
     if (allowed == %false):
       return false
   return true
 
-proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSResponse = 
+proc processApiUrl(req: LSRequest, LS: LiteStore,
+    info: ResourceInfo): LSResponse =
   var reqUri = "/" & info.resource & "/" & info.id
   if reqUri[^1] == '/':
     reqUri.removeSuffix({'/'})
@@ -125,12 +123,12 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
     while true:
       # Match exact url
       if access.hasKey(uri):
-        auth(uri, jwt, LS)
+        auth(uri, LS, jwt)
         break
       # Match exact url adding /* (e.g. /docs would match also /docs/* in auth.json)
       elif uri[^1] != '*' and uri[^1] != '/':
         if access.hasKey(uri & "/*"):
-          auth(uri & "/*", jwt, LS)
+          auth(uri & "/*", LS, jwt)
           break
       var parts = uri.split("/")
       if parts[^1] == "*":
@@ -143,7 +141,7 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
         # If at the end of the URL, check generic URL
         uri = "/*"
         if access.hasKey(uri):
-          auth(uri, jwt, LS)
+          auth(uri, LS, jwt)
         break
   if info.version == "v8":
     if info.resource.match(peg"^assets / docs / info / tags / indexes / stores$"):
@@ -235,7 +233,8 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
     else:
       return resError(Http404, "Resource Not Found: $1" % info.resource)
   else:
-    if info.version == "v1" or info.version == "v2" or info.version == "v3" or info.version == "v4" or info.version == "v5":
+    if info.version == "v1" or info.version == "v2" or info.version == "v3" or
+        info.version == "v4" or info.version == "v5":
       return resError(Http400, "Bad Request - Invalid API version: $1" % info.version)
     else:
       if info.resource.decodeURL.strip == "":
@@ -243,7 +242,7 @@ proc processApiUrl(req: LSRequest, LS: LiteStore, info: ResourceInfo): LSRespons
       else:
         return resError(Http404, "Resource Not Found: $1" % info.resource)
 
-proc process*(req: LSRequest, LS: LiteStore): LSResponse {.gcsafe.}=
+proc process*(req: LSRequest, LS: LiteStore): LSResponse {.gcsafe.} =
   var matches = @["", "", ""]
   template route(req: LSRequest, peg: Peg, op: untyped): untyped =
     if req.url.path.find(peg, matches) != -1:
@@ -273,14 +272,17 @@ proc process*(req: LSRequest, LS: LiteStore): LSResponse {.gcsafe.}=
   except EInvalidRequest:
     let e = (ref EInvalidRequest)(getCurrentException())
     let trace = e.getStackTrace()
-    return resError(Http404, "Resource Not Found: $1" % getCurrentExceptionMsg().split(" ")[2], trace)
-  except:
+    return resError(Http404, "Resource Not Found: $1" % getCurrentExceptionMsg(
+      ).split(" ")[2], trace)
+  except CatchableError:
     let e = getCurrentException()
     let trace = e.getStackTrace()
-    return resError(Http500, "Internal Server Error: $1" % getCurrentExceptionMsg(), trace)
+    return resError(Http500, "Internal Server Error: $1" %
+        getCurrentExceptionMsg(), trace)
 
 
-proc process*(req: LSRequest, LSDICT: OrderedTable[string, LiteStore]): LSResponse {.gcsafe.}=
+proc process*(req: LSRequest, LSDICT: OrderedTable[string,
+    LiteStore]): LSResponse {.gcsafe.} =
   var matches = @["", ""]
   if req.url.path.find(PEG_STORE_URL, matches) != -1:
     let id = matches[0]
@@ -335,7 +337,8 @@ proc serve*(LS: LiteStore) =
     let res = req.process(LSDICT)
     var newReq = newRequest(req, client)
     await newReq.respond(res.code, res.content, res.headers)
-  echo(LS.appname & " v" & LS.appversion & " started on " & LS.address & ":" & $LS.port & ".")
+  echo(LS.appname & " v" & LS.appversion & " started on " & LS.address & ":" &
+      $LS.port & ".")
   printCfg("master")
   let storeIds = toSeq(LSDICT.keys)
   if (storeIds.len > 1):

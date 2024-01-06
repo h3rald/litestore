@@ -1,21 +1,21 @@
-import 
-  x_db_sqlite, 
-  asynchttpserver, 
+import
+  db_connector/db_sqlite,
+  std/[asynchttpserver,
   asyncnet,
   uri,
-  pegs, 
+  pegs,
   json,
   strtabs,
+  os,
   strutils,
   sequtils,
   nativesockets,
-  jwt,
-  tables
+  tables]
 import
   config
 
 type
-  EDatastoreExists* = object of CatchableError 
+  EDatastoreExists* = object of CatchableError
   EDatastoreDoesNotExist* = object of CatchableError
   EDatastoreUnavailable* = object of CatchableError
   EInvalidTag* = object of CatchableError
@@ -23,6 +23,9 @@ type
   EFileNotFound* = object of CatchableError
   EFileExists* = object of CatchableError
   EInvalidRequest* = object of CatchableError
+  EJwtValidationError* = object of CatchableError
+  EUnauthorizedError* = object of CatchableError
+  EX509Error* = object of CatchableError
   ConfigFiles* = object
     auth*: string
     config*: string
@@ -41,8 +44,8 @@ type
     jsonFilter*: string
     jsonSelect*: seq[tuple[path: string, alias: string]]
     select*: seq[string]
-    single*:bool
-    system*:bool
+    single*: bool
+    system*: bool
     limit*: int
     offset*: int
     orderby*: string
@@ -59,6 +62,12 @@ type
     startswith*: bool
     endswith*: bool
     negated*: bool
+  JWT* = object
+    header*: JsonNode
+    claims*: JsonNode
+    signature*: string
+    payload*: string
+    token*: string
   Operation* = enum
     opRun,
     opImport,
@@ -83,6 +92,7 @@ type
     operation*: Operation
     config*: JsonNode
     configFile*: string
+    jwks*: JsonNode
     cliSettings*: JsonNode
     directory*: string
     manageSystemData*: bool
@@ -96,15 +106,15 @@ type
     appversion*: string
     auth*: JsonNode
     authFile*: string
-    favicon*:string
-    loglevel*:string
+    favicon*: string
+    loglevel*: string
   LSRequest* = object
     reqMethod*: HttpMethod
     headers*: HttpHeaders
     protocol*: tuple[orig: string, major, minor: int]
     url*: Uri
     jwt*: JWT
-    hostname*: string 
+    hostname*: string
     body*: string
   LSResponse* = object
     code*: HttpCode
@@ -116,7 +126,10 @@ type
     version: string
   ]
 
-proc initLiteStore*(): LiteStore = 
+proc jwksPath*(LS: LiteStore): string =
+  return "$#/$#_jwks.json" % [getCurrentDir(), LS.file.splitFile.name]
+
+proc initLiteStore*(): LiteStore =
   result.config = newJNull()
   result.configFile = ""
   result.cliSettings = newJObject()
@@ -147,7 +160,7 @@ proc httpMethod*(meth: string): HttpMethod =
       return HttpDelete
     else:
       return HttpGet
-  
+
 
 proc `%`*(protocol: tuple[orig: string, major: int, minor: int]): JsonNode =
   result = newJObject()
@@ -201,7 +214,7 @@ proc newLSRequest*(req: JsonNode): LSRequest =
   for k, v in req["headers"].pairs:
     result.headers[k] = v.getStr
   let protocol = req["protocol"].getStr
-  let  parts = protocol.split("/")
+  let parts = protocol.split("/")
   let version = parts[1].split(".")
   result.protocol = (orig: parts[0], major: version[0].parseInt, minor: version[1].parseInt)
   result.url = initUri()
@@ -232,8 +245,8 @@ proc newRequest*(req: LSRequest, client: AsyncSocket): Request =
 var
   PEG_TAG* {.threadvar.}: Peg
   PEG_USER_TAG* {.threadvar.}: Peg
-  PEG_INDEX* {.threadvar}: Peg
-  PEG_STORE* {.threadvar}: Peg
+  PEG_INDEX* {.threadvar.}: Peg
+  PEG_STORE* {.threadvar.}: Peg
   PEG_JSON_FIELD* {.threadvar.}: Peg
   PEG_DEFAULT_URL* {.threadvar.}: Peg
   PEG_STORE_URL* {.threadvar.}: Peg
@@ -252,7 +265,7 @@ PEG_URL = peg"""^\/({(v\d+)} \/) {([^\/]+)} (\/ {(.+)} / \/?)$"""
 var LS* {.threadvar.}: LiteStore
 var LSDICT* {.threadvar.}: OrderedTable[string, LiteStore]
 var TAB_HEADERS* {.threadvar.}: array[0..2, (string, string)]
-LSDICT  = initOrderedTable[string, LiteStore]()
+LSDICT = initOrderedTable[string, LiteStore]()
 
 LS.appversion = pkgVersion
 LS.appname = appname
@@ -264,9 +277,14 @@ TAB_HEADERS = {
 }
 
 proc newQueryOptions*(system = false): QueryOptions =
-  var select = @["documents.id AS id", "documents.data AS data", "content_type", "binary", "searchable", "created", "modified"]
+  var select = @["documents.id AS id", "documents.data AS data", "content_type",
+      "binary", "searchable", "created", "modified"]
   if system:
-    select = @["system_documents.id AS id", "system_documents.data AS data", "content_type", "binary", "created", "modified"]
+    select = @["system_documents.id AS id", "system_documents.data AS data",
+        "content_type", "binary", "created", "modified"]
   return QueryOptions(select: select,
-    single: false, limit: 0, offset: 0, orderby: "", tags: "", search: "", folder: "", like: "", system: system,
-    createdAfter: "", createdBefore: "", modifiedAfter: "", modifiedBefore: "", jsonFilter: "", jsonSelect: newSeq[tuple[path: string, alias: string]](), tables: newSeq[string]())
+    single: false, limit: 0, offset: 0, orderby: "", tags: "", search: "",
+    folder: "", like: "", system: system,
+    createdAfter: "", createdBefore: "", modifiedAfter: "", modifiedBefore: "",
+    jsonFilter: "", jsonSelect: newSeq[tuple[path: string, alias: string]](),
+        tables: newSeq[string]())

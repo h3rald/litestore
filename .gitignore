@@ -16,8 +16,13 @@ LiteStore_UserGuide.htm
 jester_integration
 js
 *_backup
-./config.json
+config.json
+*jwks.json
 *.db-shm
 *.db-wal
 *.nim.bak
 litestore_linkerArgs.txt
+token*.txt
+x5c*.cert
+jwt
+middleware

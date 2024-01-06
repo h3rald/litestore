@@ -76,13 +76,13 @@ jobs:
 
       # Build for Linux
       - name: Build (Linux)
-        run: nimble build -v -y --passL:-static -d:release --gcc.exe:musl-gcc --gcc.linkerexe:musl-gcc --gc:orc --opt:size litestore
+        run: nimble build -v -y --passL:-static -d:release --gcc.exe:musl-gcc --gcc.linkerexe:musl-gcc --mm:refc --opt:size litestore
         if: matrix.os == 'ubuntu-latest'
 
       # Build for macOS/Windows
       - name: Build (macOS, Windows)
         shell: bash
-        run: nimble build -v -y -d:release --gc:orc --opt:size litestore
+        run: nimble build -v -y -d:release --mm:refc --opt:size litestore
         if: matrix.os == 'macos-latest' || matrix.os == 'windows-latest'
 
       # Import admin directory and create default db
