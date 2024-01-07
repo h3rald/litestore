@@ -61,6 +61,7 @@ jobs:
           msystem: MINGW64
           release: true
           update: true
+          path-type: inherit
           install: >-
             base-devel
             autotools
