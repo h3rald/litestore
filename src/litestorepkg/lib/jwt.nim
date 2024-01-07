@@ -4,8 +4,7 @@ import std/[
 import types
 
 when defined(windows) and defined(amd64):
-    {.emit: """#include <time.h>""".}
-    {.passL: "-static -L"&getProjectPath()&"/litestorepkg/vendor/openssl/windows -lssl -lcrypto -lbcrypt -lws2_32 -lcrypt32".}
+    {.passL: "-static -L"&getProjectPath()&"/litestorepkg/vendor/openssl/windows -lssl -lcrypto -lbcrypt -lws2_32 -lcrypt32 -lmsvcrtd".}
 elif defined(linux) and defined(amd64):
     {.passL: "-static -L"&getProjectPath()&"/litestorepkg/vendor/openssl/linux -lssl -lcrypto".}
 elif defined(macosx) and defined(amd64):
