@@ -79,12 +79,18 @@ jobs:
         run: nimble build -v -y --passL:-static -d:release --gcc.exe:musl-gcc --gcc.linkerexe:musl-gcc --mm:refc --opt:size -d:ssl litestore
         if: matrix.os == 'ubuntu-latest'
 
-      # Build for macOS/Windows
-      - name: Build (macOS, Windows)
+      # Build for macOS
+      - name: Build (macOS)
         shell: bash
         run: nimble build -v -y -d:release --mm:refc --opt:size -d:ssl litestore
-        if: matrix.os == 'macos-latest' || matrix.os == 'windows-latest'
+        if: matrix.os == 'macos-latest'
 
+      # Build for Windows
+      - name: Build (Windows)
+        shell: bash
+        run: nimble build -v -y -d:release --mm:refc --opt:size -d:ssl --gcc.exe:gcc --gcc.linkerexe:gcc --cc:gcc litestore
+        if: matrix.os == 'windows-latest'
+      
       # Import admin directory and create default db
       - name: Import Admin
         shell: bash
