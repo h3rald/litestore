@@ -4,7 +4,6 @@ import std/[
 import types
 
 when defined(windows) and defined(amd64):
-    const __imp__timezone = 1
     {.passL: "-static -L"&getProjectPath()&"/litestorepkg/vendor/openssl/windows -lssl -lcrypto -lgdi32 -ladvapi32 -luser32 -lws2_32 -lcrypt32".}
 elif defined(linux) and defined(amd64):
     {.passL: "-static -L"&getProjectPath()&"/litestorepkg/vendor/openssl/linux -lssl -lcrypto".}
