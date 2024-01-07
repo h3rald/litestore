@@ -4,7 +4,7 @@ import std/[
 import types
 
 when defined(windows) and defined(amd64):
-    {.passL: "-static -L"&getProjectPath()&"/litestorepkg/vendor/openssl/windows -lssl -lcrypto -lbcrypt -lws2_32 -lcrypt32".}
+    {.passL: "-static -L"&getProjectPath()&"/litestorepkg/vendor/openssl/windows -lssl -lcrypto -lbcrypt -lws2_32 -lcrypt32 -ltimezone".}
 elif defined(linux) and defined(amd64):
     {.passL: "-static -L"&getProjectPath()&"/litestorepkg/vendor/openssl/linux -lssl -lcrypto".}
 elif defined(macosx) and defined(amd64):
@@ -14,6 +14,8 @@ elif defined(macosx) and defined(amd64):
 proc EVP_PKEY_new(): EVP_PKEY {.cdecl, importc.}
 proc X509_get_pubkey(cert: PX509): EVP_PKEY {.cdecl, importc.}
 proc X509_free(cert: PX509) {.cdecl, importc.}
+proc EVP_MD_CTX_create(): EVP_MD_CTX {.cdecl, importc.}
+proc EVP_MD_CTX_destroy(ctx: EVP_MD_CTX) {.cdecl, importc.}
 proc EVP_DigestVerifyInit(ctx: EVP_MD_CTX; pctx: ptr EVP_PKEY_CTX; typ: EVP_MD;
         e: ENGINE; pkey: EVP_PKEY): cint {.cdecl, importc.}
 proc EVP_DigestVerifyUpdate(ctx: EVP_MD_CTX; data: pointer;
