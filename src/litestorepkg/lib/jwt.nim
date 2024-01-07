@@ -4,7 +4,7 @@ import std/[
 import types
 
 when defined(windows) and defined(amd64):
-    {.passL: "-static -L"&getProjectPath()&"/litestorepkg/vendor/openssl/windows -lssl -lcrypto -lbcrypt".}
+    {.passL: "-static -L"&getProjectPath()&"/litestorepkg/vendor/openssl/windows -lssl -lcrypto -lbcrypt -lws2_32 -lcrypt32 -lmsvcrtd".}
 elif defined(linux) and defined(amd64):
     {.passL: "-static -L"&getProjectPath()&"/litestorepkg/vendor/openssl/linux -lssl -lcrypto".}
 elif defined(macosx) and defined(amd64):
@@ -14,6 +14,8 @@ elif defined(macosx) and defined(amd64):
 proc EVP_PKEY_new(): EVP_PKEY {.cdecl, importc.}
 proc X509_get_pubkey(cert: PX509): EVP_PKEY {.cdecl, importc.}
 proc X509_free(cert: PX509) {.cdecl, importc.}
+proc EVP_MD_CTX_new(): EVP_MD_CTX {.cdecl, importc.}
+proc EVP_MD_CTX_free(ctx: EVP_MD_CTX) {.cdecl, importc.}
 proc EVP_DigestVerifyInit(ctx: EVP_MD_CTX; pctx: ptr EVP_PKEY_CTX; typ: EVP_MD;
         e: ENGINE; pkey: EVP_PKEY): cint {.cdecl, importc.}
 proc EVP_DigestVerifyUpdate(ctx: EVP_MD_CTX; data: pointer;
@@ -102,7 +104,7 @@ proc verifySignature*(jwt: JWT; x5c: string) =
         if pubkey.isNil:
             raiseX509Error("An error occurred while retrieving the public key")
 
-        mdctx = EVP_MD_CTX_create()
+        mdctx = EVP_MD_CTX_new()
         if mdctx.isNil:
             raiseX509Error("Unable to initialize MD CTX")
 
@@ -121,7 +123,7 @@ proc verifySignature*(jwt: JWT; x5c: string) =
     except CatchableError:
         let err = getCurrentException()
         if not mdctx.isNil:
-            EVP_MD_CTX_destroy(mdctx)
+            EVP_MD_CTX_free(mdctx)
         if not pkeyctx.isNil:
             EVP_PKEY_CTX_free(pkeyctx)
         if not pubkey.isNil:
