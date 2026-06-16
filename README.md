@@ -1,3 +1,5 @@
+**Important** This project was moved to [sourcehut](https://git.sr.ht/~h3rald/litestore) on 2026-06-16.
+
 [![Nimble](https://raw.githubusercontent.com/yglukhov/nimble-tag/master/nimble.png)](https://nimble.directory/pkg/litestore)
 
 [![Release](https://img.shields.io/github/release/h3rald/litestore.svg)](https://github.com/h3rald/litestore/releases/latest)
